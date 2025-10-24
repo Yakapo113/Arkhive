@@ -159,9 +159,10 @@
         <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
 
         <div>
-          <strong>Other Monthly Income Source</strong>
+          <strong>Other Monthly Income Sources</strong>
           <div id="otherIncomeList"></div>
-          <div class="small muted">Enter any other income sources besides Social Security.</div>
+          <button type="button" id="addIncomeBtn" class="btn secondary" style="margin-top:6px;">Add Income Source</button>
+          <div class="small muted">Enter all other income sources besides Social Security.</div>
         </div>
 
 
@@ -212,7 +213,7 @@
         </div>
 
         <div style="display:flex;gap:8px;margin-top:12px" class="controls">
-           <button id="resetBtn" class="btn secondary" title="Reset to defaults">Reset</button>
+          <button id="resetBtn" class="btn secondary" title="Reset to defaults">Reset</button>
         </div>
 
         <div style="margin-top:10px" class="small muted">
@@ -221,7 +222,15 @@
           <a href="https://www.ssa.gov/benefits/retirement/estimator.html" target="_blank" style="color:var(--accent)">SSA Retirement Estimator</a>
         </div>
       </div>
-      
+
+      <div class="panel" style="margin-top:12px">
+        <strong>Quick tips</strong>
+        <ul class="small muted" style="padding-left:16px">
+          <li>Enter the monthly benefits you expect at each claim age (use SSA statements if available).</li>
+        </ul>
+      </div>
+    </div>
+
     <div>
       <div class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center">
@@ -250,14 +259,10 @@
 
 <script>
   let myChart = null;
-  const otherIncomeData = []; // store raw numeric values
-
+  
   function formatUSD(x){ return x >= 1000 ? x.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}) : '$'+x.toFixed(0); }
-
-  function buildSummaryCard(title, main, sub){ 
-    return `<div class="stat"><h3>${title}</h3><p>${main}</p><p class="muted">${sub}</p></div>`; 
-  }
-
+  function buildSummaryCard(title, main, sub){ return `<div class="stat"><h3>${title}</h3><p>${main}</p><p class="muted">${sub}</p></div>`; }
+  
   function runSimulation(inputs, strategy, otherIncome){
     const startAge = inputs.currentAge;
     const endAge   = inputs.lifeExpectancy;
@@ -267,7 +272,7 @@
     const taxRate = inputs.taxRate/100;
     const withdrawRate = inputs.withdrawRate/100;
     let cumEff = 0;
-
+  
     for(let i=0;i<=endAge-startAge;i++){
       const age = startAge+i;
       ages.push(age);
@@ -275,10 +280,10 @@
       const afterTaxSS = yearlySS*(1-taxRate);
       const yearlyIncome = yearlySS + otherIncome*12;
       const utilAdjusted = (age>=inputs.healthDeclineAge)?yearlyIncome*inputs.utilityAfterDecline:yearlyIncome;
-
+  
       yearlyAfterTaxSS.push(afterTaxSS);
       yearlyNetSpendingValue.push(utilAdjusted);
-
+  
       let withdrawalThisYear = 0;
       if(age < strategy.claimAge){
         withdrawalThisYear = portfolio*withdrawRate;
@@ -287,14 +292,22 @@
       }
       portfolio = portfolio*(1+annualReturnNominal);
       portfolioValues.push(portfolio);
-
+  
       cumEff += utilAdjusted;
       cumulativeEffective.push(cumEff);
     }
-
+  
     return {ages, yearlyAfterTaxSS, yearlyNetSpendingValue, portfolioValues, cumulativeEffective, endingPortfolio:portfolio, totalEffective:cumEff};
   }
-
+  
+  function findBreakEven(ages, cumA, cumB){
+    for(let i=0;i<ages.length;i++){
+      if(Math.abs(cumA[i]-cumB[i])<1e-6) return ages[i];
+      if(cumB[i]>=cumA[i]) return ages[i];
+    }
+    return null;
+  }
+  
   function runSimulationWrapper(){
     const rawAssets = document.getElementById('assets').value.replace(/[^0-9.]/g,'');
     const inputs = {
@@ -308,10 +321,10 @@
       inflation: Number(document.getElementById('inflation').value),
       taxRate: Number(document.getElementById('taxRate').value)
     };
-
+  
     let otherIncome = 0;
     otherIncomeData.forEach(val => { if(!isNaN(val)) otherIncome += val; });
-
+  
     const strategies = ['A','B','C'].map(letter=>{
       return {
         name: letter,
@@ -319,17 +332,16 @@
         monthlyBenefit: Number(document.getElementById(`claim${letter}_amt`).value)
       };
     }).filter(s=>s.monthlyBenefit>0 && s.claimAge>=inputs.currentAge);
-
-    if(strategies.length<1) return;
-
+  
+    if(strategies.length<2) return;
+  
     const sims = strategies.map(s=>({...s, sim: runSimulation(inputs,s,otherIncome)}));
     const ages = sims[0].sim.ages;
-
+  
     const datasets = sims.map((s,idx)=>{
       const colorHue = 210 - idx*40;
       return {label:`Claim @ ${s.claimAge} (${s.name})`, data:s.sim.cumulativeEffective, tension:0.2, borderWidth:2, pointRadius:0, borderColor:`hsl(${colorHue} 80% 60%)`, backgroundColor:'rgba(0,0,0,0)'};
     });
-
     const ctx = document.getElementById('cumulativeChart').getContext('2d');
     if(myChart) myChart.destroy();
     myChart = new Chart(ctx,{type:'line',data:{labels:ages,datasets},options:{
@@ -339,16 +351,11 @@
       plugins:{legend:{position:'top'},tooltip:{callbacks:{label:function(context){return `${context.dataset.label}: ${formatUSD(context.parsed.y)}`;}}}} ,
       scales:{x:{title:{display:true,text:'Age'}},y:{title:{display:true,text:'Cumulative effective value ($)'}}}
     }});
-
+  
     const summaryDiv = document.getElementById('summaryCards'); summaryDiv.innerHTML='';
-
     sims.forEach(s=>{
       summaryDiv.innerHTML += buildSummaryCard(`Strategy ${s.name} — Claim @ ${s.claimAge}`,`${formatUSD(s.sim.endingPortfolio)}`,`Total effective utility value: ${formatUSD(s.sim.totalEffective)}`);
     });
-
-    // Add suggested age card
-    const best = sims.reduce((a,b)=> a.sim.totalEffective>b.sim.totalEffective?a:b);
-    summaryDiv.innerHTML += buildSummaryCard(`Suggested SS Claim Age`, `${best.claimAge}`, `Max utility-adjusted value`);
   }
 
   function addIncomeRow(label='401K',amount=0){
