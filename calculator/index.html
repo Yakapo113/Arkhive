@@ -400,13 +400,9 @@
     document.querySelector(sel).addEventListener('input', runSimulationWrapper);
   });  
 
-  function addCommaFormatting(input){
-  input.addEventListener('blur', e=>{
-    let v = e.target.value.replace(/[^0-9.]/g,'');
-    if(!isNaN(v) && v!==''){ e.target.value = Number(v).toLocaleString(); }
-  });
   
- });
+
+  });
 
 </script>
 </body>
