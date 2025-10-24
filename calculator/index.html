@@ -458,47 +458,48 @@
       if(!isNaN(value) && value!==''){ e.target.value = Number(value).toLocaleString(); }
     });
 
-    
+    // --- Other Monthly Income dynamic rows ---
+    const otherIncomeList = document.getElementById('otherIncomeList');
+    const addIncomeBtn = document.getElementById('addIncomeBtn');
+
+    // Function to add a new income input row
+    function addIncomeRow(label='', amount=0){
+      const div = document.createElement('div');
+      div.style.display='flex';
+      div.style.gap='6px';
+      div.style.marginTop='4px';
+      div.innerHTML = `
+        <input type="text" placeholder="Income label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+        <input type="number" placeholder="Amount $" value="${amount}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+        <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
+      `;
+      otherIncomeList.appendChild(div);
+
+      // Remove button
+      div.querySelector('button').addEventListener('click', ()=>{ div.remove(); });
+
+      // Comma-format the amount input
+      const amountInput = div.querySelectorAll('input')[1];
+      amountInput.addEventListener('input',(e)=>{
+        let v = e.target.value.replace(/,/g,'');
+        if(!isNaN(v) && v!==''){ e.target.value = Number(v).toLocaleString(); }
+      });
+    }
+
+    // Add button listener
+    addIncomeBtn.addEventListener('click', ()=> addIncomeRow());
+
+    // Optional: add default example incomes
+    addIncomeRow('Roth IRA', 1000);
+    addIncomeRow('Pension', 4000);
+
 
   });
   // Attach button clicks
   document.getElementById('runBtn').addEventListener('click', runSimulationWrapper);
   document.getElementById('resetBtn').addEventListener('click', resetDefaults);
 
-  const otherIncomeList = document.getElementById('otherIncomeList');
-  const addIncomeBtn = document.getElementById('addIncomeBtn');
-
-  // Function to add a new income input row
-  function addIncomeRow(label='', amount=0){
-    const div = document.createElement('div');
-    div.style.display='flex';
-    div.style.gap='6px';
-    div.style.marginTop='4px';
-    div.innerHTML = `
-      <input type="text" placeholder="Income label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-      <input type="number" placeholder="Amount $" value="${amount}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-      <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
-    `;
-    otherIncomeList.appendChild(div);
-
-    // Remove button
-    div.querySelector('button').addEventListener('click', ()=>{ div.remove(); });
-
-    // Comma-format the amount input
-    const amountInput = div.querySelectorAll('input')[1];
-    amountInput.addEventListener('input',(e)=>{
-      let v = e.target.value.replace(/,/g,'');
-      if(!isNaN(v) && v!==''){ e.target.value = Number(v).toLocaleString(); }
-    });
-  }
-
-  // Add button listener
-  addIncomeBtn.addEventListener('click', ()=> addIncomeRow());
-
-  // Optional: add default example incomes
-  addIncomeRow('Roth IRA', 1000);
-  addIncomeRow('Pension', 4000);
-
+  
   </script>  
 </body>
 </html>
