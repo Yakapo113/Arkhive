@@ -116,73 +116,60 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <strong>Assumptions & Inputs</strong>
         </div>
-
+      
+        <!-- 1. Current age -->
         <label>Current age</label>
         <input id="currentAge" type="number" min="50" max="95" value="62">
-
+      
+        <!-- 2. Life expectancy -->
         <label style="margin-top:10px">Life expectancy (age)</label>
         <input id="lifeExpectancy" type="number" min="65" max="110" value="88">
-
-        <label style="margin-top:10px">Health decline starting age (spendability reduces)</label>
+      
+        <!-- 3. Health decline starting age -->
+        <label style="margin-top:10px">Health decline starting age</label>
         <input id="healthDeclineAge" type="number" min="60" max="110" value="80">
-
-        <label>Income preference:</label>
+        <div class="small muted">Spending ability reduces gradually after this age.</div>
+      
+        <!-- 4. Income preference -->
+        <label style="margin-top:10px">Income preference</label>
         <select id="incomePref">
           <option value="early">More income while healthy (early)</option>
           <option value="late">Maximize later income</option>
         </select>
-
-        <label style="margin-top:10px">Utility factor after decline (0-1). Example: 0.6 = 60% of prior spending utility</label>
-        <input id="utilityAfterDecline" type="number" step="0.01" min="0" max="1" value="0.6">
-
-        <label style="margin-top:10px">Other retirement assets — $</label>
-        <input id="assets" type="text" value="500,000">
-        <div class="small muted">Enter total assets. Commas are auto-formatted.</div>
-
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <div style="flex:1">
-            <label style="display:flex;align-items:center;gap:4px;">
-              Withdrawal rate if delaying SS (annual %)
-              <span title="This is the % of your assets you would withdraw each year to fund spending until you start Social Security." 
-                    style="cursor:help;color:var(--accent);font-weight:bold;">ℹ️</span>
-            </label>
-            <input id="withdrawRate" type="number" step="0.1" value="4.0">
-          </div>
-
-          <div style="flex:1">
-            <label>Portfolio annual return (real %, after inflation)</label>
-            <input id="realReturn" type="number" step="0.1" value="4.0">
-          </div>
-        </div>
-
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <div style="flex:1">
-            <label>Inflation rate (annual %)</label>
-            <input id="inflation" type="number" step="0.1" value="2.0">
-          </div>
-          <div style="flex:1">
-            <label>Effective marginal tax rate on SS income (%)</label>
-            <input id="taxRate" type="number" step="0.1" value="12.0">
-          </div>
-        </div>
-
+      
         <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
-
-        <div>
-          <strong>Other Monthly Income Sources</strong>
-          <div id="otherIncomeList"></div>
-          <button type="button" id="addIncomeBtn" class="btn secondary" style="margin-top:6px;">Add Income Source</button>
-          <div class="small muted">Enter all other income sources besides Social Security.</div>
-        </div>
-
-
+      
+        <!-- 6. Other retirement assets -->
+        <strong>Retirement Assets</strong>
+        <div id="assetList"></div>
+        <button type="button" id="addAssetBtn" class="btn secondary" style="margin-top:6px;">Add Asset</button>
+        <div class="small muted">Enter your other retirement assets like 401k, IRA, brokerage accounts. Include total amount and expected annual growth.</div>
+      
         <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
-
+      
+        <!-- 7. Withdrawals -->
+        <strong>Asset Withdrawals</strong>
+        <div id="withdrawList"></div>
+        <button type="button" id="addWithdrawBtn" class="btn secondary" style="margin-top:6px;">Add Withdrawal Plan</button>
+        <div class="small muted">Set withdrawal age and monthly withdrawal amount per asset.</div>
+      
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+      
+        <!-- Other monthly income (unchanged) -->
+        <strong>Other Monthly Income Sources</strong>
+        <div id="otherIncomeList"></div>
+        <button type="button" id="addIncomeBtn" class="btn secondary" style="margin-top:6px;">Add Income Source</button>
+        <div class="small muted">For recurring monthly income like real estate rent, pensions, annuities, etc.</div>
+      
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+      
+        <!-- Claiming strategies -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <strong>Claiming strategies (monthly SS benefit)</strong>
           <span class="small muted">Enter your expected benefit at each claim age</span>
         </div>
-
+      
+        <!-- Strategy A -->
         <div class="strategy">
           <div class="flex-between">
             <div style="flex:1">
@@ -195,7 +182,8 @@
             </div>
           </div>
         </div>
-
+      
+        <!-- Strategy B -->
         <div class="strategy">
           <div class="flex-between">
             <div style="flex:1">
@@ -208,7 +196,8 @@
             </div>
           </div>
         </div>
-
+      
+        <!-- Strategy C -->
         <div class="strategy">
           <div class="flex-between">
             <div style="flex:1">
@@ -221,17 +210,12 @@
             </div>
           </div>
         </div>
-
+      
         <div style="display:flex;gap:8px;margin-top:12px" class="controls">
           <button id="runBtn" class="btn">Run comparison</button>
           <button id="resetBtn" class="btn secondary" title="Reset to defaults">Reset</button>
         </div>
-
-        <div style="margin-top:10px" class="small muted">
-          Notes: This model treats Social Security as fixed nominal amounts you enter for each claim age. It applies taxes, then simulates investing or withdrawing from your assets and adjusts spending utility after the health decline age.<br>
-          Check your personal expected benefit here: 
-          <a href="https://www.ssa.gov/benefits/retirement/estimator.html" target="_blank" style="color:var(--accent)">SSA Retirement Estimator</a>
-        </div>
+      
       </div>
 
       <div class="panel" style="margin-top:12px">
@@ -260,7 +244,6 @@
         <div id="tables" style="margin-top:12px"></div>
 
         <footer>
-          <div class="muted">suggestSSAge()</div>
           <div class="muted">Model assumptions are simplified. This is a planning tool — not financial advice.</div>
         </footer>
       </div>
