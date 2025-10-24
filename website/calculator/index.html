@@ -3,21 +3,117 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Retirement Calculator</title>
-  <link rel="stylesheet" href="../style.css">
+  <title>Social Security & Retirement Calculator</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    body { font-family: Arial, sans-serif; padding:1rem; max-width:800px; margin:0 auto; }
+    h1,h2 { text-align:center; }
+    label { display:block; margin-top:1rem; }
+    input, select { width:100%; padding:0.5rem; margin-top:0.25rem; box-sizing:border-box; }
+    button { margin-top:1.5rem; padding:0.75rem 1.5rem; font-size:1rem; cursor:pointer; }
+    #results { margin-top:2rem; background:#f0f0f0; padding:1rem; border-radius:6px; }
+    a.back-link { display:inline-block; margin-bottom:1rem; color:#0070f3; text-decoration:none; }
+    a.back-link:hover { text-decoration:underline; }
+    table { width:100%; border-collapse: collapse; margin-top:1rem; }
+    th, td { padding:0.5rem; border:1px solid #ccc; text-align:center; }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Retirement Calculator</h1>
-    <a href="../index.html">← Back to ArkHive</a>
-  </header>
+  <a href="../index.html" class="back-link">← Back to ArkHive</a>
+  <h1>Social Security & Retirement Calculator</h1>
 
-  <main>
-    <div id="calculator-app">
-      <!-- Paste your calculator HTML/JS here -->
-      <p>Calculator will load here.</p>
-    </div>
-  </main>
+  <form id="calculatorForm">
+    <label>Current Age:
+      <input type="number" id="age" min="0" max="120" required>
+    </label>
 
+    <label>Desired Retirement Age:
+      <input type="number" id="retireAge" min="0" max="120" required>
+    </label>
+
+    <label>Current Savings ($):
+      <input type="number" id="savings" min="0" required>
+    </label>
+
+    <label>Monthly Contribution ($):
+      <input type="number" id="contribution" min="0" required>
+    </label>
+
+    <label>Expected Annual Return (%):
+      <input type="number" id="returnRate" min="0" max="20" step="0.1" value="5" required>
+    </label>
+
+    <label>Full Retirement Age Social Security ($/month):
+      <input type="number" id="ssFRA" min="0" required>
+    </label>
+
+    <label>Expected Lifespan:
+      <input type="number" id="lifespan" min="0" max="120" value="90" required>
+    </label>
+
+    <button type="submit">Calculate</button>
+  </form>
+
+  <div id="results"></div>
+
+  <script>
+    document.getElementById('calculatorForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const age = parseInt(document.getElementById('age').value);
+      const retireAge = parseInt(document.getElementById('retireAge').value);
+      const savings = parseFloat(document.getElementById('savings').value);
+      const contribution = parseFloat(document.getElementById('contribution').value);
+      const returnRate = parseFloat(document.getElementById('returnRate').value) / 100;
+      const ssFRA = parseFloat(document.getElementById('ssFRA').value);
+      const lifespan = parseInt(document.getElementById('lifespan').value);
+
+      const yearsToRetire = retireAge - age;
+      let futureSavings = savings;
+
+      // Grow savings until retirement
+      for (let i = 0; i < yearsToRetire; i++) {
+        futureSavings = (futureSavings + contribution*12)*(1 + returnRate);
+      }
+
+      const retirementYears = lifespan - retireAge;
+
+      // Social Security break-even scenarios
+      const ssOptions = [
+        { label: "Claim at 62 (-25%)", factor: 0.75 },
+        { label: "Claim at FRA (100%)", factor: 1.0 },
+        { label: "Claim at 70 (+32%)", factor: 1.32 }
+      ];
+
+      let ssResults = ssOptions.map(opt => {
+        const annualSS = ssFRA * 12 * opt.factor;
+        const annualWithdrawal = futureSavings / retirementYears;
+        return {
+          label: opt.label,
+          annualSS: annualSS.toFixed(2),
+          totalAnnualIncome: (annualSS + annualWithdrawal).toFixed(2)
+        };
+      });
+
+      // Display results
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = `
+        <h2>Estimated Savings & Income</h2>
+        <p>Savings at retirement: <strong>$${futureSavings.toFixed(2)}</strong></p>
+        <p>Annual income from savings alone: <strong>$${(futureSavings/retirementYears).toFixed(2)}</strong></p>
+
+        <h2>Social Security Break-Even Analysis</h2>
+        <table>
+          <tr><th>Claim Age</th><th>Social Security / year</th><th>Total Income / year</th></tr>
+          ${ssResults.map(r => `
+            <tr>
+              <td>${r.label}</td>
+              <td>$${r.annualSS}</td>
+              <td>$${r.totalAnnualIncome}</td>
+            </tr>`).join('')}
+        </table>
+      `;
+    });
+  </script>
 </body>
 </html>
