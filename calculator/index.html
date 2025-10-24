@@ -251,39 +251,191 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  /* ----------------------------
+     True Social Security Break-even Calculator
+     Fully wired: buttons, sliders, comma formatting
+  -------------------------------*/
   
-    // --- Attach Run & Reset buttons ---
-    const runBtn = document.getElementById('runBtn');
-    const resetBtn = document.getElementById('resetBtn');
+  let myChart = null;
   
-    runBtn.addEventListener('click', runSimulationWrapper);
-    resetBtn.addEventListener('click', resetDefaults);
+  // --- Helper functions from your original code ---
+  function yearRange(startAge, endAge){
+    const arr=[]; for(let a=startAge; a<=endAge; a++) arr.push(a); return arr;
+  }
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  function formatUSD(x){ return x >= 1000 ? x.toLocaleString(undefined, {style:'currency',currency:'USD',maximumFractionDigits:0}) : '$'+x.toFixed(0); }
+  function buildSummaryCard(title, main, sub){ return `<div class="stat"><h3>${title}</h3><p>${main}</p><p class="muted">${sub}</p></div>`; }
   
-    // --- Sliders for claim ages ---
+  // --- Simulation function from your original code ---
+  function runSimulation(inputs, strategy){
+    const startAge = inputs.currentAge;
+    const endAge   = inputs.lifeExpectancy;
+    const years = endAge - startAge;
+    const ages = [], yearlyAfterTaxSS=[], yearlyNetSpendingValue=[], portfolioValues=[], cumulativeEffective=[];
+    let portfolio = inputs.assets;
+    const annualReturnNominal = inputs.realReturn/100;
+    const taxRate = inputs.taxRate/100;
+    const withdrawRate = inputs.withdrawRate/100;
+    let cumEff = 0;
+  
+    for(let i=0;i<=years;i++){
+      const age = startAge + i;
+      ages.push(age);
+      let yearlySS = (age >= strategy.claimAge) ? strategy.monthlyBenefit*12 : 0;
+      const afterTaxSS = yearlySS * (1 - taxRate);
+      const util = (age >= inputs.healthDeclineAge) ? inputs.utilityAfterDecline : 1.0;
+      const utilAdjusted = afterTaxSS * util;
+      yearlyAfterTaxSS.push(afterTaxSS);
+      yearlyNetSpendingValue.push(utilAdjusted);
+  
+      let withdrawalThisYear = 0;
+      if(age < strategy.claimAge){
+        withdrawalThisYear = inputs.assets * withdrawRate;
+        if(withdrawalThisYear > portfolio) withdrawalThisYear = portfolio;
+        portfolio -= withdrawalThisYear;
+      }
+      portfolio = portfolio * (1 + annualReturnNominal);
+      portfolioValues.push(portfolio);
+      cumEff += utilAdjusted;
+      cumulativeEffective.push(cumEff);
+    }
+  
+    return {
+      ages, yearlyAfterTaxSS, yearlyNetSpendingValue, portfolioValues,
+      cumulativeEffective, endingPortfolio: portfolio, totalEffective: cumEff
+    };
+  }
+  
+  // --- Break-even finder ---
+  function findBreakEven(ages, cumA, cumB){
+    for(let i=0;i<ages.length;i++){
+      if(Math.abs(cumA[i]-cumB[i]) < 1e-6) return ages[i];
+      if(cumB[i] >= cumA[i]) return ages[i];
+    }
+    return null;
+  }
+  
+  /* ----------------------------
+     Wrapper for Run button
+  -------------------------------*/
+  function runSimulationWrapper(){
+    const inputs = {
+      currentAge: Number(document.getElementById('currentAge').value),
+      lifeExpectancy: Number(document.getElementById('lifeExpectancy').value),
+      healthDeclineAge: Number(document.getElementById('healthDeclineAge').value),
+      utilityAfterDecline: Number(document.getElementById('utilityAfterDecline').value),
+      assets: Number(document.getElementById('assets').value.replace(/,/g,'')),
+      withdrawRate: Number(document.getElementById('withdrawRate').value),
+      realReturn: Number(document.getElementById('realReturn').value),
+      inflation: Number(document.getElementById('inflation').value),
+      taxRate: Number(document.getElementById('taxRate').value)
+    };
+  
+    const strategies = ['A','B','C'].map(letter=>{
+      return {
+        name: letter,
+        claimAge: Number(document.getElementById(`claim${letter}_age`).value),
+        monthlyBenefit: Number(document.getElementById(`claim${letter}_amt`).value)
+      };
+    }).filter(s=>s.monthlyBenefit>0 && s.claimAge>=inputs.currentAge);
+  
+    if(strategies.length < 2){ alert('Please enter at least two strategies with monthly benefits and claim ages >= current age.'); return; }
+  
+    const sims = strategies.map(s => ({...s, sim: runSimulation(inputs, s)}));
+    const ages = sims[0].sim.ages;
+  
+    // --- Chart ---
+    const datasets = sims.map((s,idx)=>{
+      const colorHue = 210 - idx*40;
+      return {
+        label: `Claim @ ${s.claimAge} (${s.name})`,
+        data: s.sim.cumulativeEffective,
+        tension: 0.2,
+        borderWidth: 2,
+        pointRadius: 0,
+        borderColor: `hsl(${colorHue} 80% 60%)`,
+        backgroundColor: `rgba(0,0,0,0)`
+      };
+    });
+  
+    const ctx = document.getElementById('cumulativeChart').getContext('2d');
+    if(myChart) myChart.destroy();
+    myChart = new Chart(ctx, { type:'line', data:{labels:ages,datasets}, options:{
+      responsive:true,
+      interaction:{mode:'index',intersect:false},
+      stacked:false,
+      plugins:{legend:{position:'top'},tooltip:{callbacks:{label:function(context){ return `${context.dataset.label}: ${formatUSD(context.parsed.y)}`; }}}},
+      scales:{x:{title:{display:true,text:'Age'}},y:{title:{display:true,text:'Cumulative effective value ($)'}}}
+    }});
+  
+    // --- Summary cards ---
+    const summaryDiv = document.getElementById('summaryCards'); summaryDiv.innerHTML='';
+    sims.forEach(s=>{ summaryDiv.innerHTML += buildSummaryCard(`Strategy ${s.name} — Claim @ ${s.claimAge}`, `${formatUSD(s.sim.cumulativeEffective[s.sim.cumulativeEffective.length-1])} cumulative effective spending`, `Ending portfolio: ${formatUSD(s.sim.endingPortfolio)}`); });
+  
+    // --- Break-even ages ---
+    let breakText = '<div style="margin-top:10px"><strong>Break-even results</strong></div>';
+    for(let i=0;i<sims.length;i++){
+      for(let j=i+1;j<sims.length;j++){
+        const be = findBreakEven(ages, sims[i].sim.cumulativeEffective, sims[j].sim.cumulativeEffective);
+        if(be){ breakText += `<div class="small muted">Strategy ${sims[j].name} (later) breaks even with ${sims[i].name} at age <strong>${be}</strong>.</div>`; }
+        else{ breakText += `<div class="small muted">Strategy ${sims[j].name} (later) does <strong>not</strong> break even with ${sims[i].name} before age ${inputs.lifeExpectancy}.</div>`; }
+      }
+    }
+  
+    // --- Detailed table ---
+    let tablesHtml = '<div style="margin-top:8px"><strong>Detailed per-year summary</strong></div>';
+    tablesHtml += '<table><thead><tr><th>Age</th>';
+    sims.forEach(s=> tablesHtml += `<th>SS after-tax (${s.name})</th><th>Utility Adj (${s.name})</th><th>Portfolio (${s.name})</th>`);
+    tablesHtml += '</tr></thead><tbody>';
+    for(let k=0;k<ages.length;k++){
+      tablesHtml += `<tr><td>${ages[k]}</td>`;
+      sims.forEach(s=>{
+        tablesHtml += `<td>${formatUSD(s.sim.yearlyAfterTaxSS[k])}</td><td>${formatUSD(s.sim.yearlyNetSpendingValue[k])}</td><td>${formatUSD(s.sim.portfolioValues[k])}</td>`;
+      });
+      tablesHtml += '</tr>';
+    }
+    tablesHtml += '</tbody></table>';
+    document.getElementById('tables').innerHTML = breakText + tablesHtml;
+  }
+  
+  /* ----------------------------
+     Wrapper for Reset button
+  -------------------------------*/
+  function resetDefaults(){
+    const defaults = {
+      currentAge:62, lifeExpectancy:88, healthDeclineAge:80, utilityAfterDecline:0.6,
+      assets:500000, withdrawRate:4.0, realReturn:4.0, inflation:2.0, taxRate:12.0,
+      claimA_age:62, claimA_amt:2000, claimB_age:67, claimB_amt:2860, claimC_age:70, claimC_amt:3540
+    };
+    for(const k in defaults){
+      if(document.getElementById(k)) document.getElementById(k).value = defaults[k];
+    }
+    if(myChart) myChart.destroy();
+    document.getElementById('summaryCards').innerHTML = '';
+    document.getElementById('tables').innerHTML = '';
+  }
+  
+  // ----------------------
+  // Attach sliders & comma formatting after DOM loaded
+  // ----------------------
+  document.addEventListener('DOMContentLoaded', ()=>{
+    // Sliders for claim ages
     ['A','B','C'].forEach(letter=>{
       const numInput = document.getElementById(`claim${letter}_age`);
       const slider = document.createElement('input');
-      slider.type = 'range';
-      slider.min = 62;
-      slider.max = 70;
-      slider.value = numInput.value;
-      slider.style.width = '100%';
-      slider.style.marginTop = '4px';
+      slider.type='range'; slider.min=62; slider.max=70; slider.value=numInput.value;
+      slider.style.width='100%'; slider.style.marginTop='4px';
       numInput.parentNode.appendChild(slider);
       slider.addEventListener('input', ()=>{ numInput.value = slider.value; });
-      slider.addEventListener('change', ()=>{ runBtn.click(); });
+      slider.addEventListener('change', ()=>{ runSimulationWrapper(); });
     });
   
-    // --- Comma formatting for assets ---
+    // Assets input commas
     const assetsInput = document.getElementById('assets');
     assetsInput.addEventListener('input', (e)=>{
       let value = e.target.value.replace(/,/g,'');
-      if(!isNaN(value) && value!==''){
-        e.target.value = Number(value).toLocaleString();
-      }
+      if(!isNaN(value) && value!==''){ e.target.value = Number(value).toLocaleString(); }
     });
-  
   });
   </script>  
 </body>
