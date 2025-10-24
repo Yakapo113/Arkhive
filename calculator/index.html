@@ -277,7 +277,7 @@
   function buildSummaryCard(title, main, sub){ return `<div class="stat"><h3>${title}</h3><p>${main}</p><p class="muted">${sub}</p></div>`; }
   
   // --- Simulation function from your original code ---
-  function runSimulation(inputs, strategy){
+  function runSimulation(inputs, strategy, otherIncome){
     const startAge = inputs.currentAge;
     const endAge   = inputs.lifeExpectancy;
     const years = endAge - startAge;
@@ -362,7 +362,7 @@
   
     if(strategies.length < 2){ alert('Please enter at least two strategies with monthly benefits and claim ages >= current age.'); return; }
   
-    const sims = strategies.map(s => ({...s, sim: runSimulation(inputs, s)}));
+    const sims = strategies.map(s => ({...s, sim: runSimulation(inputs, s, otherIncome)}));
     const ages = sims[0].sim.ages;
   
     // --- Chart ---
@@ -492,8 +492,6 @@
     // Optional: add default example incomes
     addIncomeRow('Roth IRA', 1000);
     addIncomeRow('Pension', 4000);
-
-
   });
   // Attach button clicks
   document.getElementById('runBtn').addEventListener('click', runSimulationWrapper);
