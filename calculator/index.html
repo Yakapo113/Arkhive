@@ -251,33 +251,40 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
-/* --- Your original simulation JS code stays here --- */
-
-/* --- ADDITIONS START --- */
-
-// 1. Sliders for claim ages
-['A','B','C'].forEach(letter=>{
-  const numInput = document.getElementById(`claim${letter}_age`);
-  const slider = document.createElement('input');
-  slider.type = 'range';
-  slider.min = 62;
-  slider.max = 70;
-  slider.value = numInput.value;
-  slider.style.width = '100%';
-  slider.style.marginTop = '4px';
-  numInput.parentNode.appendChild(slider);
-  slider.addEventListener('input', ()=>{ numInput.value = slider.value; });
-  slider.addEventListener('change', ()=>{ document.getElementById('runBtn').click(); });
-});
-
-// 2. Comma formatting for assets input
-const assetsInput = document.getElementById('assets');
-assetsInput.addEventListener('input', (e)=>{
-  let value = e.target.value.replace(/,/g,'');
-  if(!isNaN(value) && value!==''){
-    e.target.value = Number(value).toLocaleString();
-  }
-});
-</script>
+  document.addEventListener('DOMContentLoaded', () => {
+  
+    // --- Attach Run & Reset buttons ---
+    const runBtn = document.getElementById('runBtn');
+    const resetBtn = document.getElementById('resetBtn');
+  
+    runBtn.addEventListener('click', runSimulationWrapper);
+    resetBtn.addEventListener('click', resetDefaults);
+  
+    // --- Sliders for claim ages ---
+    ['A','B','C'].forEach(letter=>{
+      const numInput = document.getElementById(`claim${letter}_age`);
+      const slider = document.createElement('input');
+      slider.type = 'range';
+      slider.min = 62;
+      slider.max = 70;
+      slider.value = numInput.value;
+      slider.style.width = '100%';
+      slider.style.marginTop = '4px';
+      numInput.parentNode.appendChild(slider);
+      slider.addEventListener('input', ()=>{ numInput.value = slider.value; });
+      slider.addEventListener('change', ()=>{ runBtn.click(); });
+    });
+  
+    // --- Comma formatting for assets ---
+    const assetsInput = document.getElementById('assets');
+    assetsInput.addEventListener('input', (e)=>{
+      let value = e.target.value.replace(/,/g,'');
+      if(!isNaN(value) && value!==''){
+        e.target.value = Number(value).toLocaleString();
+      }
+    });
+  
+  });
+  </script>  
 </body>
 </html>
