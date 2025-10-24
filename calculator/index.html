@@ -387,7 +387,7 @@
   document.getElementById('addIncomeBtn').addEventListener('click', ()=>addIncomeRow());
   document.getElementById('runBtn').addEventListener('click', runSimulationWrapper);
   window.addEventListener('load', ()=>{
-    addIncomeRow('401k',1200);
+    addIncomeRow('401k',0);
     runSimulationWrapper();
 
   // Select all inputs in Assumptions & Inputs and Claiming Strategies
@@ -399,6 +399,24 @@
   inputSelectors.forEach(sel => {
     document.querySelector(sel).addEventListener('input', runSimulationWrapper);
   });  
+
+  function addCommaFormatting(input){
+  input.addEventListener('blur', e=>{
+    let v = e.target.value.replace(/[^0-9.]/g,'');
+    if(!isNaN(v) && v!==''){ e.target.value = Number(v).toLocaleString(); }
+  });
+  
+  // Optional: also format while typing
+  input.addEventListener('input', e=>{
+    let v = e.target.value.replace(/[^0-9]/g,'');
+    if(v!==''){ e.target.value = Number(v).toLocaleString(); }
+  });
+  }
+
+  ['assets','claimA_amt','claimB_amt','claimC_amt'].forEach(id=>{
+    addCommaFormatting(document.getElementById(id));
+  });
+
   });
 
 </script>
