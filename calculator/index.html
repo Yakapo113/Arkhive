@@ -262,14 +262,11 @@
 
 <script>
   let myChart = null;
-
-  function yearRange(startAge, endAge){
-    const arr=[]; for(let a=startAge; a<=endAge; a++) arr.push(a); return arr;
-  }
-  function clone(o){ return JSON.parse(JSON.stringify(o)); }
-  function formatUSD(x){ return x >= 1000 ? x.toLocaleString(undefined, {style:'currency',currency:'USD',maximumFractionDigits:0}) : '$'+x.toFixed(0); }
+  
+  // Helper functions
+  function formatUSD(x){ return x >= 1000 ? x.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}) : '$'+x.toFixed(0); }
   function buildSummaryCard(title, main, sub){ return `<div class="stat"><h3>${title}</h3><p>${main}</p><p class="muted">${sub}</p></div>`; }
-
+  
   function runSimulation(inputs, strategy, otherIncome){
     const startAge = inputs.currentAge;
     const endAge   = inputs.lifeExpectancy;
@@ -279,46 +276,44 @@
     const taxRate = inputs.taxRate/100;
     const withdrawRate = inputs.withdrawRate/100;
     let cumEff = 0;
-
+  
     for(let i=0;i<=endAge-startAge;i++){
-      const age = startAge + i;
+      const age = startAge+i;
       ages.push(age);
-      let yearlySS = (age >= strategy.claimAge) ? strategy.monthlyBenefit*12 : 0;
-      const afterTaxSS = yearlySS * (1 - taxRate);
+      const yearlySS = (age >= strategy.claimAge) ? strategy.monthlyBenefit*12 : 0;
+      const afterTaxSS = yearlySS*(1-taxRate);
       const yearlyIncome = yearlySS + otherIncome*12;
-      const utilAdjusted = (age >= inputs.healthDeclineAge) ? yearlyIncome*inputs.utilityAfterDecline : yearlyIncome;
-
+      const utilAdjusted = (age>=inputs.healthDeclineAge)?yearlyIncome*inputs.utilityAfterDecline:yearlyIncome;
+  
       yearlyAfterTaxSS.push(afterTaxSS);
       yearlyNetSpendingValue.push(utilAdjusted);
-
+  
       // Withdraw from current portfolio if SS hasn't started
       let withdrawalThisYear = 0;
       if(age < strategy.claimAge){
-        withdrawalThisYear = portfolio * withdrawRate;
-        if(withdrawalThisYear > portfolio) withdrawalThisYear = portfolio;
+        withdrawalThisYear = portfolio*withdrawRate;
+        if(withdrawalThisYear>portfolio) withdrawalThisYear = portfolio;
         portfolio -= withdrawalThisYear;
       }
-      portfolio = portfolio * (1 + annualReturnNominal);
+      portfolio = portfolio*(1+annualReturnNominal);
       portfolioValues.push(portfolio);
-
+  
       cumEff += utilAdjusted;
       cumulativeEffective.push(cumEff);
     }
-
-    return {
-      ages, yearlyAfterTaxSS, yearlyNetSpendingValue, portfolioValues,
-      cumulativeEffective, endingPortfolio: portfolio, totalEffective: cumEff
-    };
+  
+    return {ages, yearlyAfterTaxSS, yearlyNetSpendingValue, portfolioValues, cumulativeEffective, endingPortfolio:portfolio, totalEffective:cumEff};
   }
-
+  
   function findBreakEven(ages, cumA, cumB){
     for(let i=0;i<ages.length;i++){
-      if(Math.abs(cumA[i]-cumB[i]) < 1e-6) return ages[i];
-      if(cumB[i] >= cumA[i]) return ages[i];
+      if(Math.abs(cumA[i]-cumB[i])<1e-6) return ages[i];
+      if(cumB[i]>=cumA[i]) return ages[i];
     }
     return null;
   }
-
+  
+  // Core wrapper
   function runSimulationWrapper(){
     const rawAssets = document.getElementById('assets').value.replace(/[^0-9.]/g,'');
     const inputs = {
@@ -332,15 +327,14 @@
       inflation: Number(document.getElementById('inflation').value),
       taxRate: Number(document.getElementById('taxRate').value)
     };
-
-    // Gather other monthly income
+  
     let otherIncome = 0;
     document.querySelectorAll('#otherIncomeList div').forEach(div=>{
       const amtInput = div.querySelectorAll('input')[1];
       let amt = parseFloat(amtInput.value.replace(/[^0-9.]/g,''));
       if(!isNaN(amt)) otherIncome += amt;
     });
-
+  
     const strategies = ['A','B','C'].map(letter=>{
       return {
         name: letter,
@@ -348,58 +342,45 @@
         monthlyBenefit: Number(document.getElementById(`claim${letter}_amt`).value)
       };
     }).filter(s=>s.monthlyBenefit>0 && s.claimAge>=inputs.currentAge);
-
-    if(strategies.length < 2){ alert('Please enter at least two strategies with monthly benefits and claim ages >= current age.'); return; }
-
-    const sims = strategies.map(s => ({...s, sim: runSimulation(inputs, s, otherIncome)}));
+  
+    if(strategies.length<2) return;
+  
+    const sims = strategies.map(s=>({...s, sim: runSimulation(inputs,s,otherIncome)}));
     const ages = sims[0].sim.ages;
-
+  
     // Chart
     const datasets = sims.map((s,idx)=>{
       const colorHue = 210 - idx*40;
-      return {
-        label: `Claim @ ${s.claimAge} (${s.name})`,
-        data: s.sim.cumulativeEffective,
-        tension: 0.2,
-        borderWidth: 2,
-        pointRadius: 0,
-        borderColor: `hsl(${colorHue} 80% 60%)`,
-        backgroundColor: `rgba(0,0,0,0)`
-      };
+      return {label:`Claim @ ${s.claimAge} (${s.name})`, data:s.sim.cumulativeEffective, tension:0.2, borderWidth:2, pointRadius:0, borderColor:`hsl(${colorHue} 80% 60%)`, backgroundColor:'rgba(0,0,0,0)'};
     });
-
     const ctx = document.getElementById('cumulativeChart').getContext('2d');
     if(myChart) myChart.destroy();
-    myChart = new Chart(ctx, { type:'line', data:{labels:ages,datasets}, options:{
+    myChart = new Chart(ctx,{type:'line',data:{labels:ages,datasets},options:{
       responsive:true,
       interaction:{mode:'index',intersect:false},
       stacked:false,
-      plugins:{legend:{position:'top'},tooltip:{callbacks:{label:function(context){ return `${context.dataset.label}: ${formatUSD(context.parsed.y)}`; }}}},
+      plugins:{legend:{position:'top'},tooltip:{callbacks:{label:function(context){return `${context.dataset.label}: ${formatUSD(context.parsed.y)}`;}}}},
       scales:{x:{title:{display:true,text:'Age'}},y:{title:{display:true,text:'Cumulative effective value ($)'}}}
     }});
-
+  
     // Summary cards
     const summaryDiv = document.getElementById('summaryCards'); summaryDiv.innerHTML='';
     sims.forEach(s=>{
-      summaryDiv.innerHTML += buildSummaryCard(
-        `Strategy ${s.name} — Claim @ ${s.claimAge}`,
-        `${formatUSD(s.sim.cumulativeEffective[s.sim.cumulativeEffective.length-1])} cumulative effective spending`,
-        `Ending portfolio: ${formatUSD(s.sim.endingPortfolio)}`
-      );
+      summaryDiv.innerHTML += buildSummaryCard(`Strategy ${s.name} — Claim @ ${s.claimAge}`,`${formatUSD(s.sim.cumulativeEffective[s.sim.cumulativeEffective.length-1])} cumulative effective spending`,`Ending portfolio: ${formatUSD(s.sim.endingPortfolio)}`);
     });
-
-    // Break-even ages
+  
+    // Break-even
     let breakText = '<div style="margin-top:10px"><strong>Break-even results</strong></div>';
     for(let i=0;i<sims.length;i++){
       for(let j=i+1;j<sims.length;j++){
-        const be = findBreakEven(ages, sims[i].sim.cumulativeEffective, sims[j].sim.cumulativeEffective);
+        const be = findBreakEven(ages,sims[i].sim.cumulativeEffective,sims[j].sim.cumulativeEffective);
         if(be){ breakText += `<div class="small muted">Strategy ${sims[j].name} (later) breaks even with ${sims[i].name} at age <strong>${be}</strong>.</div>`; }
-        else{ breakText += `<div class="small muted">Strategy ${sims[j].name} (later) does <strong>not</strong> break even with ${sims[i].name} before age ${inputs.lifeExpectancy}.</div>`; }
+        else{ breakText += `<div class="small muted">Strategy ${sims[j].name} (later) does <strong>not</strong> break even before age ${inputs.lifeExpectancy}.</div>`; }
       }
     }
-
+  
     // Detailed table
-    let tablesHtml = '<div style="margin-top:8px"><strong>Detailed per-year summary</strong></div>';
+    let tablesHtml = '<div style="margin-top:8px"><strong>Detailed per-year summary</strong> <button type="button" id="exportBtn" style="margin-left:6px;padding:2px 6px;font-size:12px">Export CSV</button></div>';
     tablesHtml += '<table><thead><tr><th>Age</th>';
     sims.forEach(s=> tablesHtml += `<th>SS after-tax (${s.name})</th><th>Utility Adj (${s.name})</th><th>Portfolio (${s.name})</th>`);
     tablesHtml += '</tr></thead><tbody>';
@@ -412,8 +393,28 @@
     }
     tablesHtml += '</tbody></table>';
     document.getElementById('tables').innerHTML = breakText + tablesHtml;
+  
+    // Export CSV
+    document.getElementById('exportBtn').addEventListener('click', ()=>{
+      let csv='Age';
+      sims.forEach(s=> csv+=`,SS ${s.name},Utility ${s.name},Portfolio ${s.name}`);
+      csv+='\n';
+      for(let k=0;k<ages.length;k++){
+        csv+=ages[k];
+        sims.forEach(s=>{
+          csv+=`,`+s.sim.yearlyAfterTaxSS[k]+`,`+s.sim.yearlyNetSpendingValue[k]+`,`+s.sim.portfolioValues[k];
+        });
+        csv+='\n';
+      }
+      const blob = new Blob([csv], {type:'text/csv'});
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'social_security_simulation.csv';
+      link.click();
+    });
   }
-
+  
+  // Reset defaults
   function resetDefaults(){
     const defaults = {
       currentAge:62, lifeExpectancy:88, healthDeclineAge:80, utilityAfterDecline:0.6,
@@ -424,59 +425,45 @@
       if(document.getElementById(k)) document.getElementById(k).value = defaults[k];
     }
     if(myChart) myChart.destroy();
-    document.getElementById('summaryCards').innerHTML = '';
-    document.getElementById('tables').innerHTML = '';
+    document.getElementById('summaryCards').innerHTML='';
+    document.getElementById('tables').innerHTML='';
   }
-
+  
   document.addEventListener('DOMContentLoaded', ()=>{
+    // Sliders
     ['A','B','C'].forEach(letter=>{
       const numInput = document.getElementById(`claim${letter}_age`);
       const slider = document.createElement('input');
       slider.type='range'; slider.min=62; slider.max=70; slider.value=numInput.value;
       slider.style.width='100%'; slider.style.marginTop='4px';
       numInput.parentNode.appendChild(slider);
-      slider.addEventListener('input', ()=>{ numInput.value = slider.value; });
-      slider.addEventListener('change', ()=>{ runSimulationWrapper(); });
+      slider.addEventListener('input', ()=>{ numInput.value=slider.value; runSimulationWrapper(); });
+      numInput.addEventListener('input', ()=> runSimulationWrapper());
     });
-
-    const assetsInput = document.getElementById('assets');
-    assetsInput.addEventListener('input', (e)=>{
-      let value = e.target.value.replace(/[^0-9.]/g,'');
-      if(!isNaN(value) && value!==''){ e.target.value = Number(value).toLocaleString(); }
+  
+    const inputs = ['currentAge','lifeExpectancy','healthDeclineAge','utilityAfterDecline','assets','withdrawRate','realReturn','inflation','taxRate','claimA_amt','claimB_amt','claimC_amt'];
+    inputs.forEach(id=>{
+      const el = document.getElementById(id);
+      if(el){
+        el.addEventListener('input', ()=> runSimulationWrapper());
+        // Assets formatting on blur only
+        if(id==='assets'){
+          el.addEventListener('blur', e=>{
+            let v = e.target.value.replace(/[^0-9.]/g,'');
+            if(!isNaN(v) && v!==''){ e.target.value=Number(v).toLocaleString(); }
+          });
+        }
+      }
     });
-
+  
     const otherIncomeList = document.getElementById('otherIncomeList');
     const addIncomeBtn = document.getElementById('addIncomeBtn');
-
-    function addIncomeRow(label='', amount=0){
-      const div = document.createElement('div');
-      div.style.display='flex';
-      div.style.gap='6px';
-      div.style.marginTop='4px';
-      div.innerHTML = `
-        <input type="text" placeholder="Income label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-        <input type="number" placeholder="Amount $" value="${amount}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-        <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
-      `;
-      otherIncomeList.appendChild(div);
-
-      div.querySelector('button').addEventListener('click', ()=>{ div.remove(); });
-
-      const amountInput = div.querySelectorAll('input')[1];
-      amountInput.addEventListener('input',(e)=>{
-        let v = e.target.value.replace(/[^0-9.]/g,'');
-        if(!isNaN(v) && v!==''){ e.target.value = Number(v).toLocaleString(); }
-      });
-    }
-
-    addIncomeBtn.addEventListener('click', ()=> addIncomeRow());
-    addIncomeRow('Roth IRA', 1000);
-    addIncomeRow('Pension', 4000);
-  });
-
-  document.getElementById('runBtn').addEventListener('click', runSimulationWrapper);
-  document.getElementById('resetBtn').addEventListener('click', resetDefaults);
-</script>
+    function addIncomeRow(label='',amount=0){
+      const div=document.createElement('div');
+      div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
+      div.innerHTML=`
+        <input type="text" placeholder="Income label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:
+  
 
 </body>
 </html>
