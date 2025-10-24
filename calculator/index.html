@@ -335,6 +335,41 @@
   
   // Add asset row instead of "other income"
   function addAssetRow(label='Asset', amount=500000, withdrawRate=4, annualReturn=4){
+  const list = document.getElementById('assetList'); // corrected target
+  const div = document.createElement('div');
+  div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
+  div.innerHTML = `
+    <input type="text" placeholder="Asset label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+    <input type="text" placeholder="Total $" value="${amount}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+    <input type="number" placeholder="Withdrawal %" value="${withdrawRate}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+    <input type="number" placeholder="Annual Return %" value="${annualReturn}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+    <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
+  `;
+  list.appendChild(div);
+
+  // Remove button
+  div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
+
+  // Trigger recalculation on input change
+  div.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', runSimulationWrapper));
+  }
+
+  // Add withdrawal row
+  function addWithdrawRow(assetLabel='Asset', startAge=65, monthly=2000){
+  const list = document.getElementById('withdrawList');
+  const div = document.createElement('div');
+  div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
+  div.innerHTML = `
+    <input type="text" placeholder="Asset label" value="${assetLabel}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+    <input type="number" placeholder="Withdrawal start age" value="${startAge}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+    <input type="number" placeholder="Monthly $" value="${monthly}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+    <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
+  `;
+  list.appendChild(div);
+  div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
+  div.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', runSimulationWrapper));
+  }
+    
     const list = document.getElementById('otherIncomeList'); // reuse div
     const div = document.createElement('div');
     div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
@@ -345,11 +380,24 @@
       <input type="number" placeholder="Annual Return %" value="${annualReturn}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
       <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
     `;
-    list.appendChild(div);
-  
+    list.appendChild(div);  
     const inputs = div.querySelectorAll('input');
     inputs.forEach(inp => inp.addEventListener('input', ()=>runSimulationWrapper()));
     div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
+    
+    // Add other income row
+  function addOtherIncomeRow(label='Income', monthly=500){
+  const list = document.getElementById('otherIncomeList');
+  const div = document.createElement('div');
+  div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
+  div.innerHTML = `
+    <input type="text" placeholder="Income label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+    <input type="number" placeholder="Monthly $" value="${monthly}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+    <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
+  `;
+  list.appendChild(div);
+  div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
+  div.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', runSimulationWrapper));
   }
   
   // Wrapper to gather inputs and run simulations
@@ -404,11 +452,14 @@
     suggestSSAge();
   }
   
-  document.getElementById('addIncomeBtn').addEventListener('click', ()=>addAssetRow());
+  // Event listeners
+  document.getElementById('addAssetBtn').addEventListener('click', ()=>addAssetRow());
+  document.getElementById('addWithdrawBtn').addEventListener('click', ()=>addWithdrawRow());
+  document.getElementById('addIncomeBtn').addEventListener('click', ()=>addOtherIncomeRow());
   document.getElementById('runBtn').addEventListener('click', runSimulationWrapper);
   
   window.addEventListener('load', ()=>{
-    addAssetRow('401k',500000,4,4); // initial asset
+    addAssetRow('401k',0); // initial asset
     runSimulationWrapper();
   
     const inputSelectors = [
