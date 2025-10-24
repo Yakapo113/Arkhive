@@ -1,124 +1,283 @@
-<div class="panel">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-    <strong>Assumptions & Inputs</strong>
-    <span class="small muted">Edit defaults → press <strong>Run</strong></span>
-  </div>
-
-  <label>Current age</label>
-  <input id="currentAge" type="number" min="50" max="95" value="62">
-
-  <label style="margin-top:10px">Life expectancy (age)</label>
-  <input id="lifeExpectancy" type="number" min="65" max="110" value="88">
-
-  <label style="margin-top:10px">Health decline starting age (spendability reduces)</label>
-  <input id="healthDeclineAge" type="number" min="60" max="110" value="80">
-
-  <label style="margin-top:10px">Utility factor after decline (0-1). Example: 0.6 = 60% of prior spending utility</label>
-  <input id="utilityAfterDecline" type="number" step="0.01" min="0" max="1" value="0.6">
-
-  <label style="margin-top:10px">Other retirement assets — $</label>
-  <input id="assets" type="text" value="500,000">
-  <div class="small muted">Enter total assets. Commas are auto-formatted.</div>
-
-  <div style="display:flex;gap:8px;margin-top:8px">
-    <div style="flex:1">
-      <label>Withdrawal rate if delaying SS (annual %)</label>
-      <input id="withdrawRate" type="number" step="0.1" value="4.0">
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>True Social Security Break-even Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1724;
+    --card:#0b1220;
+    --muted:#94a3b8;
+    --accent:#60a5fa;
+    --glass: rgba(255,255,255,0.03);
+    --panel-radius:12px;
+    color-scheme: dark;
+  }
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg,#071022 0%, #071828 100%);
+    color:#e6eef8;
+    padding:20px;
+  }
+  .wrap{
+    max-width:1200px;
+    margin:0 auto;
+  }
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    margin-bottom:18px;
+  }
+  h1{font-size:20px;margin:0;}
+  p.lead{margin:0;color:var(--muted);font-size:13px}
+  .grid{
+    display:grid;
+    grid-template-columns: 380px 1fr;
+    gap:18px;
+  }
+  .panel{
+    background:var(--card);
+    border-radius:var(--panel-radius);
+    padding:16px;
+    box-shadow: 0 4px 20px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+  input[type="number"], input[type="text"], select {
+    width:100%;
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.04);
+    background:var(--glass);
+    color:inherit;
+    box-sizing:border-box;
+    font-size:14px;
+  }
+  input[type="range"] {
+    -webkit-appearance:none;
+    width:100%;
+    height:8px;
+    border-radius:4px;
+    background:rgba(96,165,250,0.3);
+    outline:none;
+  }
+  .row{display:flex;gap:10px}
+  .row > *{flex:1}
+  .small{font-size:12px;color:var(--muted)}
+  .controls .btn{
+    display:inline-block;
+    margin-top:8px;
+    background:linear-gradient(180deg,var(--accent),#3b82f6);
+    border:none;color:#04204b;padding:10px 12px;border-radius:8px;font-weight:600;cursor:pointer;
+    box-shadow:0 6px 18px rgba(59,130,246,0.18);
+  }
+  .controls .btn.secondary{
+    background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);
+    box-shadow:none;font-weight:600;
+  }
+  .strategy{
+    margin-bottom:12px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+    border:1px solid rgba(255,255,255,0.02);
+  }
+  .flex-between{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  canvas{max-width:100%;}
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+  th,td{padding:8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03)}
+  th{color:var(--muted);font-weight:600;font-size:12px}
+  .muted{color:var(--muted);font-size:13px}
+  footer{margin-top:12px;color:var(--muted);font-size:12px}
+  .results-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+  .stat{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px}
+  .stat h3{margin:0;font-size:14px}
+  .stat p{margin:6px 0 0 0;color:var(--muted);font-size:12px}
+  @media (max-width:980px){
+    .grid{grid-template-columns:1fr; }
+    header{flex-direction:column;align-items:flex-start}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>True Social Security Break-even Calculator</h1>
+      <p class="lead">Compare claiming ages, investment opportunity cost, taxes, and health-related spending decline — and see the break-even age.</p>
     </div>
-    <div style="flex:1">
-      <label>Portfolio annual return (real %, after inflation)</label>
-      <input id="realReturn" type="number" step="0.1" value="4.0">
-    </div>
-  </div>
+  </header>
 
-  <div style="display:flex;gap:8px;margin-top:8px">
-    <div style="flex:1">
-      <label>Inflation rate (annual %)</label>
-      <input id="inflation" type="number" step="0.1" value="2.0">
-    </div>
-    <div style="flex:1">
-      <label>Effective marginal tax rate on SS income (%)</label>
-      <input id="taxRate" type="number" step="0.1" value="12.0">
-    </div>
-  </div>
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <strong>Assumptions & Inputs</strong>
+          <span class="small muted">Edit defaults → press <strong>Run</strong></span>
+        </div>
 
-  <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+        <label>Current age</label>
+        <input id="currentAge" type="number" min="50" max="95" value="62">
 
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-    <strong>Claiming strategies (monthly SS benefit)</strong>
-    <span class="small muted">Enter your expected benefit at each claim age</span>
-  </div>
+        <label style="margin-top:10px">Life expectancy (age)</label>
+        <input id="lifeExpectancy" type="number" min="65" max="110" value="88">
 
-  <div class="strategy">
-    <div class="flex-between">
-      <div style="flex:1">
-        <label>Strategy A claim age: <span id="claimA_age_label">62</span></label>
-        <input type="range" id="claimA_age" min="62" max="70" value="62">
+        <label style="margin-top:10px">Health decline starting age (spendability reduces)</label>
+        <input id="healthDeclineAge" type="number" min="60" max="110" value="80">
+
+        <label style="margin-top:10px">Utility factor after decline (0-1). Example: 0.6 = 60% of prior spending utility</label>
+        <input id="utilityAfterDecline" type="number" step="0.01" min="0" max="1" value="0.6">
+
+        <label style="margin-top:10px">Other retirement assets — $</label>
+        <input id="assets" type="text" value="500,000">
+        <div class="small muted">Enter total assets. Commas are auto-formatted.</div>
+
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <div style="flex:1">
+            <label>Withdrawal rate if delaying SS (annual %)</label>
+            <input id="withdrawRate" type="number" step="0.1" value="4.0">
+          </div>
+          <div style="flex:1">
+            <label>Portfolio annual return (real %, after inflation)</label>
+            <input id="realReturn" type="number" step="0.1" value="4.0">
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <div style="flex:1">
+            <label>Inflation rate (annual %)</label>
+            <input id="inflation" type="number" step="0.1" value="2.0">
+          </div>
+          <div style="flex:1">
+            <label>Effective marginal tax rate on SS income (%)</label>
+            <input id="taxRate" type="number" step="0.1" value="12.0">
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong>Claiming strategies (monthly SS benefit)</strong>
+          <span class="small muted">Enter your expected benefit at each claim age</span>
+        </div>
+
+        <div class="strategy">
+          <div class="flex-between">
+            <div style="flex:1">
+              <label>Strategy A claim age</label>
+              <input id="claimA_age" type="number" min="62" max="70" value="62">
+            </div>
+            <div style="width:46%">
+              <label>Monthly SS @ that age ($)</label>
+              <input id="claimA_amt" type="number" min="0" value="2000">
+            </div>
+          </div>
+        </div>
+
+        <div class="strategy">
+          <div class="flex-between">
+            <div style="flex:1">
+              <label>Strategy B claim age</label>
+              <input id="claimB_age" type="number" min="62" max="70" value="67">
+            </div>
+            <div style="width:46%">
+              <label>Monthly SS @ that age ($)</label>
+              <input id="claimB_amt" type="number" min="0" value="2860">
+            </div>
+          </div>
+        </div>
+
+        <div class="strategy">
+          <div class="flex-between">
+            <div style="flex:1">
+              <label>Strategy C claim age</label>
+              <input id="claimC_age" type="number" min="62" max="70" value="70">
+            </div>
+            <div style="width:46%">
+              <label>Monthly SS @ that age ($)</label>
+              <input id="claimC_amt" type="number" min="0" value="3540">
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:12px" class="controls">
+          <button id="runBtn" class="btn">Run comparison</button>
+          <button id="resetBtn" class="btn secondary" title="Reset to defaults">Reset</button>
+        </div>
+
+        <div style="margin-top:10px" class="small muted">
+          Notes: This model treats Social Security as fixed nominal amounts you enter for each claim age. It applies taxes, then simulates investing or withdrawing from your assets and adjusts spending utility after the health decline age.<br>
+          Check your personal expected benefit here: 
+          <a href="https://www.ssa.gov/benefits/retirement/estimator.html" target="_blank" style="color:var(--accent)">SSA Retirement Estimator</a>
+        </div>
       </div>
-      <div style="width:46%">
-        <label>Monthly SS @ that age ($)</label>
-        <input id="claimA_amt" type="number" min="0" value="2000">
+
+      <div class="panel" style="margin-top:12px">
+        <strong>Quick tips</strong>
+        <ul class="small muted" style="padding-left:16px">
+          <li>Enter the monthly benefits you expect at each claim age (use SSA statements if available).</li>
+          <li>If delaying SS, use your assets + withdrawal rate to partially fund spending until SS starts.</li>
+          <li>Utility factor models reduced ability/desire to spend after poor health.</li>
+        </ul>
       </div>
     </div>
-  </div>
 
-  <div class="strategy">
-    <div class="flex-between">
-      <div style="flex:1">
-        <label>Strategy B claim age: <span id="claimB_age_label">67</span></label>
-        <input type="range" id="claimB_age" min="62" max="70" value="67">
-      </div>
-      <div style="width:46%">
-        <label>Monthly SS @ that age ($)</label>
-        <input id="claimB_amt" type="number" min="0" value="2860">
-      </div>
-    </div>
-  </div>
+    <div>
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>Results & visualization</strong>
+          <div class="small muted">Cumulative effective (utility-adjusted) value vs age</div>
+        </div>
 
-  <div class="strategy">
-    <div class="flex-between">
-      <div style="flex:1">
-        <label>Strategy C claim age: <span id="claimC_age_label">70</span></label>
-        <input type="range" id="claimC_age" min="62" max="70" value="70">
-      </div>
-      <div style="width:46%">
-        <label>Monthly SS @ that age ($)</label>
-        <input id="claimC_amt" type="number" min="0" value="3540">
+        <div style="margin-top:12px">
+          <canvas id="cumulativeChart" height="220"></canvas>
+        </div>
+
+        <div class="results-grid" id="summaryCards" style="margin-top:12px"></div>
+
+        <div id="tables" style="margin-top:12px"></div>
+
+        <footer>
+          <div class="muted">Model assumptions are simplified. This is a planning tool — not financial advice.</div>
+        </footer>
       </div>
     </div>
-  </div>
-
-  <div style="display:flex;gap:8px;margin-top:12px" class="controls">
-    <button id="runBtn" class="btn">Run comparison</button>
-    <button id="resetBtn" class="btn secondary" title="Reset to defaults">Reset</button>
-  </div>
-
-  <div style="margin-top:10px" class="small muted">
-    Notes: Use your SSA statement to enter expected monthly benefits. You can <a href="https://www.ssa.gov/benefits/retirement/estimator.html" target="_blank" style="color:var(--accent)">check your personal estimate here</a>.  
-    This model treats Social Security as fixed nominal amounts you enter for each claim age, applies taxes, simulates portfolio evolution, and adjusts spending utility after the health decline age.
   </div>
 </div>
 
-<script>
-  // Slider live label updates + run on change
-  const sliders = [
-    {id:'claimA_age', label:'claimA_age_label'},
-    {id:'claimB_age', label:'claimB_age_label'},
-    {id:'claimC_age', label:'claimC_age_label'}
-  ];
-  sliders.forEach(s=>{
-    const slider = document.getElementById(s.id);
-    const label = document.getElementById(s.label);
-    slider.addEventListener('input', ()=>{ label.textContent = slider.value; });
-    slider.addEventListener('change', ()=>{ document.getElementById('runBtn').click(); });
-  });
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-  // Assets input formatting with commas
-  const assetsInput = document.getElementById('assets');
-  assetsInput.addEventListener('input', (e)=>{
-    let value = e.target.value.replace(/,/g,'');
-    if(!isNaN(value) && value!==''){
-      e.target.value = Number(value).toLocaleString();
-    }
-  });
+<script>
+/* --- Your original simulation JS code stays here --- */
+
+/* --- ADDITIONS START --- */
+
+// 1. Sliders for claim ages
+['A','B','C'].forEach(letter=>{
+  const numInput = document.getElementById(`claim${letter}_age`);
+  const slider = document.createElement('input');
+  slider.type = 'range';
+  slider.min = 62;
+  slider.max = 70;
+  slider.value = numInput.value;
+  slider.style.width = '100%';
+  slider.style.marginTop = '4px';
+  numInput.parentNode.appendChild(slider);
+  slider.addEventListener('input', ()=>{ numInput.value = slider.value; });
+  slider.addEventListener('change', ()=>{ document.getElementById('runBtn').click(); });
+});
+
+// 2. Comma formatting for assets input
+const assetsInput = document.getElementById('assets');
+assetsInput.addEventListener('input', (e)=>{
+  let value = e.target.value.replace(/,/g,'');
+  if(!isNaN(value) && value!==''){
+    e.target.value = Number(value).toLocaleString();
+  }
+});
 </script>
+</body>
+</html>
