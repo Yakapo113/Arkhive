@@ -390,6 +390,16 @@
     addIncomeRow('Pension',1200);
     runSimulationWrapper();
   });
+
+  // Select all inputs in Assumptions & Inputs and Claiming Strategies
+  const inputSelectors = [
+    '#currentAge','#lifeExpectancy','#healthDeclineAge','#utilityAfterDecline',
+    '#assets','#withdrawRate','#realReturn','#inflation','#taxRate',
+    '#claimA_age','#claimA_amt','#claimB_age','#claimB_amt','#claimC_age','#claimC_amt'
+  ];
+  inputSelectors.forEach(sel => {
+    document.querySelector(sel).addEventListener('input', runSimulationWrapper);
+  });
 </script>
 </body>
 </html>
