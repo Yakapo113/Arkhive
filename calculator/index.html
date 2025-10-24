@@ -263,7 +263,6 @@
 <script>
   let myChart = null;
   
-  // Helper functions
   function formatUSD(x){ return x >= 1000 ? x.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}) : '$'+x.toFixed(0); }
   function buildSummaryCard(title, main, sub){ return `<div class="stat"><h3>${title}</h3><p>${main}</p><p class="muted">${sub}</p></div>`; }
   
@@ -288,7 +287,6 @@
       yearlyAfterTaxSS.push(afterTaxSS);
       yearlyNetSpendingValue.push(utilAdjusted);
   
-      // Withdraw from current portfolio if SS hasn't started
       let withdrawalThisYear = 0;
       if(age < strategy.claimAge){
         withdrawalThisYear = portfolio*withdrawRate;
@@ -313,7 +311,6 @@
     return null;
   }
   
-  // Core wrapper
   function runSimulationWrapper(){
     const rawAssets = document.getElementById('assets').value.replace(/[^0-9.]/g,'');
     const inputs = {
@@ -348,7 +345,6 @@
     const sims = strategies.map(s=>({...s, sim: runSimulation(inputs,s,otherIncome)}));
     const ages = sims[0].sim.ages;
   
-    // Chart
     const datasets = sims.map((s,idx)=>{
       const colorHue = 210 - idx*40;
       return {label:`Claim @ ${s.claimAge} (${s.name})`, data:s.sim.cumulativeEffective, tension:0.2, borderWidth:2, pointRadius:0, borderColor:`hsl(${colorHue} 80% 60%)`, backgroundColor:'rgba(0,0,0,0)'};
@@ -359,131 +355,41 @@
       responsive:true,
       interaction:{mode:'index',intersect:false},
       stacked:false,
-      plugins:{legend:{position:'top'},tooltip:{callbacks:{label:function(context){return `${context.dataset.label}: ${formatUSD(context.parsed.y)}`;}}}},
+      plugins:{legend:{position:'top'},tooltip:{callbacks:{label:function(context){return `${context.dataset.label}: ${formatUSD(context.parsed.y)}`;}}}} ,
       scales:{x:{title:{display:true,text:'Age'}},y:{title:{display:true,text:'Cumulative effective value ($)'}}}
     }});
   
-    // Summary cards
     const summaryDiv = document.getElementById('summaryCards'); summaryDiv.innerHTML='';
     sims.forEach(s=>{
-      summaryDiv.innerHTML += buildSummaryCard(`Strategy ${s.name} — Claim @ ${s.claimAge}`,`${formatUSD(s.sim.cumulativeEffective[s.sim.cumulativeEffective.length-1])} cumulative effective spending`,`Ending portfolio: ${formatUSD(s.sim.endingPortfolio)}`);
-    });
-  
-    // Break-even
-    let breakText = '<div style="margin-top:10px"><strong>Break-even results</strong></div>';
-    for(let i=0;i<sims.length;i++){
-      for(let j=i+1;j<sims.length;j++){
-        const be = findBreakEven(ages,sims[i].sim.cumulativeEffective,sims[j].sim.cumulativeEffective);
-        if(be){ breakText += `<div class="small muted">Strategy ${sims[j].name} (later) breaks even with ${sims[i].name} at age <strong>${be}</strong>.</div>`; }
-        else{ breakText += `<div class="small muted">Strategy ${sims[j].name} (later) does <strong>not</strong> break even before age ${inputs.lifeExpectancy}.</div>`; }
-      }
-    }
-  
-    // Detailed table
-    let tablesHtml = '<div style="margin-top:8px"><strong>Detailed per-year summary</strong> <button type="button" id="exportBtn" style="margin-left:6px;padding:2px 6px;font-size:12px">Export CSV</button></div>';
-    tablesHtml += '<table><thead><tr><th>Age</th>';
-    sims.forEach(s=> tablesHtml += `<th>SS after-tax (${s.name})</th><th>Utility Adj (${s.name})</th><th>Portfolio (${s.name})</th>`);
-    tablesHtml += '</tr></thead><tbody>';
-    for(let k=0;k<ages.length;k++){
-      tablesHtml += `<tr><td>${ages[k]}</td>`;
-      sims.forEach(s=>{
-        tablesHtml += `<td>${formatUSD(s.sim.yearlyAfterTaxSS[k])}</td><td>${formatUSD(s.sim.yearlyNetSpendingValue[k])}</td><td>${formatUSD(s.sim.portfolioValues[k])}</td>`;
-      });
-      tablesHtml += '</tr>';
-    }
-    tablesHtml += '</tbody></table>';
-    document.getElementById('tables').innerHTML = breakText + tablesHtml;
-  
-    // Export CSV
-    document.getElementById('exportBtn').addEventListener('click', ()=>{
-      let csv='Age';
-      sims.forEach(s=> csv+=`,SS ${s.name},Utility ${s.name},Portfolio ${s.name}`);
-      csv+='\n';
-      for(let k=0;k<ages.length;k++){
-        csv+=ages[k];
-        sims.forEach(s=>{
-          csv+=`,`+s.sim.yearlyAfterTaxSS[k]+`,`+s.sim.yearlyNetSpendingValue[k]+`,`+s.sim.portfolioValues[k];
-        });
-        csv+='\n';
-      }
-      const blob = new Blob([csv], {type:'text/csv'});
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'social_security_simulation.csv';
-      link.click();
+      summaryDiv.innerHTML += buildSummaryCard(`Strategy ${s.name} — Claim @ ${s.claimAge}`,`${formatUSD(s.sim.endingPortfolio)}`,`Total effective utility value: ${formatUSD(s.sim.totalEffective)}`);
     });
   }
-  
-  // Reset defaults
-  function resetDefaults(){
-    const defaults = {
-      currentAge:62, lifeExpectancy:88, healthDeclineAge:80, utilityAfterDecline:0.6,
-      assets:500000, withdrawRate:4.0, realReturn:4.0, inflation:2.0, taxRate:12.0,
-      claimA_age:62, claimA_amt:2000, claimB_age:67, claimB_amt:2860, claimC_age:70, claimC_amt:3540
-    };
-    for(const k in defaults){
-      if(document.getElementById(k)) document.getElementById(k).value = defaults[k];
-    }
-    if(myChart) myChart.destroy();
-    document.getElementById('summaryCards').innerHTML='';
-    document.getElementById('tables').innerHTML='';
-  }
-  
-  document.addEventListener('DOMContentLoaded', ()=>{
-    // Sliders
-    ['A','B','C'].forEach(letter=>{
-      const numInput = document.getElementById(`claim${letter}_age`);
-      const slider = document.createElement('input');
-      slider.type='range'; slider.min=62; slider.max=70; slider.value=numInput.value;
-      slider.style.width='100%'; slider.style.marginTop='4px';
-      numInput.parentNode.appendChild(slider);
-      slider.addEventListener('input', ()=>{ numInput.value=slider.value; runSimulationWrapper(); });
-      numInput.addEventListener('input', ()=> runSimulationWrapper());
-    });
-  
-    const inputs = ['currentAge','lifeExpectancy','healthDeclineAge','utilityAfterDecline','assets','withdrawRate','realReturn','inflation','taxRate','claimA_amt','claimB_amt','claimC_amt'];
-    inputs.forEach(id=>{
-      const el = document.getElementById(id);
-      if(el){
-        el.addEventListener('input', ()=> runSimulationWrapper());
-        // Assets formatting on blur only
-        if(id==='assets'){
-          el.addEventListener('blur', e=>{
-            let v = e.target.value.replace(/[^0-9.]/g,'');
-            if(!isNaN(v) && v!==''){ e.target.value=Number(v).toLocaleString(); }
-          });
-        }
-      }
-    });
-  
+
+  function addIncomeRow(label='',amount=0){
     const otherIncomeList = document.getElementById('otherIncomeList');
-    const addIncomeBtn = document.getElementById('addIncomeBtn');
-    function addIncomeRow(label='',amount=0){
-      const div=document.createElement('div');
-      div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
-      div.innerHTML=`
-        <input type="text" placeholder="Income label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-        <input type="number" placeholder="Amount $" value="${amount}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-        <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
-      `;
-      otherIncomeList.appendChild(div);
-      const amountInput = div.querySelectorAll('input')[1];
-      amountInput.addEventListener('input', ()=>runSimulationWrapper());
-      amountInput.addEventListener('blur', e=>{
-        let v=e.target.value.replace(/[^0-9.]/g,'');
-        if(!isNaN(v) && v!==''){ e.target.value=Number(v).toLocaleString(); }
-      });
-      div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
-    }
-    addIncomeBtn.addEventListener('click', ()=>addIncomeRow());
-    addIncomeRow('Roth IRA',1000);
-    addIncomeRow('Pension',4000);
-  
-    // Initial run to load chart
+    const div=document.createElement('div');
+    div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
+    div.innerHTML=`
+      <input type="text" placeholder="Income label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+      <input type="text" placeholder="Amount $" value="${amount}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+      <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
+    `;
+    otherIncomeList.appendChild(div);
+    const amountInput = div.querySelectorAll('input')[1];
+    amountInput.addEventListener('input', ()=>runSimulationWrapper());
+    amountInput.addEventListener('blur', e=>{
+      let v = e.target.value.replace(/[^0-9.]/g,'');
+      if(!isNaN(v) && v!==''){ e.target.value = Number(v).toLocaleString(); }
+    });
+    div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
+  }
+
+  document.getElementById('addIncomeBtn').addEventListener('click', ()=>addIncomeRow());
+  document.getElementById('runBtn').addEventListener('click', runSimulationWrapper);
+  window.addEventListener('load', ()=>{
+    addIncomeRow('Pension',1200);
     runSimulationWrapper();
   });
-  </script>
-  
- 
+</script>
 </body>
 </html>
