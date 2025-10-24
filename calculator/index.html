@@ -252,9 +252,6 @@
         <footer>
           <div class="muted">Model assumptions are simplified. This is a planning tool — not financial advice.</div>
         </footer>
-
-        <div id="ssSuggestion" class="small muted" style="margin-top:6px;"></div>
-
       </div>
     </div>
   </div>
@@ -314,16 +311,7 @@
     return null;
   }
 
-  function suggestSSAge(){
-  const currentAge = Number(document.getElementById('currentAge').value);
-  const lifeExpectancy = Number(document.getElementById('lifeExpectancy').value);
-  // Rough heuristic: start at FRA ~ 66–67, adjusted if short life expectancy
-  let suggested = 66;
-  if(lifeExpectancy<75) suggested = 62;
-  else if(lifeExpectancy>85) suggested = 70;
-  document.getElementById('ssSuggestion').textContent = `Suggested SS claiming age: ${suggested}`;
-  }
-
+  
   
   function runSimulationWrapper(){
     const rawAssets = document.getElementById('assets').value.replace(/[^0-9.]/g,'');
