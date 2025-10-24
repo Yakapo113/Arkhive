@@ -462,8 +462,28 @@
       const div=document.createElement('div');
       div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
       div.innerHTML=`
-        <input type="text" placeholder="Income label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:
+        <input type="text" placeholder="Income label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+        <input type="number" placeholder="Amount $" value="${amount}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+        <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
+      `;
+      otherIncomeList.appendChild(div);
+      const amountInput = div.querySelectorAll('input')[1];
+      amountInput.addEventListener('input', ()=>runSimulationWrapper());
+      amountInput.addEventListener('blur', e=>{
+        let v=e.target.value.replace(/[^0-9.]/g,'');
+        if(!isNaN(v) && v!==''){ e.target.value=Number(v).toLocaleString(); }
+      });
+      div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
+    }
+    addIncomeBtn.addEventListener('click', ()=>addIncomeRow());
+    addIncomeRow('Roth IRA',1000);
+    addIncomeRow('Pension',4000);
   
-
+    // Initial run to load chart
+    runSimulationWrapper();
+  });
+  </script>
+  
+ 
 </body>
 </html>
