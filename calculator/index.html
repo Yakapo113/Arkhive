@@ -436,6 +436,11 @@
       let value = e.target.value.replace(/,/g,'');
       if(!isNaN(value) && value!==''){ e.target.value = Number(value).toLocaleString(); }
     });
+
+    // Attach button clicks
+    document.getElementById('runBtn').addEventListener('click', runSimulationWrapper);
+    document.getElementById('resetBtn').addEventListener('click', resetDefaults);
+
   });
   </script>  
 </body>
