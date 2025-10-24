@@ -141,10 +141,14 @@
 
         <div style="display:flex;gap:8px;margin-top:8px">
           <div style="flex:1">
-            <label>Withdrawal rate if delaying SS (annual %)</label>
-            <span title="This is the % of your assets you would withdraw each year to fund spending until you start Social Security.">ℹ️</span>
+            <label style="display:flex;align-items:center;gap:4px;">
+              Withdrawal rate if delaying SS (annual %)
+              <span title="This is the % of your assets you would withdraw each year to fund spending until you start Social Security." 
+                    style="cursor:help;color:var(--accent);font-weight:bold;">ℹ️</span>
+            </label>
             <input id="withdrawRate" type="number" step="0.1" value="4.0">
           </div>
+
           <div style="flex:1">
             <label>Portfolio annual return (real %, after inflation)</label>
             <input id="realReturn" type="number" step="0.1" value="4.0">
