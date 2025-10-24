@@ -1,483 +1,124 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>True Social Security Break-even Calculator</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#0f1724;
-    --card:#0b1220;
-    --muted:#94a3b8;
-    --accent:#60a5fa;
-    --glass: rgba(255,255,255,0.03);
-    --panel-radius:12px;
-    color-scheme: dark;
-  }
-  html,body{height:100%;}
-  body{
-    margin:0;
-    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    background: linear-gradient(180deg,#071022 0%, #071828 100%);
-    color:#e6eef8;
-    padding:20px;
-  }
-  .wrap{
-    max-width:1200px;
-    margin:0 auto;
-  }
-  header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:20px;
-    margin-bottom:18px;
-  }
-  h1{font-size:20px;margin:0;}
-  p.lead{margin:0;color:var(--muted);font-size:13px}
-  .grid{
-    display:grid;
-    grid-template-columns: 380px 1fr;
-    gap:18px;
-  }
-  .panel{
-    background:var(--card);
-    border-radius:var(--panel-radius);
-    padding:16px;
-    box-shadow: 0 4px 20px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
-  }
-  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
-  input[type="number"], input[type="text"], select {
-    width:100%;
-    padding:8px 10px;
-    border-radius:8px;
-    border:1px solid rgba(255,255,255,0.04);
-    background:var(--glass);
-    color:inherit;
-    box-sizing:border-box;
-    font-size:14px;
-  }
-  .row{display:flex;gap:10px}
-  .row > *{flex:1}
-  .small{font-size:12px;color:var(--muted)}
-  .controls .btn{
-    display:inline-block;
-    margin-top:8px;
-    background:linear-gradient(180deg,var(--accent),#3b82f6);
-    border:none;color:#04204b;padding:10px 12px;border-radius:8px;font-weight:600;cursor:pointer;
-    box-shadow:0 6px 18px rgba(59,130,246,0.18);
-  }
-  .controls .btn.secondary{
-    background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);
-    box-shadow:none;font-weight:600;
-  }
-  .strategy{
-    margin-bottom:12px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
-    border:1px solid rgba(255,255,255,0.02);
-  }
-  .flex-between{display:flex;justify-content:space-between;align-items:center;gap:8px}
-  canvas{max-width:100%;}
-  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
-  th,td{padding:8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03)}
-  th{color:var(--muted);font-weight:600;font-size:12px}
-  .muted{color:var(--muted);font-size:13px}
-  footer{margin-top:12px;color:var(--muted);font-size:12px}
-  .results-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
-  .stat{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px}
-  .stat h3{margin:0;font-size:14px}
-  .stat p{margin:6px 0 0 0;color:var(--muted);font-size:12px}
-  @media (max-width:980px){
-    .grid{grid-template-columns:1fr; }
-    header{flex-direction:column;align-items:flex-start}
-  }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <header>
-    <div>
-      <h1>True Social Security Break-even Calculator</h1>
-      <p class="lead">Compare claiming ages, investment opportunity cost, taxes, and health-related spending decline — and see the break-even age.</p>
+<div class="panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <strong>Assumptions & Inputs</strong>
+    <span class="small muted">Edit defaults → press <strong>Run</strong></span>
+  </div>
+
+  <label>Current age</label>
+  <input id="currentAge" type="number" min="50" max="95" value="62">
+
+  <label style="margin-top:10px">Life expectancy (age)</label>
+  <input id="lifeExpectancy" type="number" min="65" max="110" value="88">
+
+  <label style="margin-top:10px">Health decline starting age (spendability reduces)</label>
+  <input id="healthDeclineAge" type="number" min="60" max="110" value="80">
+
+  <label style="margin-top:10px">Utility factor after decline (0-1). Example: 0.6 = 60% of prior spending utility</label>
+  <input id="utilityAfterDecline" type="number" step="0.01" min="0" max="1" value="0.6">
+
+  <label style="margin-top:10px">Other retirement assets — $</label>
+  <input id="assets" type="text" value="500,000">
+  <div class="small muted">Enter total assets. Commas are auto-formatted.</div>
+
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <div style="flex:1">
+      <label>Withdrawal rate if delaying SS (annual %)</label>
+      <input id="withdrawRate" type="number" step="0.1" value="4.0">
     </div>
-    <div class="muted">Single-file web app — save and open locally</div>
-  </header>
-
-  <div class="grid">
-    <div>
-      <div class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <strong>Assumptions & Inputs</strong>
-          <span class="small muted">Edit defaults → press <strong>Run</strong></span>
-        </div>
-
-        <label>Current age</label>
-        <input id="currentAge" type="number" min="50" max="95" value="62">
-
-        <label style="margin-top:10px">Life expectancy (age)</label>
-        <input id="lifeExpectancy" type="number" min="65" max="110" value="88">
-
-        <label style="margin-top:10px">Health decline starting age (spendability reduces)</label>
-        <input id="healthDeclineAge" type="number" min="60" max="110" value="80">
-
-        <label style="margin-top:10px">Utility factor after decline (0-1). Example: 0.6 = 60% of prior spending utility</label>
-        <input id="utilityAfterDecline" type="number" step="0.01" min="0" max="1" value="0.6">
-
-        <label style="margin-top:10px">Other retirement assets (available at claim decision) — $</label>
-        <input id="assets" type="number" min="0" value="500000">
-
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <div style="flex:1">
-            <label>Withdrawal rate if delaying SS (annual %)</label>
-            <input id="withdrawRate" type="number" step="0.1" value="4.0">
-          </div>
-          <div style="flex:1">
-            <label>Portfolio annual return (real %, after inflation)</label>
-            <input id="realReturn" type="number" step="0.1" value="4.0">
-          </div>
-        </div>
-
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <div style="flex:1">
-            <label>Inflation rate (annual %)</label>
-            <input id="inflation" type="number" step="0.1" value="2.0">
-          </div>
-          <div style="flex:1">
-            <label>Effective marginal tax rate on SS income (%)</label>
-            <input id="taxRate" type="number" step="0.1" value="12.0">
-          </div>
-        </div>
-
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
-
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <strong>Claiming strategies (monthly SS benefit)</strong>
-          <span class="small muted">Enter your expected benefit at each claim age</span>
-        </div>
-
-        <div class="strategy">
-          <div class="flex-between">
-            <div><label>Strategy A claim age</label><input id="claimA_age" type="number" min="62" max="70" value="62"></div>
-            <div style="width:46%"><label>Monthly SS @ that age ($)</label><input id="claimA_amt" type="number" min="0" value="2000"></div>
-          </div>
-        </div>
-
-        <div class="strategy">
-          <div class="flex-between">
-            <div><label>Strategy B claim age</label><input id="claimB_age" type="number" min="62" max="70" value="67"></div>
-            <div style="width:46%"><label>Monthly SS @ that age ($)</label><input id="claimB_amt" type="number" min="0" value="2860"></div>
-          </div>
-        </div>
-
-        <div class="strategy">
-          <div class="flex-between">
-            <div><label>Strategy C claim age</label><input id="claimC_age" type="number" min="62" max="70" value="70"></div>
-            <div style="width:46%"><label>Monthly SS @ that age ($)</label><input id="claimC_amt" type="number" min="0" value="3540"></div>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:8px;margin-top:12px" class="controls">
-          <button id="runBtn" class="btn">Run comparison</button>
-          <button id="resetBtn" class="btn secondary" title="Reset to defaults">Reset</button>
-        </div>
-
-        <div style="margin-top:10px" class="small muted">
-          Notes: This model treats Social Security as fixed nominal amounts you enter for each claim age. It applies taxes, then simulates investing or withdrawing from your assets and adjusts spending utility after the health decline age. You can treat inputs as real (inflation-adjusted) or nominal by adjusting the inflation and return fields.
-        </div>
-      </div>
-
-      <div class="panel" style="margin-top:12px">
-        <strong>Quick tips</strong>
-        <ul class="small muted" style="padding-left:16px">
-          <li>Enter the monthly benefits you expect at each claim age (use SSA statements if available).</li>
-          <li>If delaying SS, use your assets + withdrawal rate to partially fund spending until SS starts.</li>
-          <li>Utility factor models reduced ability/desire to spend after poor health.</li>
-        </ul>
-      </div>
+    <div style="flex:1">
+      <label>Portfolio annual return (real %, after inflation)</label>
+      <input id="realReturn" type="number" step="0.1" value="4.0">
     </div>
+  </div>
 
-    <div>
-      <div class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <strong>Results & visualization</strong>
-          <div class="small muted">Cumulative effective (utility-adjusted) value vs age</div>
-        </div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <div style="flex:1">
+      <label>Inflation rate (annual %)</label>
+      <input id="inflation" type="number" step="0.1" value="2.0">
+    </div>
+    <div style="flex:1">
+      <label>Effective marginal tax rate on SS income (%)</label>
+      <input id="taxRate" type="number" step="0.1" value="12.0">
+    </div>
+  </div>
 
-        <div style="margin-top:12px">
-          <canvas id="cumulativeChart" height="220"></canvas>
-        </div>
+  <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
 
-        <div class="results-grid" id="summaryCards" style="margin-top:12px">
-          <!-- summary filled by JS -->
-        </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <strong>Claiming strategies (monthly SS benefit)</strong>
+    <span class="small muted">Enter your expected benefit at each claim age</span>
+  </div>
 
-        <div id="tables" style="margin-top:12px">
-          <!-- tables filled by JS -->
-        </div>
-
-        <footer>
-          <div class="muted">Model assumptions are simplified. This is a planning tool — not financial advice.</div>
-        </footer>
+  <div class="strategy">
+    <div class="flex-between">
+      <div style="flex:1">
+        <label>Strategy A claim age: <span id="claimA_age_label">62</span></label>
+        <input type="range" id="claimA_age" min="62" max="70" value="62">
+      </div>
+      <div style="width:46%">
+        <label>Monthly SS @ that age ($)</label>
+        <input id="claimA_amt" type="number" min="0" value="2000">
       </div>
     </div>
   </div>
+
+  <div class="strategy">
+    <div class="flex-between">
+      <div style="flex:1">
+        <label>Strategy B claim age: <span id="claimB_age_label">67</span></label>
+        <input type="range" id="claimB_age" min="62" max="70" value="67">
+      </div>
+      <div style="width:46%">
+        <label>Monthly SS @ that age ($)</label>
+        <input id="claimB_amt" type="number" min="0" value="2860">
+      </div>
+    </div>
+  </div>
+
+  <div class="strategy">
+    <div class="flex-between">
+      <div style="flex:1">
+        <label>Strategy C claim age: <span id="claimC_age_label">70</span></label>
+        <input type="range" id="claimC_age" min="62" max="70" value="70">
+      </div>
+      <div style="width:46%">
+        <label>Monthly SS @ that age ($)</label>
+        <input id="claimC_amt" type="number" min="0" value="3540">
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:12px" class="controls">
+    <button id="runBtn" class="btn">Run comparison</button>
+    <button id="resetBtn" class="btn secondary" title="Reset to defaults">Reset</button>
+  </div>
+
+  <div style="margin-top:10px" class="small muted">
+    Notes: Use your SSA statement to enter expected monthly benefits. You can <a href="https://www.ssa.gov/benefits/retirement/estimator.html" target="_blank" style="color:var(--accent)">check your personal estimate here</a>.  
+    This model treats Social Security as fixed nominal amounts you enter for each claim age, applies taxes, simulates portfolio evolution, and adjusts spending utility after the health decline age.
+  </div>
 </div>
 
-<!-- Chart.js CDN -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
 <script>
-/*
-  True Social Security Break-even Calculator
-  - Simulates year-by-year cash flows and portfolio evolution for multiple claiming ages
-  - Computes cumulative effective value (after-tax, utility-adjusted)
-  - Finds approximate break-even ages between strategies
-*/
-
-function yearRange(startAge, endAge){
-  const arr=[];
-  for(let a=startAge; a<=endAge; a++) arr.push(a);
-  return arr;
-}
-
-function clone(o){ return JSON.parse(JSON.stringify(o)); }
-
-function runSimulation(inputs, strategy){
-  // inputs: object of global params
-  // strategy: { claimAge, monthlyBenefit }
-  // returns: object with arrays per year: ages, yearlyAfterTaxSS, yearlyNetSpendingValue (utility-adjusted), portfolioValues, cumulativeEffective
-
-  const startAge = inputs.currentAge;
-  const endAge   = inputs.lifeExpectancy;
-  const years = endAge - startAge;
-  const ages = [];
-  const yearlyAfterTaxSS = [];
-  const yearlyNetSpendingValue = []; // utility-adjusted
-  const portfolioValues = [];
-  const cumulativeEffective = [];
-
-  // initial portfolio
-  let portfolio = inputs.assets;
-  const annualReturnNominal = inputs.realReturn/100.0; // treat as real return (after inflation) for simplicity
-  const taxRate = inputs.taxRate/100.0;
-  const withdrawRate = inputs.withdrawRate/100.0;
-
-  let cumEff = 0;
-
-  for(let i=0;i<=years;i++){
-    const age = startAge + i;
-    ages.push(age);
-
-    // determine SS income this year based on claim age
-    let yearlySS = 0;
-    if(age >= strategy.claimAge){
-      yearlySS = strategy.monthlyBenefit * 12;
-    }
-
-    // tax SS income (simple effective tax rate applied)
-    const afterTaxSS = yearlySS * (1 - taxRate);
-    yearlyAfterTaxSS.push(afterTaxSS);
-
-    // spending / utility: if age >= healthDeclineAge, scale by utilityAfterDecline
-    const util = (age >= inputs.healthDeclineAge) ? inputs.utilityAfterDecline : 1.0;
-    const utilAdjusted = afterTaxSS * util;
-    yearlyNetSpendingValue.push(utilAdjusted);
-
-    // If SS not started yet and strategy is "delayed" we will withdraw from portfolio
-    let withdrawalThisYear = 0;
-    if(age < strategy.claimAge){
-      // use withdrawal rate of starting assets *'withdrawRate'* as annual dollar amount, but cap by portfolio.
-      // A more realistic model would adapt withdrawal to required living expenses, but we use the withdrawRate input.
-      withdrawalThisYear = inputs.assets * withdrawRate; // note: uses initial assets — conservative simplification
-      // if withdrawal exceeds portfolio, cap it
-      if(withdrawalThisYear > portfolio) withdrawalThisYear = portfolio;
-      // withdrawal is treated after-tax neutral for simplicity (withdrawals may be taxed differently)
-      portfolio -= withdrawalThisYear;
-    }
-
-    // If SS started we may optionally *invest* SS (user could choose to spend it).
-    // In this model: if SS started, SS funds are considered consumed for living and optionally could be reinvested.
-    // We'll simulate strategy where when SS starts, extra SS beyond a required amount is invested. For simplicity, we assume SS is spent as needed (no extra invest), except if user had no withdrawal need.
-    // Simpler: treat SS as net cashflow that does not alter portfolio (unless prior withdrawals decreased portfolio).
-    // For realism we will still grow portfolio by the return each year.
-    portfolio = portfolio * (1 + annualReturnNominal);
-
-    portfolioValues.push(portfolio);
-
-    // cumulative effective value: we track the running sum of utilAdjusted + (if portfolio exists at death, discount some of it?)
-    // We include the accumulated invested value of any *unspent* SS by tracking portfolio — but to keep metric consistent:
-    // Define cumulativeEffective as sum of utilAdjusted (what user can spend/enjoy) + a small fraction (e.g., 30%) of remaining portfolio as bequest value.
-    // But for comparing claiming ages, the major driver is utilAdjusted sum; we will also report ending portfolio separately.
-    cumEff += utilAdjusted;
-    cumulativeEffective.push(cumEff);
-  }
-
-  return {
-    ages, yearlyAfterTaxSS, yearlyNetSpendingValue, portfolioValues, cumulativeEffective,
-    endingPortfolio: portfolio,
-    totalEffective: cumEff
-  };
-}
-
-function findBreakEven(ages, cumA, cumB){
-  // Find age where cumA and cumB cross (first age where B>=A)
-  for(let i=0;i<ages.length;i++){
-    if(Math.abs(cumA[i]-cumB[i]) < 1e-6) return ages[i];
-    if(cumB[i] >= cumA[i]) return ages[i];
-  }
-  // not broken even before death
-  return null;
-}
-
-function formatUSD(x){
-  return x >= 1000 ? x.toLocaleString(undefined, {style:'currency',currency:'USD',maximumFractionDigits:0}) : '$'+x.toFixed(0);
-}
-
-function buildSummaryCard(title, main, sub){
-  return `<div class="stat"><h3>${title}</h3><p>${main}</p><p class="muted">${sub}</p></div>`;
-}
-
-let myChart = null;
-
-document.getElementById('runBtn').addEventListener('click', ()=>{
-  // Read inputs
-  const inputs = {
-    currentAge: Number(document.getElementById('currentAge').value),
-    lifeExpectancy: Number(document.getElementById('lifeExpectancy').value),
-    healthDeclineAge: Number(document.getElementById('healthDeclineAge').value),
-    utilityAfterDecline: Number(document.getElementById('utilityAfterDecline').value),
-    assets: Number(document.getElementById('assets').value),
-    withdrawRate: Number(document.getElementById('withdrawRate').value),
-    realReturn: Number(document.getElementById('realReturn').value),
-    inflation: Number(document.getElementById('inflation').value),
-    taxRate: Number(document.getElementById('taxRate').value)
-  };
-
-  const strategies = [
-    { name: 'A', claimAge: Number(document.getElementById('claimA_age').value), monthlyBenefit: Number(document.getElementById('claimA_amt').value) },
-    { name: 'B', claimAge: Number(document.getElementById('claimB_age').value), monthlyBenefit: Number(document.getElementById('claimB_amt').value) },
-    { name: 'C', claimAge: Number(document.getElementById('claimC_age').value), monthlyBenefit: Number(document.getElementById('claimC_amt').value) }
+  // Slider live label updates + run on change
+  const sliders = [
+    {id:'claimA_age', label:'claimA_age_label'},
+    {id:'claimB_age', label:'claimB_age_label'},
+    {id:'claimC_age', label:'claimC_age_label'}
   ];
-  // Filter strategies with positive monthlyBenefit
-  const active = strategies.filter(s=>s.monthlyBenefit>0 && s.claimAge>=inputs.currentAge);
-
-  if(active.length < 2){
-    alert('Please enter at least two strategies with monthly benefits and claim ages >= current age.');
-    return;
-  }
-
-  // Run simulations
-  const sims = active.map(s => ({...s, sim: runSimulation(inputs, s)}));
-
-  const ages = sims[0].sim.ages;
-
-  // Prepare chart data: cumulativeEffective per strategy
-  const datasets = sims.map((s,idx) => {
-    const colorHue = 210 - idx*40;
-    return {
-      label: `Claim @ ${s.claimAge} (${s.name})`,
-      data: s.sim.cumulativeEffective,
-      tension: 0.2,
-      borderWidth: 2,
-      pointRadius: 0,
-      borderColor: `hsl(${colorHue} 80% 60%)`,
-      backgroundColor: `rgba(0,0,0,0)`
-    };
+  sliders.forEach(s=>{
+    const slider = document.getElementById(s.id);
+    const label = document.getElementById(s.label);
+    slider.addEventListener('input', ()=>{ label.textContent = slider.value; });
+    slider.addEventListener('change', ()=>{ document.getElementById('runBtn').click(); });
   });
 
-  // Destroy old chart
-  const ctx = document.getElementById('cumulativeChart').getContext('2d');
-  if(myChart) myChart.destroy();
-  myChart = new Chart(ctx, {
-    type:'line',
-    data:{
-      labels: ages,
-      datasets
-    },
-    options:{
-      responsive:true,
-      interaction:{mode:'index',intersect:false},
-      stacked:false,
-      plugins:{
-        legend:{position:'top'},
-        tooltip:{
-          callbacks:{
-            label: function(context){
-              return `${context.dataset.label}: ${formatUSD(context.parsed.y)}`;
-            }
-          }
-        }
-      },
-      scales:{
-        x:{title:{display:true,text:'Age'}},
-        y:{title:{display:true,text:'Cumulative effective value ($)'}}
-      }
+  // Assets input formatting with commas
+  const assetsInput = document.getElementById('assets');
+  assetsInput.addEventListener('input', (e)=>{
+    let value = e.target.value.replace(/,/g,'');
+    if(!isNaN(value) && value!==''){
+      e.target.value = Number(value).toLocaleString();
     }
   });
-
-  // Summary cards and tables
-  const summaryDiv = document.getElementById('summaryCards');
-  summaryDiv.innerHTML = '';
-
-  sims.forEach(s=>{
-    const lastCum = s.sim.cumulativeEffective[s.sim.cumulativeEffective.length-1];
-    summaryDiv.innerHTML += buildSummaryCard(
-      `Strategy ${s.name} — Claim @ ${s.claimAge}`,
-      `${formatUSD(lastCum)} cumulative effective spending`,
-      `Ending portfolio: ${formatUSD(s.sim.endingPortfolio)}`
-    );
-  });
-
-  // Break-even ages pairwise
-  let breakText = '<div style="margin-top:10px"><strong>Break-even results</strong></div>';
-  for(let i=0;i<sims.length;i++){
-    for(let j=i+1;j<sims.length;j++){
-      const be = findBreakEven(ages, sims[i].sim.cumulativeEffective, sims[j].sim.cumulativeEffective);
-      if(be){
-        breakText += `<div class="small muted">Strategy ${sims[j].name} (later) breaks even with ${sims[i].name} at age <strong>${be}</strong>.</div>`;
-      } else {
-        breakText += `<div class="small muted">Strategy ${sims[j].name} (later) does <strong>not</strong> break even with ${sims[i].name} before age ${inputs.lifeExpectancy}.</div>`;
-      }
-    }
-  }
-
-  // Detailed table per strategy
-  let tablesHtml = '<div style="margin-top:8px"><strong>Detailed per-year summary</strong></div>';
-  tablesHtml += '<table><thead><tr><th>Age</th>';
-  sims.forEach(s=> tablesHtml += `<th>SS after-tax (${s.name})</th><th>Utility Adj (${s.name})</th><th>Portfolio (${s.name})</th>`);
-  tablesHtml += '</tr></thead><tbody>';
-
-  for(let k=0;k<ages.length;k++){
-    tablesHtml += `<tr><td>${ages[k]}</td>`;
-    sims.forEach(s=>{
-      const ss = s.sim.yearlyAfterTaxSS[k];
-      const util = s.sim.yearlyNetSpendingValue[k];
-      const port = s.sim.portfolioValues[k];
-      tablesHtml += `<td>${formatUSD(ss)}</td><td>${formatUSD(util)}</td><td>${formatUSD(port)}</td>`;
-    });
-    tablesHtml += '</tr>';
-  }
-  tablesHtml += '</tbody></table>';
-
-  document.getElementById('tables').innerHTML = breakText + tablesHtml;
-});
-
-// Reset button
-document.getElementById('resetBtn').addEventListener('click', ()=>{
-  const defaults = {
-    currentAge:62, lifeExpectancy:88, healthDeclineAge:80, utilityAfterDecline:0.6,
-    assets:500000, withdrawRate:4.0, realReturn:4.0, inflation:2.0, taxRate:12.0,
-    claimA_age:62, claimA_amt:2000, claimB_age:67, claimB_amt:2860, claimC_age:70, claimC_amt:3540
-  };
-  for(const k in defaults){
-    if(document.getElementById(k)) document.getElementById(k).value = defaults[k];
-  }
-  // clear outputs
-  if(myChart) myChart.destroy();
-  document.getElementById('summaryCards').innerHTML = '';
-  document.getElementById('tables').innerHTML = '';
-});
-
 </script>
-</body>
-</html>
