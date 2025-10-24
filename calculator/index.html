@@ -389,7 +389,6 @@
   window.addEventListener('load', ()=>{
     addIncomeRow('Pension',1200);
     runSimulationWrapper();
-  });
 
   // Select all inputs in Assumptions & Inputs and Claiming Strategies
   const inputSelectors = [
@@ -399,7 +398,9 @@
   ];
   inputSelectors.forEach(sel => {
     document.querySelector(sel).addEventListener('input', runSimulationWrapper);
+  });  
   });
+
 </script>
 </body>
 </html>
