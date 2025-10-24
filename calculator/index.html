@@ -271,84 +271,105 @@
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+<!-- Replace the existing script section with this -->
 <script>
   let myChart = null;
   
   function formatUSD(x){ return x >= 1000 ? x.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}) : '$'+x.toFixed(0); }
   function buildSummaryCard(title, main, sub){ return `<div class="stat"><h3>${title}</h3><p>${main}</p><p class="muted">${sub}</p></div>`; }
   
-  function runSimulation(inputs, strategy, otherIncome){
+  // Run simulation for each strategy and asset
+  function runSimulation(inputs, strategy, assets){
     const startAge = inputs.currentAge;
     const endAge   = inputs.lifeExpectancy;
-    const ages = [], yearlyAfterTaxSS=[], yearlyNetSpendingValue=[], portfolioValues=[], cumulativeEffective=[];
-    let portfolio = inputs.assets;
-    const annualReturnNominal = inputs.realReturn/100;
-    const taxRate = inputs.taxRate/100;
-    const withdrawRate = inputs.withdrawRate/100;
+    const ages = [], cumulativeEffective = [], portfolioValues = [];
     let cumEff = 0;
   
+    // Initialize asset balances
+    const assetBalances = assets.map(a => ({...a, balance: a.amount}));
+  
     for(let i=0;i<=endAge-startAge;i++){
-      const age = startAge+i;
+      const age = startAge + i;
       ages.push(age);
+  
+      // Compute total monthly income from all assets
+      let totalOtherIncome = 0;
+      assetBalances.forEach(a=>{
+        const withdrawal = a.balance * (a.withdrawRate/100);
+        totalOtherIncome += withdrawal / 12;  // monthly
+        a.balance = (a.balance - withdrawal) * (1 + a.annualReturn/100); // growth on remainder
+      });
+  
       const yearlySS = (age >= strategy.claimAge) ? strategy.monthlyBenefit*12 : 0;
-      const afterTaxSS = yearlySS*(1-taxRate);
-      const yearlyIncome = yearlySS + otherIncome*12;
-      const utilAdjusted = (age>=inputs.healthDeclineAge)?yearlyIncome*inputs.utilityAfterDecline:yearlyIncome;
-  
-      yearlyAfterTaxSS.push(afterTaxSS);
-      yearlyNetSpendingValue.push(utilAdjusted);
-  
-      let withdrawalThisYear = 0;
-      if(age < strategy.claimAge){
-        withdrawalThisYear = portfolio*withdrawRate;
-        if(withdrawalThisYear>portfolio) withdrawalThisYear = portfolio;
-        portfolio -= withdrawalThisYear;
-      }
-      portfolio = portfolio*(1+annualReturnNominal);
-      portfolioValues.push(portfolio);
+      const afterTaxSS = yearlySS*(1 - inputs.taxRate/100);
+      const yearlyIncome = afterTaxSS + totalOtherIncome*12;
+      const utilAdjusted = (age>=inputs.healthDeclineAge)? yearlyIncome*inputs.utilityAfterDecline : yearlyIncome;
   
       cumEff += utilAdjusted;
       cumulativeEffective.push(cumEff);
+  
+      portfolioValues.push(assetBalances.map(a=>a.balance)); // for chart if needed
     }
   
-    return {ages, yearlyAfterTaxSS, yearlyNetSpendingValue, portfolioValues, cumulativeEffective, endingPortfolio:portfolio, totalEffective:cumEff};
+    return {ages, cumulativeEffective, portfolioValues, totalEffective:cumEff, endingPortfolio:assetBalances.map(a=>a.balance)};
   }
   
-  function findBreakEven(ages, cumA, cumB){
-    for(let i=0;i<ages.length;i++){
-      if(Math.abs(cumA[i]-cumB[i])<1e-6) return ages[i];
-      if(cumB[i]>=cumA[i]) return ages[i];
-    }
-    return null;
-  }
-
+  // Suggest Social Security claiming age
   function suggestSSAge(){
-  const currentAge = Number(document.getElementById('currentAge').value);
-  const lifeExpectancy = Number(document.getElementById('lifeExpectancy').value);
-  // Rough heuristic: start at FRA ~ 66–67, adjusted if short life expectancy
-  let suggested = 66;
-  if(lifeExpectancy<75) suggested = 62;
-  else if(lifeExpectancy>85) suggested = 70;
-  document.getElementById('ssSuggestion').textContent = `Suggested SS claiming age: ${suggested}`;
+    const currentAge = Number(document.getElementById('currentAge').value);
+    const lifeExpectancy = Number(document.getElementById('lifeExpectancy').value);
+    let suggested = 66;
+    if(lifeExpectancy<75) suggested=62;
+    else if(lifeExpectancy>85) suggested=70;
+  
+    // Create or update suggestion div under chart
+    let sugDiv = document.getElementById('ssSuggestion');
+    if(!sugDiv){
+      sugDiv = document.createElement('div');
+      sugDiv.id = 'ssSuggestion';
+      sugDiv.style.marginTop = '8px';
+      sugDiv.style.color = 'var(--accent)';
+      document.getElementById('cumulativeChart').parentNode.appendChild(sugDiv);
+    }
+    sugDiv.textContent = `Suggested SS claiming age: ${suggested}`;
   }
-
+  
+  // Comma formatting for number inputs
   function addCommaFormatting(input){
-  input.addEventListener('blur', e=>{
-    let v = e.target.value.replace(/[^0-9.]/g,'');
-    if(!isNaN(v) && v!==''){ e.target.value = Number(v).toLocaleString(); }
+    input.addEventListener('blur', e=>{
+      let v = e.target.value.replace(/[^0-9.]/g,'');
+      if(!isNaN(v) && v!==''){ e.target.value = Number(v).toLocaleString(); }
     });
-    // Optional: also format while typing
     input.addEventListener('input', e=>{
       let v = e.target.value.replace(/[^0-9]/g,'');
       if(v!==''){ e.target.value = Number(v).toLocaleString(); }
     });
   }
-
+  
   ['assets','claimA_amt','claimB_amt','claimC_amt'].forEach(id=>{
     addCommaFormatting(document.getElementById(id));
   });
-
   
+  // Add asset row instead of "other income"
+  function addAssetRow(label='Asset', amount=500000, withdrawRate=4, annualReturn=4){
+    const list = document.getElementById('otherIncomeList'); // reuse div
+    const div = document.createElement('div');
+    div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
+    div.innerHTML = `
+      <input type="text" placeholder="Asset label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+      <input type="text" placeholder="Total $" value="${amount}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+      <input type="number" placeholder="Withdrawal %" value="${withdrawRate}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+      <input type="number" placeholder="Annual Return %" value="${annualReturn}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
+      <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
+    `;
+    list.appendChild(div);
+  
+    const inputs = div.querySelectorAll('input');
+    inputs.forEach(inp => inp.addEventListener('input', ()=>runSimulationWrapper()));
+    div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
+  }
+  
+  // Wrapper to gather inputs and run simulations
   function runSimulationWrapper(){
     const rawAssets = document.getElementById('assets').value.replace(/[^0-9.]/g,'');
     const inputs = {
@@ -356,37 +377,32 @@
       lifeExpectancy: Number(document.getElementById('lifeExpectancy').value),
       healthDeclineAge: Number(document.getElementById('healthDeclineAge').value),
       utilityAfterDecline: Number(document.getElementById('utilityAfterDecline').value),
-      assets: Number(rawAssets),
-      withdrawRate: Number(document.getElementById('withdrawRate').value),
-      realReturn: Number(document.getElementById('realReturn').value),
-      inflation: Number(document.getElementById('inflation').value),
       taxRate: Number(document.getElementById('taxRate').value)
     };
   
-    let otherIncome = 0;
+    // Gather assets
+    const assets = [];
     document.querySelectorAll('#otherIncomeList div').forEach(div=>{
-      const amtInput = div.querySelectorAll('input')[1];
-      let amt = parseFloat(amtInput.value.replace(/[^0-9.]/g,''));
-      if(!isNaN(amt)) otherIncome += amt;
+      const vals = div.querySelectorAll('input');
+      const amt = parseFloat(vals[1].value.replace(/[^0-9.]/g,'')) || 0;
+      const wr = parseFloat(vals[2].value) || 0;
+      const ar = parseFloat(vals[3].value) || 0;
+      assets.push({label: vals[0].value || 'Asset', amount: amt, withdrawRate: wr, annualReturn: ar});
     });
   
     const strategies = ['A','B','C'].map(letter=>{
-      return {
-        name: letter,
-        claimAge: Number(document.getElementById(`claim${letter}_age`).value),
-        monthlyBenefit: Number(document.getElementById(`claim${letter}_amt`).value)
-      };
+      return {name:letter, claimAge:Number(document.getElementById(`claim${letter}_age`).value), monthlyBenefit:Number(document.getElementById(`claim${letter}_amt`).value)};
     }).filter(s=>s.monthlyBenefit>0 && s.claimAge>=inputs.currentAge);
-  
     if(strategies.length<2) return;
   
-    const sims = strategies.map(s=>({...s, sim: runSimulation(inputs,s,otherIncome)}));
+    const sims = strategies.map(s=>({...s, sim: runSimulation(inputs,s,assets)}));
     const ages = sims[0].sim.ages;
   
     const datasets = sims.map((s,idx)=>{
       const colorHue = 210 - idx*40;
       return {label:`Claim @ ${s.claimAge} (${s.name})`, data:s.sim.cumulativeEffective, tension:0.2, borderWidth:2, pointRadius:0, borderColor:`hsl(${colorHue} 80% 60%)`, backgroundColor:'rgba(0,0,0,0)'};
     });
+  
     const ctx = document.getElementById('cumulativeChart').getContext('2d');
     if(myChart) myChart.destroy();
     myChart = new Chart(ctx,{type:'line',data:{labels:ages,datasets},options:{
@@ -399,46 +415,26 @@
   
     const summaryDiv = document.getElementById('summaryCards'); summaryDiv.innerHTML='';
     sims.forEach(s=>{
-      summaryDiv.innerHTML += buildSummaryCard(`Strategy ${s.name} — Claim @ ${s.claimAge}`,`${formatUSD(s.sim.endingPortfolio)}`,`Total effective utility value: ${formatUSD(s.sim.totalEffective)}`);
+      summaryDiv.innerHTML += buildSummaryCard(`Strategy ${s.name} — Claim @ ${s.claimAge}`,`${formatUSD(s.sim.endingPortfolio.reduce((a,b)=>a+b,0))}`,`Total effective utility value: ${formatUSD(s.sim.totalEffective)}`);
     });
+  
+    suggestSSAge();
   }
-
-  function addIncomeRow(label='',amount=0){
-    const otherIncomeList = document.getElementById('otherIncomeList');
-    const div=document.createElement('div');
-    div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
-    div.innerHTML=`
-      <input type="text" placeholder="Income label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-      <input type="text" placeholder="Amount $" value="${amount}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-      <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
-    `;
-    otherIncomeList.appendChild(div);
-    const amountInput = div.querySelectorAll('input')[1];
-    amountInput.addEventListener('input', ()=>runSimulationWrapper());
-    amountInput.addEventListener('blur', e=>{
-      let v = e.target.value.replace(/[^0-9.]/g,'');
-      if(!isNaN(v) && v!==''){ e.target.value = Number(v).toLocaleString(); }
-    });
-    div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
-  }
-
-  document.getElementById('addIncomeBtn').addEventListener('click', ()=>addIncomeRow());
+  
+  document.getElementById('addIncomeBtn').addEventListener('click', ()=>addAssetRow());
   document.getElementById('runBtn').addEventListener('click', runSimulationWrapper);
+  
   window.addEventListener('load', ()=>{
-    addIncomeRow('401k',0);
+    addAssetRow('401k',500000,4,4); // initial asset
     runSimulationWrapper();
-
-  // Select all inputs in Assumptions & Inputs and Claiming Strategies
-  const inputSelectors = [
-    '#currentAge','#lifeExpectancy','#healthDeclineAge','#utilityAfterDecline',
-    '#assets','#withdrawRate','#realReturn','#inflation','#taxRate',
-    '#claimA_age','#claimA_amt','#claimB_age','#claimB_amt','#claimC_age','#claimC_amt'
-  ];
-  inputSelectors.forEach(sel => {
-    document.querySelector(sel).addEventListener('input', runSimulationWrapper);
-  });  
+  
+    const inputSelectors = [
+      '#currentAge','#lifeExpectancy','#healthDeclineAge','#utilityAfterDecline',
+      '#claimA_age','#claimA_amt','#claimB_age','#claimB_amt','#claimC_age','#claimC_amt'
+    ];
+    inputSelectors.forEach(sel => document.querySelector(sel).addEventListener('input', runSimulationWrapper));
   });
-
-</script>
+  </script>
+  
 </body>
 </html>
