@@ -6,468 +6,752 @@
 <title>True Social Security Break-even Calculator</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0f1724;
-    --card:#0b1220;
-    --muted:#94a3b8;
-    --accent:#60a5fa;
-    --glass: rgba(255,255,255,0.03);
-    --panel-radius:12px;
-    color-scheme: dark;
+:root{
+  --bg:#0f1724; --card:#0b1220; --muted:#94a3b8; --accent:#60a5fa; --glass: rgba(255,255,255,0.03); --panel-radius:12px;
+  color-scheme: dark;
+}
+html,body{height:100%;}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#071022 0%,#071828 100%);color:#e6eef8;padding:20px;}
+.wrap{max-width:1200px;margin:0 auto;}
+header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px;}
+h1{font-size:20px;margin:0;}
+p.lead{margin:0;color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns: 380px 1fr;gap:18px;}
+.panel{background:var(--card);border-radius:var(--panel-radius);padding:16px;box-shadow:0 4px 20px rgba(2,6,23,0.6),inset 0 1px 0 rgba(255,255,255,0.02);}
+label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+input[type="number"], input[type="text"], select {width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;box-sizing:border-box;font-size:14px;}
+input[type="range"]{-webkit-appearance:none;width:100%;height:8px;border-radius:4px;background:rgba(96,165,250,0.3);outline:none;}
+.row{display:flex;gap:10px}
+.row > *{flex:1}
+.small{font-size:12px;color:var(--muted)}
+.controls .btn{display:inline-block;margin-top:8px;background:linear-gradient(180deg,var(--accent),#3b82f6);border:none;color:#04204b;padding:10px 12px;border-radius:8px;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(59,130,246,0.18);}
+.controls .btn.secondary{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);box-shadow:none;font-weight:600;}
+.strategy{margin-bottom:12px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border:1px solid rgba(255,255,255,0.02);}
+.flex-between{display:flex;justify-content:space-between;align-items:center;gap:8px}
+canvas{max-width:100%;}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+th,td{padding:8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03)}
+th{color:var(--muted);font-weight:600;font-size:12px}
+.muted{color:var(--muted);font-size:13px}
+footer{margin-top:12px;color:var(--muted);font-size:12px}
+.results-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+.stat{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px}
+.stat h3{margin:0;font-size:14px}
+.stat p{margin:6px 0 0 0;color:var(--muted);font-size:12px}
+@media (max-width:980px){.grid{grid-template-columns:1fr; }header{flex-direction:column;align-items:flex-start}}
+
+ /* Highlight selected strategy */
+ #summaryCards .stat {
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.03);
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
-  html,body{height:100%;}
-  body{
-    margin:0;
-    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    background: linear-gradient(180deg,#071022 0%, #071828 100%);
-    color:#e6eef8;
-    padding:20px;
+
+  #summaryCards .stat:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.08);
   }
-  .wrap{
-    max-width:1200px;
-    margin:0 auto;
+
+  #summaryCards .stat.active {
+    border: 2px solid #fff;
+    background-color: rgba(255,255,255,0.08);
+    box-shadow: 0 4px 12px rgba(255,255,255,0.15);
   }
-  header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:20px;
-    margin-bottom:18px;
+
+  #summaryCards .stat h3 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 600;
   }
-  h1{font-size:20px;margin:0;}
-  p.lead{margin:0;color:var(--muted);font-size:13px}
-  .grid{
-    display:grid;
-    grid-template-columns: 380px 1fr;
-    gap:18px;
+
+  #summaryCards .stat p {
+    margin: 0;
+    font-size: 13px;
+    color: #94a3b8;
   }
-  .panel{
-    background:var(--card);
-    border-radius:var(--panel-radius);
-    padding:16px;
-    box-shadow: 0 4px 20px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+
+  /* Header labels for asset/income sections */
+  .input-header {
+    display: flex;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 12px;
+    color: #94a3b8; /* muted text color */
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
-  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
-  input[type="number"], input[type="text"], select {
-    width:100%;
-    padding:8px 10px;
-    border-radius:8px;
-    border:1px solid rgba(255,255,255,0.04);
-    background:var(--glass);
-    color:inherit;
-    box-sizing:border-box;
-    font-size:14px;
+
+  .input-header div {
+    flex: 1;
   }
-  input[type="range"] {
-    -webkit-appearance:none;
-    width:100%;
-    height:8px;
-    border-radius:4px;
-    background:rgba(96,165,250,0.3);
-    outline:none;
-  }
-  .row{display:flex;gap:10px}
-  .row > *{flex:1}
-  .small{font-size:12px;color:var(--muted)}
-  .controls .btn{
-    display:inline-block;
-    margin-top:8px;
-    background:linear-gradient(180deg,var(--accent),#3b82f6);
-    border:none;color:#04204b;padding:10px 12px;border-radius:8px;font-weight:600;cursor:pointer;
-    box-shadow:0 6px 18px rgba(59,130,246,0.18);
-  }
-  .controls .btn.secondary{
-    background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);
-    box-shadow:none;font-weight:600;
-  }
-  .strategy{
-    margin-bottom:12px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
-    border:1px solid rgba(255,255,255,0.02);
-  }
-  .flex-between{display:flex;justify-content:space-between;align-items:center;gap:8px}
-  canvas{max-width:100%;}
-  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
-  th,td{padding:8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03)}
-  th{color:var(--muted);font-weight:600;font-size:12px}
-  .muted{color:var(--muted);font-size:13px}
-  footer{margin-top:12px;color:var(--muted);font-size:12px}
-  .results-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
-  .stat{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px}
-  .stat h3{margin:0;font-size:14px}
-  .stat p{margin:6px 0 0 0;color:var(--muted);font-size:12px}
-  @media (max-width:980px){
-    .grid{grid-template-columns:1fr; }
-    header{flex-direction:column;align-items:flex-start}
+
+  /* Adjust specific widths */
+  .input-header .name {
+    flex: 2;
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div>
-      <h1>True Social Security Break-even Calculator</h1>
-      <p class="lead">Compare claiming ages, investment opportunity cost, taxes, and health-related spending decline — and see the break-even age.</p>
+<header>
+  <div>
+    <h1>True Social Security Break-even Calculator</h1>
+    <p class="lead">Compare claiming ages, investment opportunity cost, taxes, and health-related spending decline — and see the break-even age.</p>
+  </div>
+</header>
+
+<div class="grid">
+  <div>
+    <div class="panel">
+      <strong>Assumptions & Inputs</strong>
+
+      <!-- 1. Current age -->
+      <label style="margin-top:10px">Current age</label>
+      <input id="currentAge" type="number" min="50" max="95" value="62">
+
+      <!-- 2. Life expectancy -->
+      <label style="margin-top:10px">Life expectancy (age)</label>
+      <input id="lifeExpectancy" type="number" min="65" max="110" value="88">
+
+      <!-- 3. Desired monthly income -->
+      <label style="margin-top:10px">Desired monthly income</label>
+      <input id="desiredIncome" type="range" min="0" max="15000" step="100" value="5000">
+      <div class="small muted" id="desiredIncomeLabel">$ / month</div>
+
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+
+<!-- Retirement Assets -->
+<strong>Retirement Assets</strong>
+<div class="input-header">
+  <div class="name">Name</div>
+  <div>Value ($)</div>
+  <div>
+    Growth (%)
+  <span class="tooltip" title = "Enter the projected annual growth rate for this asset">ℹ️</span></div>
+</div>
+<div id="assetList"></div>
+<button type="button" id="addAssetBtn" class="btn secondary" style="margin-top:6px;">Add Asset</button>
+<div class="small muted">Enter your other retirement assets like 401k, IRA, brokerage accounts. Include total amount and projected annual growth rate.</div>
+
+<hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+
+<!-- Asset Withdrawals -->
+<strong>Asset Withdrawals</strong>
+<div id="assetWithdrawals"></div>
+<div class="small muted">Adjust the slider to select monthly withdrawal from each asset.</div>
+
+<hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+
+<!-- Other Monthly Income Sources -->
+<strong>Other Monthly Income Sources</strong>
+<!-- Other Monthly Income Sources -->
+<div class="input-header">
+  <div class="name">Source</div>
+  <div>Monthly Income ($)</div>
+</div>
+<div id="otherIncomeList"></div>
+<button type="button" id="addIncomeBtn" class="btn secondary" style="margin-top:6px;">Add Income Source</button>
+
+
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+
+      <!-- Claiming strategies -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <strong>Claiming strategies (monthly SS benefit)</strong>
+        <span class="small muted">Enter your expected benefit at each claim age</span>
+      </div>
+
+      <!-- Strategy A -->
+      <div class="strategy">
+        <div class="flex-between">
+          <div style="flex:1">
+            <label>Strategy A claim age</label>
+            <input id="claimA_age" type="number" min="62" max="70" value="62">
+          </div>
+          <div style="width:46%">
+            <label>Monthly SS @ that age ($)</label>
+            <input id="claimA_amt" type="number" min="0" value="2000">
+          </div>
+        </div>
+      </div>
+
+      <!-- Strategy B -->
+      <div class="strategy">
+        <div class="flex-between">
+          <div style="flex:1">
+            <label>Strategy B claim age</label>
+            <input id="claimB_age" type="number" min="62" max="70" value="67">
+          </div>
+          <div style="width:46%">
+            <label>Monthly SS @ that age ($)</label>
+            <input id="claimB_amt" type="number" min="0" value="2860">
+          </div>
+        </div>
+      </div>
+
+      <!-- Strategy C -->
+      <div class="strategy">
+        <div class="flex-between">
+          <div style="flex:1">
+            <label>Strategy C claim age</label>
+            <input id="claimC_age" type="number" min="62" max="70" value="70">
+          </div>
+          <div style="width:46%">
+            <label>Monthly SS @ that age ($)</label>
+            <input id="claimC_amt" type="number" min="0" value="3540">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px" class="controls">
+        <button id="runBtn" class="btn">Run comparison</button>
+      </div>
+
     </div>
-  </header>
+  </div>
 
-  <div class="grid">
-    <div>
-      <div class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <strong>Assumptions & Inputs</strong>
-        </div>
-      
-        <!-- 1. Current age -->
-        <label>Current age</label>
-        <input id="currentAge" type="number" min="50" max="95" value="62">
-      
-        <!-- 2. Life expectancy -->
-        <label style="margin-top:10px">Life expectancy (age)</label>
-        <input id="lifeExpectancy" type="number" min="65" max="110" value="88">
-      
-        <!-- 3. Health decline starting age -->
-        <label style="margin-top:10px">Health decline starting age</label>
-        <input id="healthDeclineAge" type="number" min="60" max="110" value="80">
-        <div class="small muted">Spending ability reduces gradually after this age.</div>
-      
-        <!-- 4. Income preference -->
-        <label style="margin-top:10px">Income preference</label>
-        <select id="incomePref">
-          <option value="early">More income while healthy (early)</option>
-          <option value="late">Maximize later income</option>
-        </select>
-      
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
-      
-        <!-- 6. Other retirement assets -->
-        <strong>Retirement Assets</strong>
-        <div id="assetList"></div>
-        <button type="button" id="addAssetBtn" class="btn secondary" style="margin-top:6px;">Add Asset</button>
-        <div class="small muted">Enter your other retirement assets like 401k, IRA, brokerage accounts. Include total amount and expected annual growth.</div>
-      
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
-      
-        <!-- 7. Withdrawals -->
-        <strong>Asset Withdrawals</strong>
-        <div id="withdrawList"></div>
-        <button type="button" id="addWithdrawBtn" class="btn secondary" style="margin-top:6px;">Add Withdrawal Plan</button>
-        <div class="small muted">Set withdrawal age and monthly withdrawal amount per asset.</div>
-      
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
-      
-        <!-- Other monthly income (unchanged) -->
-        <strong>Other Monthly Income Sources</strong>
-        <div id="otherIncomeList"></div>
-        <button type="button" id="addIncomeBtn" class="btn secondary" style="margin-top:6px;">Add Income Source</button>
-        <div class="small muted">For recurring monthly income like real estate rent, pensions, annuities, etc.</div>
-      
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
-      
-        <!-- Claiming strategies -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <strong>Claiming strategies (monthly SS benefit)</strong>
-          <span class="small muted">Enter your expected benefit at each claim age</span>
-        </div>
-      
-        <!-- Strategy A -->
-        <div class="strategy">
-          <div class="flex-between">
-            <div style="flex:1">
-              <label>Strategy A claim age</label>
-              <input id="claimA_age" type="number" min="62" max="70" value="62">
-            </div>
-            <div style="width:46%">
-              <label>Monthly SS @ that age ($)</label>
-              <input id="claimA_amt" type="number" min="0" value="2000">
-            </div>
-          </div>
-        </div>
-      
-        <!-- Strategy B -->
-        <div class="strategy">
-          <div class="flex-between">
-            <div style="flex:1">
-              <label>Strategy B claim age</label>
-              <input id="claimB_age" type="number" min="62" max="70" value="67">
-            </div>
-            <div style="width:46%">
-              <label>Monthly SS @ that age ($)</label>
-              <input id="claimB_amt" type="number" min="0" value="2860">
-            </div>
-          </div>
-        </div>
-      
-        <!-- Strategy C -->
-        <div class="strategy">
-          <div class="flex-between">
-            <div style="flex:1">
-              <label>Strategy C claim age</label>
-              <input id="claimC_age" type="number" min="62" max="70" value="70">
-            </div>
-            <div style="width:46%">
-              <label>Monthly SS @ that age ($)</label>
-              <input id="claimC_amt" type="number" min="0" value="3540">
-            </div>
-          </div>
-        </div>
-      
-        <div style="display:flex;gap:8px;margin-top:12px" class="controls">
-          <button id="runBtn" class="btn">Run comparison</button>
-          <button id="resetBtn" class="btn secondary" title="Reset to defaults">Reset</button>
-        </div>
-      
+  <div>
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>Results & visualization</strong>
+        <div class="small muted">Stacked income vs age</div>
       </div>
+      
+      <div id="resultsContainer" style="
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 12px;
+">
+  <!-- Left: Summary cards -->
+<div id="summaryCards" style="
+flex: 1;
+display: flex;
+flex-direction: column;
+gap: 12px;
+"></div>
 
-      <div class="panel" style="margin-top:12px">
-        <strong>Quick tips</strong>
-        <ul class="small muted" style="padding-left:16px">
-          <li>Enter the monthly benefits you expect at each claim age (use SSA statements if available).</li>
-          <li>If delaying SS, use your assets + withdrawal rate to partially fund spending until SS starts.</li>
-          <li>Utility factor models reduced ability/desire to spend after poor health.</li>
-        </ul>
-      </div>
-    </div>
 
-    <div>
-      <div class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <strong>Results & visualization</strong>
-          <div class="small muted">Cumulative effective (utility-adjusted) value vs age</div>
-        </div>
 
-        <div style="margin-top:12px">
-          <canvas id="cumulativeChart" height="220"></canvas>
-        </div>
+  <!-- Divider -->
+  <div style="width: 1px; background: rgba(255,255,255,0.1); height: 250px; align-self: center;"></div>
 
-        <div class="results-grid" id="summaryCards" style="margin-top:12px"></div>
-
-        <div id="tables" style="margin-top:12px"></div>
-
-        <footer>
-          <div class="muted">Model assumptions are simplified. This is a planning tool — not financial advice.</div>
-        </footer>
-      </div>
+  <!-- Right: Income Gap Chart -->
+  <div style="flex: 2;">
+    <div style="text-align:center; font-weight:600; margin-bottom:8px;">Actual vs Desired Annual Income</div>
+    <canvas id="incomeGapChart" height="220"></canvas>
+  </div>
+</div>
+</div>
+      <canvas id="cumulativeChart" height="200" style="margin-top:12px"></canvas>
+      <footer>
+        <div class="muted">Model assumptions are simplified. This is a planning tool — not financial advice.</div>
+      </footer>
     </div>
   </div>
 </div>
+</div>
 
-<!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.1/dist/chartjs-plugin-annotation.min.js"></script>
 
-<!-- Replace the existing script section with this -->
 <script>
-  let myChart = null;
+  let incomeGapChart = null;
+  let cumulativeChart = null;
+  let activeStrategy = null;
+  let yearlyData = [];
   
-  function formatUSD(x){ return x >= 1000 ? x.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}) : '$'+x.toFixed(0); }
-  function buildSummaryCard(title, main, sub){ return `<div class="stat"><h3>${title}</h3><p>${main}</p><p class="muted">${sub}</p></div>`; }
+  // -------------------- Income Gap Chart --------------------
+  function updateIncomeGapChart(yearlyData, desiredIncome, activeStrategy) {
+  const ctx = document.getElementById('incomeGapChart').getContext('2d');
+  const ages = yearlyData.map(d => d.age);
+
+  // Compute actual income dynamically per year
+  const actualIncome = yearlyData.map(d => {
+    let ss = 0;
+    if (activeStrategy && d.age >= activeStrategy.claimAge) ss = activeStrategy.monthlyBenefit;
+
+    // Sum of all asset withdrawals for that year
+    let assetsIncome = 0;
+    document.querySelectorAll('#assetWithdrawals div').forEach((wDiv, i) => {
+      const slider = wDiv.querySelector('input[type="range"]');
+      assetsIncome += Number(slider?.value || 0);
+    });
+
+    // Sum of all other monthly income sources
+    let otherIncome = 0;
+    document.querySelectorAll('#otherIncomeList div').forEach(div => {
+      const inputs = div.querySelectorAll('input');
+      otherIncome += Number(inputs[1]?.value || 0);
+    });
+
+    return ss + assetsIncome + otherIncome;
+  });
+
+  const desiredLine = ages.map(() => desiredIncome);
+  const incomeGap = yearlyData.map((d, i) => Math.max(desiredIncome - actualIncome[i], 0));
+
+  if (incomeGapChart) incomeGapChart.destroy();
+
+  incomeGapChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ages,
+      datasets: [
+        {
+          label: 'Desired Monthly Income',
+          data: desiredLine,
+          borderColor: 'rgba(234,179,8,0.9)',
+          borderWidth: 2,
+          borderDash: [6, 4],
+          fill: false,
+          tension: 0.2
+        },
+        {
+          label: 'Actual Monthly Income',
+          data: actualIncome,
+          borderColor: 'rgba(34,197,94,0.9)',
+          backgroundColor: 'rgba(34,197,94,0.25)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.2
+        },
+        {
+          label: 'Income Gap',
+          data: incomeGap,
+          borderColor: 'rgba(248,113,113,0.9)',
+          backgroundColor: 'rgba(248,113,113,0.25)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      animation: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        tooltip: {
+  enabled: false,
+  external: function(context) {
+    let tooltipEl = document.getElementById('chartjs-tooltip');
+    if (!tooltipEl) {
+      tooltipEl = document.createElement('div');
+      tooltipEl.id = 'chartjs-tooltip';
+      Object.assign(tooltipEl.style, {
+        position: 'absolute',
+        background: '#0b1220',
+        border: '1px solid rgba(255,255,255,0.1)',
+        padding: '8px',
+        borderRadius: '6px',
+        pointerEvents: 'none',
+        color: '#fff',
+        fontSize: '12px',
+        whiteSpace: 'nowrap'
+      });
+      document.body.appendChild(tooltipEl);
+    }
+
+    const tooltipModel = context.tooltip;
+    if (tooltipModel.opacity === 0) {
+      tooltipEl.style.opacity = 0;
+      return;
+    }
+
+    const dataIndex = tooltipModel.dataPoints[0].dataIndex;
+    const actual = context.chart.data.datasets[1].data[dataIndex]; // Actual Monthly Income
+    const desired = context.chart.data.datasets[0].data[dataIndex];
+    const gap = context.chart.data.datasets[2].data[dataIndex];
+
+    // Build dynamic breakdown
+    const sources = [];
+
+    // Social Security
+    const activeStrategy = window.activeStrategy; // or however you track it
+    const ss = activeStrategy && yearlyData[dataIndex].age >= activeStrategy.claimAge
+      ? activeStrategy.monthlyBenefit
+      : 0;
+    if (ss > 0) sources.push({name:'Social Security', amount:ss});
+
+    // Asset withdrawals
+    document.querySelectorAll('#assetWithdrawals div').forEach(wDiv => {
+      const label = wDiv.querySelector('label')?.textContent || 'Asset';
+      const val = Number(wDiv.querySelector('input[type="range"]')?.value || 0);
+      sources.push({name: label, amount: val});
+    });
+
+    // Other income
+    document.querySelectorAll('#otherIncomeList div').forEach(div => {
+      const inputs = div.querySelectorAll('input');
+      const name = inputs[0]?.value || 'Income';
+      const val = Number(inputs[1]?.value || 0);
+      sources.push({name, amount: val});
+    });
+
+    tooltipEl.innerHTML = `
+      <div style="display:flex; gap:12px;">
+        <div>
+          <div>Desired: $${desired.toLocaleString()}</div>
+          <div>Actual: $${actual.toLocaleString()}</div>
+          <div>Gap: $${gap.toLocaleString()}</div>
+        </div>
+        <div style="border-left:1px solid rgba(255,255,255,0.3); padding-left:8px;">
+          ${sources.map(s => `<div>${s.name}: $${s.amount.toLocaleString()}</div>`).join('')}
+        </div>
+      </div>
+    `;
+
+    const canvasRect = context.chart.canvas.getBoundingClientRect();
+    tooltipEl.style.opacity = 1;
+    tooltipEl.style.left = canvasRect.left + window.pageXOffset + tooltipModel.caretX + 'px';
+    tooltipEl.style.top = canvasRect.top + window.pageYOffset + tooltipModel.caretY + 'px';
+  }
+}
+
+
+      },
+      scales: {
+        x: { title: { display: true, text: 'Age' } },
+        y: { title: { display: true, text: 'Monthly Amount ($)' } }
+      }
+    }
+  });
+}
+
+
   
-  // Run simulation for each strategy and asset
-  function runSimulation(inputs, strategy, assets){
-    const startAge = inputs.currentAge;
-    const endAge   = inputs.lifeExpectancy;
-    const ages = [], cumulativeEffective = [], portfolioValues = [];
-    let cumEff = 0;
+  // -------------------- Cumulative Chart --------------------
+  function updateCumulativeChart(yearlyData, strategies) {
+    const ctx = document.getElementById('cumulativeChart').getContext('2d');
+    const ages = yearlyData.map(d => d.age);
   
-    // Initialize asset balances
-    const assetBalances = assets.map(a => ({...a, balance: a.amount}));
+    const datasets = strategies.map((s, idx) => {
+      let cumulative = 0;
+      const values = yearlyData.map(d => {
+        const annualSS = d.age >= s.claimAge ? s.monthlyBenefit * 12 : 0;
+        cumulative += annualSS + d.assets / strategies.length + d.other / strategies.length;
+        return cumulative;
+      });
+      const colors = ['#60a5fa','#22c55e','#f87171'];
+      return {
+        label: `Strategy ${s.name}`,
+        data: values,
+        borderColor: colors[idx],
+        backgroundColor: colors[idx] + '33',
+        borderWidth: 2,
+        fill: false,
+        tension: 0.2
+      };
+    });
   
-    for(let i=0;i<=endAge-startAge;i++){
-      const age = startAge + i;
-      ages.push(age);
+    // Break-even lines
+    const breakEvenAges = [];
+    for (let i = 0; i < strategies.length; i++) {
+      for (let j = i + 1; j < strategies.length; j++) {
+        for (let k = 1; k < yearlyData.length; k++) {
+          const prevDiff = datasets[i].data[k-1] - datasets[j].data[k-1];
+          const currDiff = datasets[i].data[k] - datasets[j].data[k];
+          if (prevDiff * currDiff < 0) breakEvenAges.push(ages[k]);
+        }
+      }
+    }
   
-      // Compute total monthly income from all assets
-      let totalOtherIncome = 0;
-      assetBalances.forEach(a=>{
-        const withdrawal = a.balance * (a.withdrawRate/100);
-        totalOtherIncome += withdrawal / 12;  // monthly
-        a.balance = (a.balance - withdrawal) * (1 + a.annualReturn/100); // growth on remainder
+    if (cumulativeChart) cumulativeChart.destroy();
+  
+    cumulativeChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels: ages, datasets },
+      options: {
+        responsive: true,
+        animation: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}`
+            }
+          },
+          annotation: {
+            annotations: breakEvenAges.map(age => ({
+              type: 'line',
+              xMin: age,
+              xMax: age,
+              borderColor: 'yellow',
+              borderWidth: 2,
+              label: {
+                enabled: true,
+                content: 'Break-even',
+                position: 'start',
+                backgroundColor: 'yellow',
+                color: '#000',
+                font: { weight: 'bold' }
+              }
+            }))
+          }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Age' } },
+          y: { title: { display: true, text: 'Cumulative Value ($)' } }
+        }
+      },
+      plugins: [Chart.registry.getPlugin('annotation')]
+    });
+  }
+  
+  // -------------------- Run Simulation --------------------
+  function runSimulation() {
+    const currentAge = Number(document.getElementById('currentAge').value);
+    const desiredIncome = Number(document.getElementById('desiredIncome').value);
+    const lifeExpectancy = Number(document.getElementById('lifeExpectancy').value);
+      
+    const assets = [], withdrawals = [];
+    document.querySelectorAll('#assetList div').forEach((div, i) => {
+      const vals = div.querySelectorAll('input');
+      const amt = parseFloat(vals[1]?.value.replace(/[^0-9.]/g,'')) || 0;
+      const growth = parseFloat(vals[2]?.value) || 0;
+      assets.push({ label: vals[0]?.value || 'Asset', amount: amt, growth });
+      const slider = document.getElementById('assetWithdrawals').children[i]?.querySelector('input');
+      withdrawals.push(parseFloat(slider?.value) || 0);
+    });
+  
+    const otherIncome = [];
+    document.querySelectorAll('#otherIncomeList div').forEach(div => {
+      const vals = div.querySelectorAll('input');
+      otherIncome.push({ label: vals[0]?.value || 'Income', monthly: Number(vals[1]?.value) || 0 });
+    });
+  
+    const strategies = ['A','B','C'].map(l => ({
+      name: l,
+      claimAge: Number(document.getElementById(`claim${l}_age`).value),
+      monthlyBenefit: Number(document.getElementById(`claim${l}_amt`).value)
+    })).filter(s => s.monthlyBenefit > 0 && s.claimAge >= currentAge);
+  
+    yearlyData.length = 0;
+    for (let i = 0; i <= lifeExpectancy - currentAge; i++) {
+      const age = currentAge + i;
+      const data = { age, SS: 0, assets: 0, other: 0, total: 0 };
+  
+      otherIncome.forEach(o => data.other += o.monthly * 12);
+      strategies.forEach(s => { if (age >= s.claimAge) data.SS += s.monthlyBenefit * 12; });
+  
+      assets.forEach((a, idx) => {
+        if (i === 0) a.balance = a.amount;
+        const withdrawal = withdrawals[idx];
+        const monthlyGrowth = Math.pow(1 + a.growth / 100, 1 / 12) - 1;
+        let balance = a.balance;
+        let totalWithdrawal = 0;
+        for (let m = 0; m < 12; m++) {
+          const w = Math.min(withdrawal, balance);
+          balance = (balance - w) * (1 + monthlyGrowth);
+          totalWithdrawal += w;
+        }
+        a.balance = balance;
+        data.assets += totalWithdrawal;
       });
   
-      const yearlySS = (age >= strategy.claimAge) ? strategy.monthlyBenefit*12 : 0;
-      const afterTaxSS = yearlySS*(1 - inputs.taxRate/100);
-      const yearlyIncome = afterTaxSS + totalOtherIncome*12;
-      const utilAdjusted = (age>=inputs.healthDeclineAge)? yearlyIncome*inputs.utilityAfterDecline : yearlyIncome;
-  
-      cumEff += utilAdjusted;
-      cumulativeEffective.push(cumEff);
-  
-      portfolioValues.push(assetBalances.map(a=>a.balance)); // for chart if needed
+      data.total = data.SS + data.assets + data.other;
+      yearlyData.push(data);
     }
   
-    return {ages, cumulativeEffective, portfolioValues, totalEffective:cumEff, endingPortfolio:assetBalances.map(a=>a.balance)};
+    updateCumulativeChart(yearlyData, strategies);
+    updateSummaryCards(strategies);
+    updateIncomeGapChart(yearlyData, desiredIncome, activeStrategy); // initial chart
   }
   
-  // Suggest Social Security claiming age
-  function suggestSSAge(){
-    const currentAge = Number(document.getElementById('currentAge').value);
-    const lifeExpectancy = Number(document.getElementById('lifeExpectancy').value);
-    let suggested = 66;
-    if(lifeExpectancy<75) suggested=62;
-    else if(lifeExpectancy>85) suggested=70;
+  // -------------------- Summary Cards --------------------
+  function updateSummaryCards(strategies) {
+    const container = document.getElementById('summaryCards');
+    container.innerHTML = '';
   
-    // Create or update suggestion div under chart
-    let sugDiv = document.getElementById('ssSuggestion');
-    if(!sugDiv){
-      sugDiv = document.createElement('div');
-      sugDiv.id = 'ssSuggestion';
-      sugDiv.style.marginTop = '8px';
-      sugDiv.style.color = 'var(--accent)';
-      document.getElementById('cumulativeChart').parentNode.appendChild(sugDiv);
+    strategies.forEach((s, idx) => {
+      const card = document.createElement('div');
+      card.className = 'stat';
+      card.dataset.strategy = s.claimAge + '-' + s.monthlyBenefit;
+      card.innerHTML = `
+        <h3>Claim Age: ${s.claimAge}</h3>
+        <p>Monthly SS: $${s.monthlyBenefit.toLocaleString()}</p>
+      `;
+  
+      // Set default strategy
+      if (!activeStrategy && idx === 0) activeStrategy = s;
+  
+      if (activeStrategy.claimAge === s.claimAge && activeStrategy.monthlyBenefit === s.monthlyBenefit) {
+        card.classList.add('active');
+      }
+  
+      card.addEventListener('click', () => {
+        activeStrategy = s;
+        document.querySelectorAll('#summaryCards .stat').forEach(t => t.classList.remove('active'));
+        card.classList.add('active');
+        // Only update income gap chart
+        const desiredIncome = Number(document.getElementById('desiredIncome').value);
+        updateIncomeGapChart(yearlyData, desiredIncome, activeStrategy);
+      });
+  
+      container.appendChild(card);
+    });
+  }
+  
+  // -------------------- Desired Income Slider --------------------
+  const desiredIncomeSlider = document.getElementById('desiredIncome');
+  const desiredIncomeLabel = document.getElementById('desiredIncomeLabel');
+  
+  function updateDesiredIncomeLabel() {
+    desiredIncomeLabel.textContent = `$${Number(desiredIncomeSlider.value).toLocaleString()} / month`;
+  }
+  
+  updateDesiredIncomeLabel();
+  desiredIncomeSlider.addEventListener('input', () => {
+    updateDesiredIncomeLabel();
+    runSimulation();
+  });
+  
+  // -------------------- Hook up other events --------------------
+  document.getElementById('runBtn').addEventListener('click', runSimulation);
+  document.querySelectorAll('input').forEach(el => {
+    el.addEventListener('input', runSimulation);
+  });
+
+  // -------------------- Add Retirement Asset --------------------
+document.getElementById('addAssetBtn').addEventListener('click', () => {
+  const container = document.getElementById('assetList');
+  const withdrawalsContainer = document.getElementById('assetWithdrawals');
+
+  // Asset row
+  const div = document.createElement('div');
+  div.style.display = 'flex';
+  div.style.gap = '8px';
+  div.style.marginBottom = '8px';
+
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.placeholder = 'Asset name';
+  nameInput.style.flex = '2';
+
+  const amountInput = document.createElement('input');
+  amountInput.type = 'text'; // use text so we can format commas
+  amountInput.placeholder = 'Amount ($)';
+  amountInput.value = '0';
+  amountInput.style.flex = '1.5';
+  amountInput.style.textAlign = 'right';
+
+  const growthInput = document.createElement('input');
+  growthInput.type = 'number';
+  growthInput.placeholder = 'Annual growth (%)';
+  growthInput.value = 5;
+  growthInput.step = 0.1;
+  growthInput.style.flex = '0.8';
+
+  // Format amount with commas while typing
+  amountInput.addEventListener('input', () => {
+    let val = amountInput.value.replace(/,/g, '').replace(/[^\d.]/g, '');
+    if (val) {
+      const parts = val.split('.');
+      parts[0] = parseInt(parts[0], 10).toLocaleString();
+      amountInput.value = parts.join('.');
+    } else {
+      amountInput.value = '';
     }
-    sugDiv.textContent = `Suggested SS claiming age: ${suggested}`;
-  }
-  
-  // Comma formatting for number inputs
-  function addCommaFormatting(input){
-    input.addEventListener('blur', e=>{
-      let v = e.target.value.replace(/[^0-9.]/g,'');
-      if(!isNaN(v) && v!==''){ e.target.value = Number(v).toLocaleString(); }
-    });
-    input.addEventListener('input', e=>{
-      let v = e.target.value.replace(/[^0-9]/g,'');
-      if(v!==''){ e.target.value = Number(v).toLocaleString(); }
-    });
-  }
-  
-  ['assets','claimA_amt','claimB_amt','claimC_amt'].forEach(id=>{
-    addCommaFormatting(document.getElementById(id));
   });
-  
-  // Add asset row instead of "other income"
-  function addAssetRow(label='Asset', amount=500000, withdrawRate=4, annualReturn=4){
-  const list = document.getElementById('assetList'); // corrected target
-  const div = document.createElement('div');
-  div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
-  div.innerHTML = `
-    <input type="text" placeholder="Asset label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-    <input type="text" placeholder="Total $" value="${amount}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-    <input type="number" placeholder="Withdrawal %" value="${withdrawRate}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-    <input type="number" placeholder="Annual Return %" value="${annualReturn}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-    <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
-  `;
-  list.appendChild(div);
 
-  // Remove button
-  div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
+  div.appendChild(nameInput);
+  div.appendChild(amountInput);
+  div.appendChild(growthInput);
+  container.appendChild(div);
 
-  // Trigger recalculation on input change
-  div.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', runSimulationWrapper));
-  }
+ // Corresponding withdrawal slider + number input
+const wDiv = document.createElement('div');
+wDiv.style.marginBottom = '12px';
+wDiv.style.display = 'flex';
+wDiv.style.alignItems = 'center';
+wDiv.style.gap = '8px';
 
-  // Add withdrawal row
-  function addWithdrawRow(assetLabel='Asset', startAge=65, monthly=2000){
-  const list = document.getElementById('withdrawList');
+const label = document.createElement('label');
+label.style.minWidth = '120px';
+label.textContent = `${nameInput.value || 'Asset'}`;
+
+// Slider
+const slider = document.createElement('input');
+slider.type = 'range';
+slider.min = 0;
+slider.max = 20000; // reasonable maximum
+slider.value = 0;
+slider.step = 100;
+slider.style.flex = '1';
+
+// Number input
+const numberInput = document.createElement('input');
+numberInput.type = 'number';
+numberInput.min = 0;
+numberInput.max = 20000;
+numberInput.step = 100;
+numberInput.value = 0;
+numberInput.style.width = '100px';
+numberInput.style.textAlign = 'right';
+
+// Keep slider and number input in sync
+slider.addEventListener('input', () => {
+  numberInput.value = slider.value;
+  runSimulation();
+});
+numberInput.addEventListener('input', () => {
+  let val = Number(numberInput.value);
+  if (val > 20000) val = 20000;
+  if (val < 0) val = 0;
+  numberInput.value = val;
+  slider.value = val;
+  runSimulation();
+});
+
+// Update label if asset name changes
+nameInput.addEventListener('input', () => {
+  label.textContent = `${nameInput.value || 'Asset'}`;
+});
+
+wDiv.appendChild(label);
+wDiv.appendChild(slider);
+wDiv.appendChild(numberInput);
+withdrawalsContainer.appendChild(wDiv);
+
+
+  runSimulation();
+});
+
+
+// -------------------- Add Other Income --------------------
+document.getElementById('addIncomeBtn').addEventListener('click', () => {
+  const container = document.getElementById('otherIncomeList');
+  
   const div = document.createElement('div');
-  div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
+  div.style.display = 'flex';
+  div.style.gap = '8px';
+  div.style.marginBottom = '8px';
   div.innerHTML = `
-    <input type="text" placeholder="Asset label" value="${assetLabel}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-    <input type="number" placeholder="Withdrawal start age" value="${startAge}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-    <input type="number" placeholder="Monthly $" value="${monthly}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-    <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
+    <input type="text" placeholder="Income name" style="flex:2">
+    <input type="number" placeholder="Amount ($)" value="0" style="flex:1">
   `;
-  list.appendChild(div);
-  div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
-  div.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', runSimulationWrapper));
-  }
-    
-    const list = document.getElementById('otherIncomeList'); // reuse div
-    const div = document.createElement('div');
-    div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
-    div.innerHTML = `
-      <input type="text" placeholder="Asset label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-      <input type="text" placeholder="Total $" value="${amount}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-      <input type="number" placeholder="Withdrawal %" value="${withdrawRate}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-      <input type="number" placeholder="Annual Return %" value="${annualReturn}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-      <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
-    `;
-    list.appendChild(div);  
-    const inputs = div.querySelectorAll('input');
-    inputs.forEach(inp => inp.addEventListener('input', ()=>runSimulationWrapper()));
-    div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
-    
-    // Add other income row
-  function addOtherIncomeRow(label='Income', monthly=500){
-  const list = document.getElementById('otherIncomeList');
-  const div = document.createElement('div');
-  div.style.display='flex'; div.style.gap='6px'; div.style.marginTop='4px';
-  div.innerHTML = `
-    <input type="text" placeholder="Income label" value="${label}" style="flex:2;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-    <input type="number" placeholder="Monthly $" value="${monthly}" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px">
-    <button type="button" style="flex:0.3;background:transparent;border:none;color:var(--muted);cursor:pointer">✕</button>
-  `;
-  list.appendChild(div);
-  div.querySelector('button').addEventListener('click', ()=>{ div.remove(); runSimulationWrapper(); });
-  div.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', runSimulationWrapper));
-  }
-  
-  // Wrapper to gather inputs and run simulations
-  function runSimulationWrapper(){
-    const rawAssets = document.getElementById('assets').value.replace(/[^0-9.]/g,'');
-    const inputs = {
-      currentAge: Number(document.getElementById('currentAge').value),
-      lifeExpectancy: Number(document.getElementById('lifeExpectancy').value),
-      healthDeclineAge: Number(document.getElementById('healthDeclineAge').value),
-      utilityAfterDecline: Number(document.getElementById('utilityAfterDecline').value),
-      taxRate: Number(document.getElementById('taxRate').value)
-    };
-  
-    // Gather assets
-    const assets = [];
-    document.querySelectorAll('#otherIncomeList div').forEach(div=>{
-      const vals = div.querySelectorAll('input');
-      const amt = parseFloat(vals[1].value.replace(/[^0-9.]/g,'')) || 0;
-      const wr = parseFloat(vals[2].value) || 0;
-      const ar = parseFloat(vals[3].value) || 0;
-      assets.push({label: vals[0].value || 'Asset', amount: amt, withdrawRate: wr, annualReturn: ar});
+
+  container.appendChild(div);
+
+  // Hook up input events so changes immediately update the chart
+  const inputs = div.querySelectorAll('input');
+  inputs.forEach(input => {
+    input.addEventListener('input', () => {
+      runSimulation();
     });
-  
-    const strategies = ['A','B','C'].map(letter=>{
-      return {name:letter, claimAge:Number(document.getElementById(`claim${letter}_age`).value), monthlyBenefit:Number(document.getElementById(`claim${letter}_amt`).value)};
-    }).filter(s=>s.monthlyBenefit>0 && s.claimAge>=inputs.currentAge);
-    if(strategies.length<2) return;
-  
-    const sims = strategies.map(s=>({...s, sim: runSimulation(inputs,s,assets)}));
-    const ages = sims[0].sim.ages;
-  
-    const datasets = sims.map((s,idx)=>{
-      const colorHue = 210 - idx*40;
-      return {label:`Claim @ ${s.claimAge} (${s.name})`, data:s.sim.cumulativeEffective, tension:0.2, borderWidth:2, pointRadius:0, borderColor:`hsl(${colorHue} 80% 60%)`, backgroundColor:'rgba(0,0,0,0)'};
-    });
-  
-    const ctx = document.getElementById('cumulativeChart').getContext('2d');
-    if(myChart) myChart.destroy();
-    myChart = new Chart(ctx,{type:'line',data:{labels:ages,datasets},options:{
-      responsive:true,
-      interaction:{mode:'index',intersect:false},
-      stacked:false,
-      plugins:{legend:{position:'top'},tooltip:{callbacks:{label:function(context){return `${context.dataset.label}: ${formatUSD(context.parsed.y)}`;}}}} ,
-      scales:{x:{title:{display:true,text:'Age'}},y:{title:{display:true,text:'Cumulative effective value ($)'}}}
-    }});
-  
-    const summaryDiv = document.getElementById('summaryCards'); summaryDiv.innerHTML='';
-    sims.forEach(s=>{
-      summaryDiv.innerHTML += buildSummaryCard(`Strategy ${s.name} — Claim @ ${s.claimAge}`,`${formatUSD(s.sim.endingPortfolio.reduce((a,b)=>a+b,0))}`,`Total effective utility value: ${formatUSD(s.sim.totalEffective)}`);
-    });
-  
-    suggestSSAge();
-  }
-  
-  // Event listeners
-  document.getElementById('addAssetBtn').addEventListener('click', ()=>addAssetRow());
-  document.getElementById('addWithdrawBtn').addEventListener('click', ()=>addWithdrawRow());
-  document.getElementById('addIncomeBtn').addEventListener('click', ()=>addOtherIncomeRow());
-  document.getElementById('runBtn').addEventListener('click', runSimulationWrapper);
-  
-  window.addEventListener('load', ()=>{
-    addAssetRow('401k',0); // initial asset
-    runSimulationWrapper();
-  
-    const inputSelectors = [
-      '#currentAge','#lifeExpectancy','#healthDeclineAge','#utilityAfterDecline',
-      '#claimA_age','#claimA_amt','#claimB_age','#claimB_amt','#claimC_age','#claimC_amt'
-    ];
-    inputSelectors.forEach(sel => document.querySelector(sel).addEventListener('input', runSimulationWrapper));
   });
+
+  runSimulation();
+});
+
+
   </script>
   
 </body>
