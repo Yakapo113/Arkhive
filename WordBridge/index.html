@@ -1,1 +1,117 @@
 
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Word Bridge</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  font-family: system-ui, sans-serif;
+  background: #fafafa;
+  text-align: center;
+  margin: 2em;
+  color: #333;
+}
+.container {
+  max-width: 400px;
+  margin: auto;
+}
+.word {
+  font-size: 2em;
+  margin: 10px 0;
+}
+input {
+  width: 100%;
+  padding: 10px;
+  font-size: 1.2em;
+  text-align: center;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+}
+button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  border-radius: 6px;
+  border: none;
+  background: #4285f4;
+  color: white;
+}
+.chain {
+  margin-top: 20px;
+  font-size: 1.3em;
+}
+.success {
+  background: #d4edda;
+  color: #155724;
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 20px;
+}
+.error {
+  animation: shake 0.3s;
+  border-color: #f44336;
+}
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔠 Word Bridge</h1>
+  <p>Change one letter at a time to bridge the words!</p>
+  <div class="word">Start: <span id="start-word">cold</span></div>
+  <div class="word">End: <span id="end-word">warm</span></div>
+  <input id="guess" placeholder="Enter next word">
+  <button id="submit">Submit</button>
+  <div class="chain" id="chain">cold</div>
+  <div class="success" id="result" style="display:none;"></div>
+</div>
+
+<script>
+let startWord = "cold";
+let endWord = "warm";
+let chain = [startWord];
+let validWords = ["cold","cord","word","ward","warm","sold","gold","worm","worn","warn"];
+
+function oneLetterDiff(a,b) {
+  if(a.length !== b.length) return false;
+  let diff = 0;
+  for(let i=0;i<a.length;i++) if(a[i]!==b[i]) diff++;
+  return diff===1;
+}
+
+document.getElementById("submit").onclick = () => {
+  let input = document.getElementById("guess");
+  let word = input.value.toLowerCase().trim();
+  if(!validWords.includes(word)) {
+    input.classList.add("error");
+    setTimeout(()=>input.classList.remove("error"),300);
+    return;
+  }
+  let last = chain[chain.length-1];
+  if(!oneLetterDiff(last,word)) {
+    input.classList.add("error");
+    setTimeout(()=>input.classList.remove("error"),300);
+    return;
+  }
+  chain.push(word);
+  document.getElementById("chain").innerText = chain.join(" → ");
+  input.value = "";
+  if(word === endWord) {
+    document.getElementById("result").style.display = "block";
+    document.getElementById("result").innerText = 
+      `🎉 You bridged ${startWord.toUpperCase()} → ${endWord.toUpperCase()} in ${chain.length-1} steps!`;
+    document.getElementById("submit").disabled = true;
+  }
+};
+</script>
+</body>
+</html>
