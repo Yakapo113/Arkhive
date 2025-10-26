@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>True Social Security Break-even Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1724;
+  --card:#0b1220;
+  --muted:#94a3b8;
+  --accent:#60a5fa;
+  --glass: rgba(255,255,255,0.03);
+  --panel-radius:12px;
+  color-scheme: dark;
+}
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+  background:linear-gradient(180deg,#071022 0%,#071828 100%);
+  color:#e6eef8;
+  padding:20px;
+}
+.wrap{max-width:1200px;margin:0 auto;}
+header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px;}
+h1{font-size:20px;margin:0;}
+p.lead{margin:0;color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns: 380px 1fr;gap:18px;}
+.panel{background:var(--card);border-radius:var(--panel-radius);padding:16px;box-shadow:0 4px 20px rgba(2,6,23,0.6),inset 0 1px 0 rgba(255,255,255,0.02);}
+label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+input[type="number"], input[type="text"], select {
+  width:100%;
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.04);
+  background:var(--glass);
+  color:inherit;
+  box-sizing:border-box;
+  font-size:14px;
+}
+input[type="range"]{-webkit-appearance:none;width:100%;height:8px;border-radius:4px;background:rgba(96,165,250,0.3);outline:none;}
+.row{display:flex;gap:10px}
+.row > *{flex:1}
+.small{font-size:12px;color:var(--muted)}
+.controls .btn{
+  display:inline-block;
+  margin-top:8px;
+  background:linear-gradient(180deg,var(--accent),#3b82f6);
+  border:none;
+  color:#04204b;
+  padding:10px 12px;
+  border-radius:8px;
+  font-weight:600;
+  cursor:pointer;
+  box-shadow:0 6px 18px rgba(59,130,246,0.18);
+}
+.controls .btn.secondary{
+  background:transparent;
+  color:var(--muted);
+  border:1px solid rgba(255,255,255,0.04);
+  box-shadow:none;
+  font-weight:600;
+}
+.strategy{
+  margin-bottom:12px;
+  padding:10px;
+  border-radius:10px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+  border:1px solid rgba(255,255,255,0.02);
+}
+.flex-between{display:flex;justify-content:space-between;align-items:center;gap:8px}
+canvas{max-width:100%;}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+th,td{padding:8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03)}
+th{color:var(--muted);font-weight:600;font-size:12px}
+.muted{color:var(--muted);font-size:13px}
+footer{margin-top:12px;color:var(--muted);font-size:12px}
+.results-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+.stat{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px}
+.stat h3{margin:0;font-size:14px}
+.stat p{margin:6px 0 0 0;color:var(--muted);font-size:12px}
+@media (max-width:980px){.grid{grid-template-columns:1fr; }header{flex-direction:column;align-items:flex-start}}
+/* Highlight selected strategy */
+#summaryCards .stat {
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+#summaryCards .stat:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
+#summaryCards .stat.active { border: 2px solid #fff; background-color: rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(255,255,255,0.15); }
+#summaryCards .stat h3 { margin: 0 0 4px 0; font-size: 14px; font-weight: 600; }
+#summaryCards .stat p { margin: 0; font-size: 13px; color: #94a3b8; }
+/* Header labels for asset/income sections */
+.input-header { display: flex; gap: 8px; font-weight: 600; font-size: 12px; color: #94a3b8; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.input-header div { flex: 1; }
+.input-header .name { flex: 2; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>True Social Security Break-even Calculator</h1>
+      <p class="lead">Compare claiming ages, investment opportunity cost, taxes, and health-related spending decline — and see the break-even age.</p>
+    </div>
+  </header>
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <strong>Assumptions & Inputs</strong>
+        <!-- 1. Current age -->
+        <label style="margin-top:10px">Current age</label>
+        <input id="currentAge" type="number" min="50" max="95" value="62">
+        <!-- 2. Life expectancy -->
+        <label style="margin-top:10px">Life expectancy (age)</label>
+        <input id="lifeExpectancy" type="number" min="65" max="110" value="88">
+        <!-- 3. Desired monthly income -->
+        <label style="margin-top:10px">Desired monthly income</label>
+        <input id="desiredIncome" type="range" min="0" max="15000" step="100" value="5000">
+        <div class="small muted" id="desiredIncomeLabel">$ / month</div>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+        <!-- Retirement Assets -->
+        <strong>Retirement Assets</strong>
+        <div class="input-header">
+          <div class="name">Name</div>
+          <div>Value ($)</div>
+          <div> Growth (%) <span class="tooltip" title = "Enter the projected annual growth rate for this asset">ℹ️</span></div>
+        </div>
+        <div id="assetList"></div>
+        <button type="button" id="addAssetBtn" class="btn secondary" style="margin-top:6px;">Add Asset</button>
+        <div class="small muted">Enter your other retirement assets like 401k, IRA, brokerage accounts. Include total amount and projected annual growth rate.</div>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+        <!-- Asset Withdrawals -->
+        <strong>Asset Withdrawals</strong>
+        <div id="assetWithdrawals"></div>
+        <div class="small muted">Adjust the slider to select monthly withdrawal from each asset.</div>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+        <!-- Other Monthly Income Sources -->
+        <strong>Other Monthly Income Sources</strong>
+        <div class="input-header">
+          <div class="name">Source</div>
+          <div>Monthly Income ($)</div>
+        </div>
+        <div id="otherIncomeList"></div>
+        <button type="button" id="addIncomeBtn" class="btn secondary" style="margin-top:6px;">Add Income Source</button>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+        <!-- Claiming strategies -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong>Claiming strategies (monthly SS benefit)</strong>
+          <span class="small muted">Enter your expected benefit at each claim age</span>
+        </div>
+        <!-- Strategy A -->
+        <div class="strategy">
+          <div class="flex-between">
+            <div style="flex:1">
+              <label>Strategy A claim age</label>
+              <input id="claimA_age" type="number" min="62" max="70" value="62">
+            </div>
+            <div style="width:46%">
+              <label>Monthly SS @ that age ($)</label>
+              <input id="claimA_amt" type="number" min="0" value="2000">
+            </div>
+          </div>
+        </div>
+        <!-- Strategy B -->
+        <div class="strategy">
+          <div class="flex-between">
+            <div style="flex:1">
+              <label>Strategy B claim age</label>
+              <input id="claimB_age" type="number" min="62" max="70" value="67">
+            </div>
+            <div style="width:46%">
+              <label>Monthly SS @ that age ($)</label>
+              <input id="claimB_amt" type="number" min="0" value="2860">
+            </div>
+          </div>
+        </div>
+        <!-- Strategy C -->
+        <div class="strategy">
+          <div class="flex-between">
+            <div style="flex:1">
+              <label>Strategy C claim age</label>
+              <input id="claimC_age" type="number" min="62" max="70" value="70">
+            </div>
+            <div style="width:46%">
+              <label>Monthly SS @ that age ($)</label>
+              <input id="claimC_amt" type="number" min="0" value="3540">
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px" class="controls">
+          <button id="runBtn" class="btn">Run comparison</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>Results & visualization</strong>
+          <div class="small muted">Stacked income vs age</div>
+        </div>
+        <div id="resultsContainer" style=" display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-top: 12px; ">
+          <!-- Left: Summary cards -->
+          <div id="summaryCards" style=" flex: 1; display: flex; flex-direction: column; gap: 12px; "></div>
+          <!-- Divider -->
+          <div style="width: 1px; background: rgba(255,255,255,0.1); height: 250px; align-self: center;"></div>
+          <!-- Right: Income Gap Chart -->
+          <div style="flex: 2;">
+            <div style="text-align:center; font-weight:600; margin-bottom:8px;">Actual vs Desired Annual Income</div>
+            <canvas id="incomeGapChart" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+      <canvas id="cumulativeChart" height="200" style="margin-top:12px"></canvas>
+      <footer>
+        <div class="muted">Model assumptions are simplified. This is a planning tool — not financial advice.</div>
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.1/dist/chartjs-plugin-annotation.min.js"></script>
+<script>
+// All your JavaScript code goes here (copy exactly from your working version)
+</script>
+</body>
+</html>
