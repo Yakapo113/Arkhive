@@ -1,0 +1,1277 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Real Estate Investment Simulator — Light Theme</title>
+
+    <!-- Chart.js CDN (lightweight, widely used) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* Light theme, clean & elegant */
+        :root {
+            --bg-0: #f5f7fb;
+            --bg-1: #ffffff;
+            --muted: #52606a;
+            --accent: #2563eb;
+            --card-shadow: 0 6px 22px rgba(38, 56, 100, 0.06);
+            --radius: 12px;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            color-scheme: light;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: linear-gradient(180deg, var(--bg-0), #eef3fb 100%);
+            color: #0b1220
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 28px auto;
+            padding: 20px
+        }
+
+        header {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            margin-bottom: 18px
+        }
+
+        .logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #e6f0ff, #cfe3ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: var(--accent)
+        }
+
+        h1 {
+            font-size: 20px;
+            margin: 0
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 440px 1fr;
+            gap: 18px
+        }
+
+        .card {
+            background: var(--bg-1);
+            border-radius: var(--radius);
+            padding: 14px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(9, 30, 66, 0.04)
+        }
+
+        .form-row {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .form-row label {
+            width: 220px;
+            /* consistent label width so all inputs start aligned */
+            font-weight: 500;
+            margin-top: 4px;
+            /* aligns label vertically with small text */
+        }
+
+        /* --- Down Payment alignment fix --- */
+        .form-row .input-pair {
+            margin-left: 0px;
+            margin-top: 6px;
+            margin-bottom: -10px;
+            /* reset default flex spacing */
+        }
+
+        .form-row .input-column input {
+            width: 80px !important;
+            margin-left: 0px;
+            /* ensure consistent sizing */
+            box-sizing: border-box;
+        }
+
+                /* Ensure Amount and Percent inputs stay proportionate */
+        .input-pair .input-column:first-child input {
+            width: 100px; /* Amount box */
+        }
+
+        .input-pair .input-column:last-child input {
+            width: 50px !important; /* Percent box smaller */
+        }
+
+        .form-row input[type="number"] {
+            width: 80px;
+            box-sizing: border-box;
+        }
+
+
+        /* Remove number spinners */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+
+        .input-pair {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .input-modeselect {
+            margin-right: 12px;
+            padding: 4px 6px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            height: 28px;
+            font-size: 13px;
+        }
+
+        .input-column {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-column .small.muted {
+            margin-bottom: 2px;
+            font-size: 11px;
+            color: #777;
+        }
+
+        .input-column input {
+            width: 90px;
+            /* both the $ and % boxes same width */
+            padding: 4px 6px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        /* For grouped inputs (like down payment) */
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-group input {
+            width: 80px;
+        }
+
+        label {
+            font-size: 13px;
+            color: var(--muted);
+            min-width: 120px
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(9, 30, 66, 0.06);
+            background: transparent;
+            color: inherit;
+            font-size: 13px;
+            width: 80px;
+        }
+
+        .small {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .input-inline {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .btn {
+            background: var(--accent);
+            border: none;
+            padding: 9px 12px;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            font-weight: 700
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 8px
+        }
+
+        .tile {
+            background: linear-gradient(180deg, rgba(8, 16, 44, 0.02), transparent);
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(9, 30, 66, 0.03)
+        }
+
+        .tile h3 {
+            margin: 0;
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .tile p {
+            margin: 6px 0 0;
+            font-size: 18px;
+            font-weight: 700
+        }
+
+        .section-title {
+            font-size: 14px;
+            margin: 8px 0;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .list {
+            background: rgba(38, 56, 100, 0.03);
+            padding: 8px;
+            border-radius: 10px
+        }
+
+        .units-list .capex-list {
+            max-height: 220px;
+            overflow: auto;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .unit-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        .unit-item input {
+            width: 80px;
+            /* fixed width */
+            flex-grow: 0;
+            /* prevent growing */
+            flex-shrink: 0;
+            /* prevent shrinking */
+            max-width: 80px;
+            /* enforce maximum width */
+            box-sizing: border-box;
+        }
+
+        .capex-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .add-btn {
+            background-color: #2563eb;
+            /* blue */
+            color: white;
+            border-radius: 8px;
+            border: 1px solid #051749;
+        }
+
+        .add-btn:hover {
+            background-color: #051749;
+        }
+
+        .remove-btn {
+            background-color: #3d0202;
+            /* red */
+            color: white;
+            border-radius: 8px;
+            border: 1px solid #3d0202;
+        }
+
+        .remove-btn:hover {
+            background-color: #b91c1c;
+        }
+
+        .muted-small {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        footer {
+            margin-top: 18px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        @media (max-width:1000px) {
+            .layout {
+                grid-template-columns: 1fr
+            }
+
+            label {
+                min-width: 100px
+            }
+        }
+
+        .help-icon {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 14px;
+            color: var(--accent);
+        }
+
+        .help-icon:hover {
+            color: #1d4ed8;
+            /* slightly darker blue on hover */
+        }
+
+        input[type="number"] {
+            width: 120px;
+            padding: 4px 6px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        /* Remove number spinner arrows */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .downpayment-toggle {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+            /* spacing below label */
+        }
+
+        .downpayment-toggle button {
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: #f5f7fb;
+            cursor: pointer;
+            color: #0b1220;
+            min-width: 50px;
+            margin-top: -10px;
+        }
+
+        .downpayment-toggle button.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Make placeholder font consistent for all number inputs */
+
+        input[type="number"]::placeholder {
+            font-size: 14px;      /* match other number inputs */
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            color: #777;          /* muted gray like other placeholders */
+            opacity: 1;           /* ensure color consistency across browsers */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">RE</div>
+            <div>
+                <h1>Real Estate Investment Simulator</h1>
+                <div class="subtitle">Flexible hold-period strategy lens + chart — include $/% down payment & light
+                    theme.</div>
+            </div>
+        </header>
+
+        <div class="layout">
+            <!-- LEFT: Inputs -->
+            <div class="card" id="inputsCard">
+                <div class="section-title"><strong>Property & Financing</strong></div>
+
+                <div class="form-row">
+                    <label>Purchase Price ($)</label>
+                    <input id="purchasePrice" type="number" placeholder="$" />
+                </div>
+
+                <div class="form-row">
+                    <label>Appraised Value ($)</label>
+                    <input id="appraisedValue" type="number" placeholder="$" />
+                </div>
+
+                <div class="form-row">
+                    <label>Down Payment</label>
+
+                    <div style="display: flex; flex-direction: column;">
+                        <!-- Inputs stay aligned with label -->
+                        <div class="input-pair">
+                            <div class="input-column">
+                                <div class="small muted">Amount ($)</div>
+                                <input id="downPaymentValue" type="number" placeholder="$">
+                            </div>
+                            <div class="input-column">
+                                <div class="small muted">Percent (%)</div>
+                                <input id="downPaymentPercent" type="number" placeholder="%">
+                            </div>
+                        </div>
+
+                        <!-- Buttons aligned to left under label -->
+                        <div class="downpayment-toggle" style="margin-left: -180px;">
+                            <button id="amountButton" class="active">Amount</button>
+                            <button id="percentButton">Percent</button>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="form-row">
+                    <label>Loan Interest (%)</label>
+                    <input id="interestRate" type="number" placeholder="%" />
+                </div>
+
+                <div class="form-row">
+                    <label>Loan Term (yrs)</label>
+                    <input id="loanTerm" type="number" placeholder="yrs" />
+                </div>
+
+                <div class="form-row">
+                    <label>Total Closing Costs ($)</label>
+                    <input id="closingCosts" type="number" placeholder="$" />
+                </div>
+
+                <div class="form-row">
+                    <label>Closing Costs paid by Seller ($)</label>
+                    <input id="sellerpaidclosingCosts" type="number" placeholder="$" />
+                </div>
+
+                <div class="form-row">
+                    <label>
+                        Land Value ($)
+                        <span class="help-icon"
+                            title="Approximate value of the land according to tax records. If tax records do not match purchase price, divide land value by home value as shown on tax document, then multiply that number by the purchase price. This number is used to compute depreciation.">ℹ️</span>
+                    </label>
+                    <input id="landValue" type="number" placeholder="$" />
+                </div>
+
+                <hr style="opacity:0.08;margin:12px 0" />
+
+                <div class="section-title"><strong>Income & Units</strong></div>
+
+                <div class="form-row">
+                    <label># of Units</label>
+                    <input id="numUnits" type="number" value="1" min="1" />
+                </div>
+
+                <div class="small muted" style="margin-bottom:8px">Set rent per unit — add/remove units</div>
+                <div class="list card" style="padding:10px;margin-bottom:8px">
+                    <div class="units-list" id="unitsList"></div>
+                    <div style="display:flex;gap:8px;margin-top:8px">
+                        <button class="add-btn" id="addUnitBtn">+ Add Unit</button>
+                        <button class="remove-btn" id="removeUnitBtn">- Remove Unit</button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label>Vacancy Rate (%)</label>
+                    <input id="vacancyRate" type="number" placeholder="%" />
+                </div>
+
+                <div class="form-row">
+                    <label>Annual Rent Increase (%)</label>
+                    <input id="rentGrowth" type="number" step="0.1" placeholder="%" />
+                </div>
+
+                <div class="form-row">
+                    <label>Estimated Appreciation (%/yr)</label>
+                    <input id="appreciation" type="number" step="0.01" placeholder="%" />
+                </div>
+
+                <hr style="opacity:0.08;margin:12px 0" />
+
+                <div class="section-title"><strong>Operating Expenses (annual unless noted)</strong></div>
+
+                <div class="form-row">
+                    <label>Property Taxes ($/yr)</label>
+                    <input id="propTaxes" type="number" placeholder="$" />
+                </div>
+
+                <div class="form-row">
+                    <label>Insurance ($/yr)</label>
+                    <input id="insurance" type="number" placeholder="$" />
+                </div>
+
+                <div class="form-row">
+                    <label>Utilities ($/mo)</label>
+                    <input id="utilities" type="number" placeholder="$" />
+                </div>
+
+                 <div class="form-row">
+                    <label>Other Expenses (HOA, etc) ($/mo)</label>
+                    <input id="otherExpenses" type="number" placeholder="$" />
+                </div>
+
+                <div class="form-row">
+                    <label>Maintenance (% of gross rent / yr)</label>
+                    <input id="maintenancePct" type="number" step="0.1" placeholder="%" />
+                </div>
+
+                <div class="form-row">
+                    <label>Management Fee (% of rent)</label>
+                    <input id="managementFeePct" type="number" step="0.1" placeholder="%" />
+                </div>
+
+                <div class="form-row">
+                    <label>Annual Expense Growth (%)</label>
+                    <input id="expenseGrowth" type="number" step="0.1" placeholder="%" />
+                </div>
+
+                <hr style="opacity:0.08;margin:12px 0" />
+                <div class="section-title"><strong>Capital Expenditures</strong></div>
+
+                <div class="small muted">Add replacement cost & life</div>
+
+                <div class="list card" style="padding:10px;margin-bottom:8px">
+                    <!-- Column headers -->
+                    <div class="capex-item-headers" style="display:flex; gap:12px; margin-bottom:4px;">
+                        <div class="small muted" style="flex: 2; min-width:120px;; white-space: nowrap;">Item</div>
+                        <div class="small muted" style="flex: 2; min-width:60px; white-space: nowrap;">Amount ($)</div>
+                        <div class="small muted" style="flex: 1; min-width:60px; white-space: nowrap;">Life (yrs)</div>
+                        <div class="small muted" style="flex: 1; min-width:60px; white-space: nowrap;">Spend Year</div>
+                        <span class="help-icon"
+                            title="Enter what year you will spend this from time of ownership, i.e. 3 years after purhchase you would enter 3">ℹ️</span>
+                    </div>
+
+                    <!-- Container for dynamic CapEx items -->
+                    <div class="capex-list" id="capexList"></div>
+
+                    <!-- Add button -->
+                    <div style="display:flex;gap:8px;margin-top:8px">
+                        <button class="add-btn" id="addCapexBtn">+ Add CapEx Item</button>
+                    </div>
+                </div>
+                
+                <hr style="opacity:0.08;margin:12px 0" />
+                <div class="section-title"><strong>Strategy & Taxes</strong></div>
+
+                <div class="form-row">
+                    <label>Hold Period (yrs)</label>
+                    <input id="holdYears" type="number" value="10" />
+                </div>
+
+                <div class="form-row">
+                    <label>Selling Costs (% of sale)</label>
+                    <input id="sellingCostsPct" type="number" step="0.1" value="6" />
+                </div>
+
+                <div class="form-row">
+                    <label>Marginal Income Tax Rate (%)</label>
+                    <input id="taxRate" type="number" step="0.1" value="24" />
+                </div>
+
+                <div class="form-row">
+                    <label>Capital Gains Tax Rate (%)</label>
+                    <input id="capGainsRate" type="number" step="0.1" value="15" />
+                </div>
+
+                <div class="form-row">
+                    <label>Depreciation Recapture Rate (%)</label>
+                    <input id="recaptureRate" type="number" step="0.1" value="25" />
+                </div>                
+            </div>
+
+            <!-- RIGHT: Results & Chart -->
+            <div>
+                <div class="card">
+                    <div class="section-title"><strong>Snapshot — Cashflow & Performance</strong></div>
+
+                    <div class="results" id="summaryTiles">
+                        <div class="tile">
+                            <h3>Monthly Mortgage</h3>
+                            <p id="monthlyPayment">$0</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Net Monthly Cash Flow</h3>
+                            <p id="netMonthly">$0</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Annual Cash Flow</h3>
+                            <p id="annualCash">$0</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Cap Rate</h3>
+                            <p id="capRate">0%</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Cash-on-Cash ROI</h3>
+                            <p id="cashOnCash">0%</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Payback (yrs)</h3>
+                            <p id="payback">—</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:12px" class="section-title"><strong>Tax & Depreciation</strong></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                        <div class="tile">
+                            <h3>Depreciation (yr)</h3>
+                            <p id="depreciation">$0</p>
+                            <div class="small muted">27.5-yr residential</div>
+                        </div>
+                        <div class="tile">
+                            <h3>Taxable Income (yr)</h3>
+                            <p id="taxableIncome">$0</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:12px" class="section-title"><strong>All-In Cash Out & Taxes</strong></div>
+                    <div class="results">
+                        <div class="tile">
+                            <h3>Total Deductible Expenses</h3>
+                            <p id="totalDeduct">$0</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Income Tax Liability</h3>
+                            <p id="taxLiability">$0</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Tax Shield (est)</h3>
+                            <p id="taxShield">$0</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Total Annual Cash Outflow</h3>
+                            <p id="allInOut">$0</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div style="margin-top:12px" class="card">
+                    <div class="section-title"><strong>Hold-Period Strategy Summary</strong></div>
+                    <div class="results">
+                        <div class="tile">
+                            <h3>Total Cash Flow (hold)</h3>
+                            <p id="totalCashFlow">$0</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Net Sale Proceeds</h3>
+                            <p id="netSale">$0</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Total Gain (before tax)</h3>
+                            <p id="totalGain">$0</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Estimated After-Tax Gain</h3>
+                            <p id="afterTaxGain">$0</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Total ROI (hold)</h3>
+                            <p id="totalROI">0%</p>
+                        </div>
+                        <div class="tile">
+                            <h3>Annualized ROI (CAGR)</h3>
+                            <p id="annualROI">0%</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:12px" class="section-title"><strong>Projection Chart</strong></div>
+                    <canvas id="projChart" style="max-height:320px"></canvas>
+
+                </div>
+
+                <div style="margin-top:12px" class="card">
+                    <div class="section-title"><strong>Detailed Values</strong></div>
+                    <div id="detailList" class="list"></div>
+                </div>
+
+                <footer>
+                    <div class="small muted">Prototype: uses simplified tax approximations (inputs for capital gains &
+                        recapture rates provided).</div>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* -----------------------
+           Utilities
+        ----------------------- */
+        const $ = id => document.getElementById(id);
+        const money2 = v => (Number(v) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        /* -----------------------
+           State for dynamic fields
+        ----------------------- */
+        const unitsList = $('unitsList');
+        const capexList = $('capexList');
+        const inputsCard = $('inputsCard');
+        const numUnitsInput = $('numUnits');
+
+        let unitRents = [];   // will hold numeric rent values per unit
+
+        /* -----------------------
+           Helpers to create DOM items
+        ----------------------- */
+        function createUnitInput(index, value = '') {
+            const wrap = document.createElement('div');
+            wrap.className = 'unit-item';
+
+            const lbl = document.createElement('div');
+            lbl.className = 'small muted';
+            lbl.style.minWidth = '60px';
+            lbl.textContent = 'Unit ' + (index + 1) + ' ($)';
+
+            const inp = document.createElement('input');
+            inp.type = 'number';
+            inp.value = value;
+            inp.placeholder='$';
+            inp.dataset.unitIndex = index;   // identify index
+            inp.style.flex = '1';
+
+            // no per-input listeners — we use delegation on inputsCard
+
+            wrap.appendChild(lbl);
+            wrap.appendChild(inp);
+            return wrap;
+        }
+
+        const purchasePriceInput = document.getElementById("purchasePrice");
+        const downPaymentValueInput = document.getElementById("downPaymentValue");
+        const downPaymentPercentInput = document.getElementById("downPaymentPercent");
+        const amountButton = document.getElementById("amountButton");
+        const percentButton = document.getElementById("percentButton");
+
+        let downPaymentMode = "amount"; // default
+
+        function updateDownPaymentFromAmount() {
+            const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
+            const amount = parseFloat(downPaymentValueInput.value) || 0;
+            const percent = purchasePrice ? (amount / purchasePrice) * 100 : 0;
+            downPaymentPercentInput.value = percent.toFixed(2);
+        }
+
+        function updateDownPaymentFromPercent() {
+            const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
+            const percent = parseFloat(downPaymentPercentInput.value) || 0;
+            const amount = (percent / 100) * purchasePrice;
+            downPaymentValueInput.value = amount.toFixed(0);
+        }
+
+        function refreshDownPaymentInputs() {
+            if (downPaymentMode === "amount") {
+                downPaymentValueInput.removeAttribute("readonly");
+                downPaymentPercentInput.setAttribute("readonly", true);
+                updateDownPaymentFromAmount();
+                amountButton.classList.add("active");
+                percentButton.classList.remove("active");
+            } else {
+                downPaymentPercentInput.removeAttribute("readonly");
+                downPaymentValueInput.setAttribute("readonly", true);
+                updateDownPaymentFromPercent();
+                percentButton.classList.add("active");
+                amountButton.classList.remove("active");
+            }
+        }
+
+        // Button click handlers
+        amountButton.addEventListener("click", () => {
+            downPaymentMode = "amount";
+            refreshDownPaymentInputs();
+        });
+
+        percentButton.addEventListener("click", () => {
+            downPaymentMode = "percent";
+            refreshDownPaymentInputs();
+        });
+
+        // Input events
+        purchasePriceInput.addEventListener("input", refreshDownPaymentInputs);
+        downPaymentValueInput.addEventListener("input", () => {
+            if (downPaymentMode === "amount") updateDownPaymentFromAmount();
+        });
+        downPaymentPercentInput.addEventListener("input", () => {
+            if (downPaymentMode === "percent") updateDownPaymentFromPercent();
+        });
+
+        // Initial setup
+        refreshDownPaymentInputs();
+
+
+
+        function createCapexItem(name = '', cost = '', life = '', spendYear ='') {
+            const wrap = document.createElement('div');
+            wrap.className = 'capex-item';
+
+            const nameI = document.createElement('input');
+            nameI.type = 'text';
+            nameI.placeholder = 'Item';
+            nameI.value = name;
+            nameI.style.width = '40%';
+
+            const costI = document.createElement('input');
+            costI.type = 'number';
+            costI.placeholder ='$';
+            costI.value = cost;
+            costI.style.width = '30%';
+            
+
+            const lifeI = document.createElement('input');
+            lifeI.type = 'number';
+            lifeI.value = life;
+            lifeI.style.width = '20%';
+            lifeI.placeholder = 'yrs';
+
+            const spendYearI = document.createElement('input');
+            spendYearI.type = 'number';
+            spendYearI.placeholder = 'yr';
+            spendYearI.value = spendYear;
+            spendYearI.style.width = '20%';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'remove-btn';
+            btn.textContent = 'x';
+            btn.title = 'Remove item';
+
+            // Use delegation for inputs; for the remove button we attach directly:
+            btn.addEventListener('click', () => {
+                wrap.remove();
+                calculateAll(); // immediate recalculation
+            });
+
+            wrap.appendChild(nameI);
+            wrap.appendChild(costI);
+            wrap.appendChild(lifeI);
+            wrap.appendChild(spendYearI);
+            wrap.appendChild(btn);
+            return wrap;
+        }
+
+        /* -----------------------
+           Unit list management (preserve rents)
+        ----------------------- */
+        function refreshUnitsFromState() {
+            const n = Math.max(0, parseInt(numUnitsInput.value || 0));
+            // keep old rents if present; if not, fill with last rent
+            if (!unitRents.length) {
+                // initialize from any existing DOM inputs (first page load)
+                const existing = unitsList.querySelectorAll('input[type="number"]');
+                if (existing.length) {
+                    unitRents = Array.from(existing).map(i => Number(i.value || ''));
+                }
+            }
+            const old = unitRents.slice(0);
+            unitRents.length = 0;
+            for (let i = 0; i < n; i++) {
+                if (old[i] !== undefined) unitRents[i] = old[i];
+                else if (old.length) unitRents[i] = old[old.length - 1] || '';
+                else unitRents[i] = '';
+            }
+
+            // rebuild DOM using unitRents values
+            unitsList.innerHTML = '';
+            for (let i = 0; i < n; i++) {
+                unitsList.appendChild(createUnitInput(i, unitRents[i]));
+            }
+        }
+
+        /* -----------------------
+           Event delegation + Enter navigation
+           - Single 'input' listener on inputsCard covers static & dynamic inputs
+           - Single 'keydown' on inputsCard handles Enter => next field + recalc
+        ----------------------- */
+        inputsCard.addEventListener('input', (ev) => {
+            const t = ev.target;
+            if (!t) return;
+
+            // If unit rent changed, update unitRents state
+            if (t.dataset && t.dataset.unitIndex !== undefined) {
+                const idx = Number(t.dataset.unitIndex);
+                unitRents[idx] = Number(t.value || 0);
+            }
+
+            // For any input change within inputsCard, recalc
+            calculateAll();
+        });
+
+        // Enter navigation: move to next input in DOM order inside inputsCard
+        inputsCard.addEventListener('keydown', (ev) => {
+            if (ev.key !== 'Enter') return;
+            const t = ev.target;
+            if (!t || t.tagName !== 'INPUT') return;
+            ev.preventDefault();
+
+            // find all inputs inside inputsCard in DOM order
+            const all = Array.from(inputsCard.querySelectorAll('input'));
+            const idx = all.indexOf(t);
+            if (idx >= 0 && idx < all.length - 1) {
+                all[idx + 1].focus();
+            }
+            // recalc as well
+            calculateAll();
+        });
+
+        /* -----------------------
+           Hook add/remove buttons
+        ----------------------- */
+        $('addUnitBtn').addEventListener('click', () => {
+            const cur = Math.max(0, parseInt(numUnitsInput.value || 0));
+            numUnitsInput.value = cur + 1;
+            refreshUnitsFromState();
+            calculateAll();
+        });
+
+        $('removeUnitBtn').addEventListener('click', () => {
+            const cur = Math.max(0, parseInt(numUnitsInput.value || 0));
+            const next = Math.max(0, cur - 1);
+            numUnitsInput.value = next;
+            // trim unitRents if necessary
+            unitRents.length = next;
+            refreshUnitsFromState();
+            calculateAll();
+        });
+
+        numUnitsInput.addEventListener('change', () => {
+            refreshUnitsFromState();
+            calculateAll();
+        });
+
+        // CapEx add button
+        $('addCapexBtn').addEventListener('click', () => {
+            capexList.appendChild(createCapexItem('', '', '',''));
+            calculateAll();
+        });
+
+        /* -----------------------
+           Chart helper
+        ----------------------- */
+        let projChart = null;
+        function ensureChart(labels = [], datasets = []) {
+            const ctx = $('projChart').getContext('2d');
+            if (!projChart) {
+                projChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels, datasets },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { position: 'top' } },
+                        interaction: { mode: 'index', intersect: false }
+                    }
+                });
+            } else {
+                projChart.data.labels = labels;
+                projChart.data.datasets = datasets;
+                projChart.update();
+            }
+        }
+
+        /* -----------------------
+           Gather inputs -> normalized object
+        ----------------------- */
+        function gatherInputs() {
+            const getNum = id => Number($(id)?.value || 0);
+            const obj = {
+                purchasePrice: getNum('purchasePrice'),
+                appraisedValue: getNum('appraisedValue'),
+                dpVal: getNum('downPaymentValue'),
+                interestRate: getNum('interestRate'),
+                loanTerm: getNum('loanTerm'),
+                closingCosts: getNum('closingCosts'),
+                sellerPaidClosingCosts: getNum('sellerpaidclosingCosts'),
+                landValue: getNum('landValue'),
+                vacancyRate: getNum('vacancyRate') / 100,
+                rentGrowth: getNum('rentGrowth') / 100,
+                appreciation: getNum('appreciation') / 100,
+                propTaxes: getNum('propTaxes'),
+                insurance: getNum('insurance'),
+                utilities: getNum('utilities') * 12,
+                otherExpenses: getNum('otherExpenses')*12,
+                maintenancePct: getNum('maintenancePct') / 100,
+                managementFeePct: getNum('managementFeePct') / 100,
+                expenseGrowth: getNum('expenseGrowth') / 100,
+                holdYears: Math.max(1, Math.floor(getNum('holdYears'))),
+                sellingCostsPct: getNum('sellingCostsPct') / 100,
+                taxRate: getNum('taxRate') / 100,
+                capGainsRate: getNum('capGainsRate') / 100,
+                recaptureRate: getNum('recaptureRate') / 100
+            };
+
+            // capex items
+            obj.capexItems = [];
+            capexList.querySelectorAll('.capex-item').forEach(div => {
+                const inputs = Array.from(div.querySelectorAll('input'));
+                if (inputs.length >= 4) {
+                    const name = inputs[0].value || '';
+                    const cost = Number(inputs[1].value || 0);
+                    const life = Number(inputs[2].value || 0);
+                    const spendYear = Number(inputs[3].value || 0);
+                    obj.capexItems.push({ name, cost, life, spendYear });
+                }
+            });
+
+            // unit rents from unitRents (keeps state)
+            obj.unitRents = unitRents.slice();
+            obj.grossAnnualRent = obj.unitRents.reduce((a, b) => a + (b || 0), 0) * 12;
+
+            return obj;
+        }
+
+        /* -----------------------
+           Calculation core
+           - keeps previous formula and outputs but simplified for clarity
+        ----------------------- */
+        function monthlyMortgage(P, annualRate, years) {
+            P = Number(P) || 0;
+            const r = (Number(annualRate) || 0) / 100;
+            const n = (Number(years) || 0) * 12;
+            if (n === 0) return 0;
+            if (!r) return P / n;
+            const m = r / 12;
+            return (P * m) / (1 - Math.pow(1 + m, -n));
+        }
+
+        function amortSchedule(loanAmount, annualRate, years) {
+            loanAmount = Number(loanAmount) || 0;
+            const monthly = monthlyMortgage(loanAmount, annualRate, years);
+            const mRate = (Number(annualRate) || 0) / 100 / 12;
+            let bal = loanAmount;
+            const schedule = [];
+            for (let y = 1; y <= years; y++) {
+                let yearInterest = 0, yearPrincipal = 0;
+                for (let m = 0; m < 12; m++) {
+                    const interest = bal * mRate;
+                    const principal = Math.max(0, monthly - interest);
+                    yearInterest += interest; yearPrincipal += principal;
+                    bal = Math.max(0, bal - principal);
+                }
+                schedule.push({ year: y, interestPaid: yearInterest, principalPaid: yearPrincipal, endBalance: bal });
+            }
+            return schedule;
+        }
+
+        function calculateAll() {
+            // gather
+            const I = gatherInputs();
+
+            // loan and mortgage
+            const loanAmount = Math.max(0, I.purchasePrice - I.dpVal);
+            const monthlyPayment = monthlyMortgage(loanAmount, I.interestRate, I.loanTerm);
+            const annualDebtService = monthlyPayment * 12;
+            const amort = amortSchedule(loanAmount, I.interestRate, I.loanTerm);
+
+            // ops
+            const maintenance = I.grossAnnualRent * I.maintenancePct;
+            const managementFee = I.grossAnnualRent * I.managementFeePct;
+            const operatingExpenses = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenance + managementFee;
+            const effectiveGrossRent = I.grossAnnualRent * (1 - I.vacancyRate);
+            const NOI = effectiveGrossRent - operatingExpenses;
+            const annualCashFlow = NOI - annualDebtService;
+            const netMonthly = annualCashFlow / 12;
+            const capRate = I.purchasePrice ? (NOI / I.purchasePrice) * 100 : 0;
+            const initialInvestment = I.dpVal + I.closingCosts - I.sellerPaidClosingCosts;
+            const cashOnCash = initialInvestment ? (annualCashFlow / initialInvestment) * 100 : 0;
+            const paybackYears = annualCashFlow > 0 ? (initialInvestment / annualCashFlow) : Infinity;
+
+            // depreciation & taxes (simple)
+            const depreciableBasis = Math.max(0, I.purchasePrice - I.landValue);
+            const depreciationAnnual = depreciableBasis / 27.5;
+            const firstYearInterest = (amort[0] && amort[0].interestPaid) ? amort[0].interestPaid : 0;
+            const totalDeductible = depreciationAnnual + operatingExpenses + firstYearInterest;
+            const taxableIncome = effectiveGrossRent - operatingExpenses - depreciationAnnual - firstYearInterest;
+            const incomeTaxLiability = taxableIncome > 0 ? taxableIncome * I.taxRate : 0;
+            const taxShield = (depreciationAnnual + firstYearInterest) * I.taxRate;
+            const allInOut = annualDebtService + operatingExpenses;
+
+            // hold projection
+            const years = Math.max(1, I.holdYears);
+            let yearRents = I.grossAnnualRent;
+            let cumulativeCashFlow = 0;
+            const detail = [];
+            const yearlySalePrices = [];
+            const yearlyLoanBalances = [];
+            let totalIncomeTaxPaid = 0;
+            let totalDepreciationTaken = 0;
+
+            const amortForYears = amortSchedule(loanAmount, I.interestRate, I.loanTerm);
+
+            for (let y = 1; y <= years; y++) {
+            if (y > 1) yearRents *= (1 + I.rentGrowth);
+            const maintenanceY = yearRents * I.maintenancePct;
+            const managementFeeY = yearRents * I.managementFeePct;
+            const operatingExpensesY = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenanceY + managementFeeY;
+
+            const effGross = yearRents * (1 - I.vacancyRate);
+            const NOIy = effGross - operatingExpensesY;
+
+            // CapEx cashflow (subtract cash spent this year)
+            const capexSpent = I.capexItems.reduce((sum, c) => sum + (c.spendYear === y ? c.cost : 0), 0);
+
+            const cashFlowY = NOIy - annualDebtService - capexSpent; // cashflow includes capex spend
+            cumulativeCashFlow += cashFlowY;
+
+            // Annual interest for taxes
+            const interestY = (amortForYears[y - 1] && amortForYears[y - 1].interestPaid) ? amortForYears[y - 1].interestPaid : 0;
+
+            // Taxable income: add annual depreciation for CapEx
+            const annualCapExDep = I.capexItems.reduce((sum, c) => sum + (c.life > 0 ? c.cost / c.life : 0), 0);
+            const taxableY = effGross - (operatingExpensesY + depreciationAnnual + interestY + annualCapExDep);
+            const taxY = taxableY > 0 ? taxableY * I.taxRate : 0;
+            totalIncomeTaxPaid += taxY;
+            totalDepreciationTaken += depreciationAnnual + annualCapExDep;
+
+            const bal = (amortForYears[y - 1]) ? amortForYears[y - 1].endBalance : 0;
+            yearlyLoanBalances.push(bal);
+            const salePrice = I.appraisedValue * Math.pow(1 + I.appreciation, y);
+            yearlySalePrices.push(salePrice);
+
+            detail.push({
+                year: y,
+                rent: yearRents,
+                operatingExpenses: operatingExpensesY,
+                NOI: NOIy,
+                cashFlow: cashFlowY,
+                cumulativeCashFlow,
+                loanBalance: bal,
+                salePrice
+            });
+        }
+
+
+            // sale
+            const finalSalePrice = yearlySalePrices[years - 1] || 0;
+            const loanBalanceAtSale = yearlyLoanBalances[years - 1] || 0;
+            const sellingCosts = finalSalePrice * I.sellingCostsPct;
+            const netSaleProceedsBeforeTax = finalSalePrice - loanBalanceAtSale - sellingCosts;
+            let capitalGain = finalSalePrice - I.purchasePrice - totalDepreciationTaken;
+            if (capitalGain < 0) capitalGain = 0;
+            const recaptureTax = totalDepreciationTaken * I.recaptureRate;
+            const capGainsTax = capitalGain * I.capGainsRate;
+            const taxesOnSale = recaptureTax + capGainsTax;
+            const totalTaxes = totalIncomeTaxPaid + taxesOnSale;
+            const totalGainBeforeTax = cumulativeCashFlow + netSaleProceedsBeforeTax - initialInvestment;
+            const afterTaxGain = totalGainBeforeTax - totalTaxes;
+            const totalROI = initialInvestment ? ((afterTaxGain / initialInvestment) * 100) : 0;
+            const finalValue = initialInvestment + afterTaxGain;
+            const annualizedROI = (initialInvestment && finalValue > 0) ? (Math.pow((finalValue / initialInvestment), 1 / years) - 1) * 100 : 0;
+
+            // update DOM tiles
+            $('monthlyPayment').textContent = '$' + money2(monthlyPayment);
+            $('netMonthly').textContent = '$' + money2(netMonthly);
+            $('annualCash').textContent = '$' + money2(annualCashFlow);
+            $('capRate').textContent = money2(capRate) + '%';
+            $('cashOnCash').textContent = money2(cashOnCash) + '%';
+            $('payback').textContent = isFinite(paybackYears) ? money2(paybackYears) : '—';
+            $('depreciation').textContent = '$' + money2(depreciationAnnual);
+            $('taxableIncome').textContent = '$' + money2(taxableIncome);
+            $('totalDeduct').textContent = '$' + money2(totalDeductible);
+            $('taxLiability').textContent = '$' + money2(totalIncomeTaxPaid + incomeTaxLiability);
+            $('taxShield').textContent = '$' + money2(taxShield);
+            $('allInOut').textContent = '$' + money2(allInOut);
+            $('totalCashFlow').textContent = '$' + money2(cumulativeCashFlow);
+            $('netSale').textContent = '$' + money2(netSaleProceedsBeforeTax);
+            $('totalGain').textContent = '$' + money2(totalGainBeforeTax);
+            $('afterTaxGain').textContent = '$' + money2(afterTaxGain);
+            $('totalROI').textContent = money2(totalROI) + '%';
+            $('annualROI').textContent = money2(annualizedROI) + '%';
+
+            // render detail table
+            const detailDiv = $('detailList');
+            detailDiv.innerHTML = '';
+            const table = document.createElement('table');
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+            table.innerHTML = `<thead><tr style="text-align:left;color:var(--muted);font-size:13px"><th>Year</th><th>Rent</th><th>OpEx</th><th>NOI</th><th>Cash Flow</th><th>Cumulative CF</th><th>Loan Bal</th><th>Sale Price</th></tr></thead>`;
+            const tb = document.createElement('tbody');
+            detail.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.style.borderTop = '1px solid rgba(9,30,66,0.04)';
+                tr.innerHTML = `<td style="padding:6px">${r.year}</td>
+      <td style="padding:6px">$${money2(r.rent)}</td>
+      <td style="padding:6px">$${money2(r.operatingExpenses)}</td>
+      <td style="padding:6px">$${money2(r.NOI)}</td>
+      <td style="padding:6px">$${money2(r.cashFlow)}</td>
+      <td style="padding:6px">$${money2(r.cumulativeCashFlow)}</td>
+      <td style="padding:6px">$${money2(r.loanBalance)}</td>
+      <td style="padding:6px">$${money2(r.salePrice)}</td>`;
+                tb.appendChild(tr);
+            });
+            table.appendChild(tb);
+            detailDiv.appendChild(table);
+
+            // update chart
+            const labels = detail.map(d => 'Y' + d.year);
+            const valueSeries = detail.map(d => Number(d.salePrice.toFixed(2)));
+            const equitySeries = detail.map(d => Number((d.salePrice - d.loanBalance).toFixed(2)));
+            const cashflowSeries = detail.map(d => Number(d.cumulativeCashFlow.toFixed(2)));
+            ensureChart(labels, [
+                { label: 'Sale Price (proj)', data: valueSeries, borderColor: '#2563eb', fill: false },
+                { label: 'Equity', data: equitySeries, borderColor: '#16a34a', fill: false },
+                { label: 'Cumulative Cashflow', data: cashflowSeries, borderColor: '#f59e0b', fill: false }
+            ]);
+        }
+
+        /* -----------------------
+           Initialization
+        ----------------------- */
+        // initialize unitRents from existing mark or defaults
+        (function init() {
+            const initialNum = Math.max(0, parseInt(numUnitsInput.value || 0));
+            const existing = unitsList.querySelectorAll('input[type="number"]');
+            if (existing.length) unitRents = Array.from(existing).map(i => Number(i.value || 0));
+            if (unitRents.length < initialNum) {
+                const last = unitRents.length ? unitRents[unitRents.length - 1] : '';
+                while (unitRents.length < initialNum) unitRents.push(last);
+            }
+            refreshUnitsFromState();
+            
+            // global listeners for quick recalc on outside changes (keeps consistent)
+            document.querySelectorAll('input, select').forEach(el => {
+                // buttons/inputs created later will be covered by delegation on inputsCard for changes
+                // but we keep calculate on input here as a safety net
+                el.addEventListener('input', () => {
+                    // small debounce could be added if needed; for now call directly
+                    calculateAll();
+                });
+            });
+
+            // final initial calculate
+            calculateAll();
+        })();
+    </script>
+
+
+
+</body>
+
+</html>
