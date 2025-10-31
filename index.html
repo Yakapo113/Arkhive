@@ -5,6 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ArkHive</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      color: #333;
+    }
+    header {
+      background: #222;
+      color: #fff;
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+    main {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .tool-card {
+      background: #fff;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      text-decoration: none;
+      color: #222;
+      display: block;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .tool-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background: #222;
+      color: #fff;
+      margin-top: 2rem;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -15,10 +57,15 @@
   <main>
     <section>
       <h2>Tools</h2>
-      <ul>
-        <li><a href="calculator/index.html">Social Security & Retirement Calculator</a></li>
-        <!-- You can add more tools here in the future -->
-      </ul>
+      <a class="tool-card" href="calculator/index.html">
+        <h3>Social Security & Retirement Calculator</h3>
+        <p>Plan your retirement and see the impact of different strategies over time.</p>
+      </a>
+      <a class="tool-card" href="RealEstateCalc/index.html">
+        <h3>Real Estate Investment Calculator</h3>
+        <p>Determine if a real estate property is a good buy!</p>
+      </a>
+      <!-- Add more tools here -->
     </section>
   </main>
 
