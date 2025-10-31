@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Real Estate Investment Simulator — Light Theme</title>
+    <title>Real Estate Investment Simulator</title>
 
     <!-- Chart.js CDN (lightweight, widely used) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -409,8 +409,7 @@
             <div class="logo">RE</div>
             <div>
                 <h1>Real Estate Investment Simulator</h1>
-                <div class="subtitle">Flexible hold-period strategy lens + chart — include $/% down payment & light
-                    theme.</div>
+                <div class="subtitle">Advanced calculator simulating investment growth accounting for taxes and other liabilities, allowing for holding strategies to be simulated</div>
             </div>
         </header>
 
@@ -421,7 +420,7 @@
 
                 <div class="form-row">
                     <label>Purchase Price ($)</label>
-                    <input id="purchasePrice" type="number" placeholder="$" />
+                    <input id="purchasePrice" type="number" value="300000" placeholder="$" />
                 </div>
 
                 <div class="form-row">
@@ -441,7 +440,7 @@
                             </div>
                             <div class="input-column">
                                 <div class="small muted">Percent (%)</div>
-                                <input id="downPaymentPercent" type="number" placeholder="%">
+                                <input id="downPaymentPercent" type="number" value = "20" placeholder="%">
                             </div>
                         </div>
 
@@ -456,31 +455,31 @@
 
                 <div class="form-row">
                     <label>Loan Interest (%)</label>
-                    <input id="interestRate" type="number" placeholder="%" />
+                    <input id="interestRate" type="number" value="6.5" placeholder="%" />
                 </div>
 
                 <div class="form-row">
                     <label>Loan Term (yrs)</label>
-                    <input id="loanTerm" type="number" placeholder="yrs" />
+                    <input id="loanTerm" type="number" value="30" placeholder="yrs" />
                 </div>
 
                 <div class="form-row">
-                    <label>Total Closing Costs ($)</label>
-                    <input id="closingCosts" type="number" placeholder="$" />
+                    <label title="Typically 2% of Purchase Price">Total Closing Costs ($)</label>
+                    <input id="closingCosts" type="number" value="6000" placeholder="$" />
                 </div>
 
                 <div class="form-row">
                     <label>Closing Costs paid by Seller ($)</label>
-                    <input id="sellerpaidclosingCosts" type="number" placeholder="$" />
+                    <input id="sellerpaidclosingCosts" type="number" value="1500" placeholder="$" />
                 </div>
 
                 <div class="form-row">
-                    <label>
+                    <label title="Will vary on county try 5% as starter">
                         Land Value ($)
                         <span class="help-icon"
                             title="Approximate value of the land according to tax records. If tax records do not match purchase price, divide land value by home value as shown on tax document, then multiply that number by the purchase price. This number is used to compute depreciation.">ℹ️</span>
                     </label>
-                    <input id="landValue" type="number" placeholder="$" />
+                    <input id="landValue" type="number" value="15000" placeholder="$" />
                 </div>
 
                 <hr style="opacity:0.08;margin:12px 0" />
@@ -502,18 +501,18 @@
                 </div>
 
                 <div class="form-row">
-                    <label>Vacancy Rate (%)</label>
-                    <input id="vacancyRate" type="number" placeholder="%" />
+                    <label title="5% or less is considered healthy">Vacancy Rate (%)</label>
+                    <input id="vacancyRate" type="number" value="5" placeholder="%" />
                 </div>
 
                 <div class="form-row">
                     <label>Annual Rent Increase (%)</label>
-                    <input id="rentGrowth" type="number" step="0.1" placeholder="%" />
+                    <input id="rentGrowth" type="number" value="2" step="0.1" placeholder="%" />
                 </div>
 
                 <div class="form-row">
-                    <label>Estimated Appreciation (%/yr)</label>
-                    <input id="appreciation" type="number" step="0.01" placeholder="%" />
+                    <label title=""Depends on market, 4% is conservative>Estimated Appreciation (%/yr)</label>
+                    <input id="appreciation" type="number" value="4" step="0.01" placeholder="%" />
                 </div>
 
                 <hr style="opacity:0.08;margin:12px 0" />
@@ -521,13 +520,13 @@
                 <div class="section-title"><strong>Operating Expenses (annual unless noted)</strong></div>
 
                 <div class="form-row">
-                    <label>Property Taxes ($/yr)</label>
-                    <input id="propTaxes" type="number" placeholder="$" />
+                    <label title="Depends on State & County, 1% default">Property Taxes ($/yr)</label>
+                    <input id="propTaxes" type="number" value="3000"placeholder="$" />
                 </div>
 
                 <div class="form-row">
                     <label>Insurance ($/yr)</label>
-                    <input id="insurance" type="number" placeholder="$" />
+                    <input id="insurance" type="number" value="2000" placeholder="$" />
                 </div>
 
                 <div class="form-row">
@@ -541,18 +540,18 @@
                 </div>
 
                 <div class="form-row">
-                    <label>Maintenance (% of gross rent / yr)</label>
-                    <input id="maintenancePct" type="number" step="0.1" placeholder="%" />
+                    <label title="Benchmark suggest 8-12%">Maintenance (% of gross rent / yr)</label>
+                    <input id="maintenancePct" type="number" value="8" step="0.1" placeholder="%" />
                 </div>
 
                 <div class="form-row">
-                    <label>Management Fee (% of rent)</label>
-                    <input id="managementFeePct" type="number" step="0.1" placeholder="%" />
+                    <label title="Expect 8-10%">Management Fee (% of rent)</label>
+                    <input id="managementFeePct" type="number" value="8" step="0.1" placeholder="%" />
                 </div>
 
                 <div class="form-row">
                     <label>Annual Expense Growth (%)</label>
-                    <input id="expenseGrowth" type="number" step="0.1" placeholder="%" />
+                    <input id="expenseGrowth" type="number" value="0" step="0.1" placeholder="%" />
                 </div>
 
                 <hr style="opacity:0.08;margin:12px 0" />
@@ -568,7 +567,7 @@
                         <div class="small muted" style="flex: 1; min-width:60px; white-space: nowrap;">Life (yrs)</div>
                         <div class="small muted" style="flex: 1; min-width:60px; white-space: nowrap;">Spend Year</div>
                         <span class="help-icon"
-                            title="Enter what year you will spend this from time of ownership, i.e. 3 years after purhchase you would enter 3">ℹ️</span>
+                            title="Enter what year you will spend this from time of ownership, i.e. 3 years after purchase you would enter 3. If you need to invest at the time of purchase, put the spendyear as 0.">ℹ️</span>
                     </div>
 
                     <!-- Container for dynamic CapEx items -->
@@ -640,8 +639,18 @@
                             <p id="payback">—</p>
                         </div>
                     </div>
+                     
+                    <div style="margin-top:12px" class="section-title"><strong>Tax, Depreciation, & Cash calcs by year or over total hold strategy</strong></div>
 
-                    <div style="margin-top:12px" class="section-title"><strong>Tax & Depreciation</strong></div>
+                    <!-- Controls: hold strategy slider -->
+                    <div style="display:flex;gap:12px;align-items:center; margin: 12px 0;">
+                    <label for="holdStratSlider" style="min-width:72px;">Select year</label>
+                    <input id="holdStratSlider" type="range" min="1" max="2" value="1" style="flex:1">
+                    <div style="min-width:140px; text-align:right;">
+                        <span id="holdStratLabel">Year 1</span>
+                    </div>
+                    </div>
+
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                         <div class="tile">
                             <h3>Depreciation (yr)</h3>
@@ -655,6 +664,8 @@
                     </div>
 
                     <div style="margin-top:12px" class="section-title"><strong>All-In Cash Out & Taxes</strong></div>
+
+                    
                     <div class="results">
                         <div class="tile">
                             <h3>Total Deductible Expenses</h3>
@@ -743,6 +754,7 @@
         /* -----------------------
            Helpers to create DOM items
         ----------------------- */
+        
         function createUnitInput(index, value = '') {
             const wrap = document.createElement('div');
             wrap.className = 'unit-item';
@@ -772,18 +784,18 @@
         const amountButton = document.getElementById("amountButton");
         const percentButton = document.getElementById("percentButton");
 
-        let downPaymentMode = "amount"; // default
+        let downPaymentMode = "percent"; // default
 
         function updateDownPaymentFromAmount() {
             const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
             const amount = parseFloat(downPaymentValueInput.value) || 0;
-            const percent = purchasePrice ? (amount / purchasePrice) * 100 : 0;
-            downPaymentPercentInput.value = percent.toFixed(2);
+            const percent = purchasePrice ? (amount / purchasePrice) * 100 : 20;
+            downPaymentPercentInput.value = percent.toFixed(1);
         }
 
         function updateDownPaymentFromPercent() {
             const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
-            const percent = parseFloat(downPaymentPercentInput.value) || 0;
+            const percent = parseFloat(downPaymentPercentInput.value) || 20;
             const amount = (percent / 100) * purchasePrice;
             downPaymentValueInput.value = amount.toFixed(0);
         }
@@ -803,6 +815,104 @@
                 amountButton.classList.remove("active");
             }
         }
+        /* ---------- Slider & Table Wiring ---------- */
+const holdStratSlider = document.getElementById('holdStratSlider');
+const holdStratLabel  = document.getElementById('holdStratLabel');
+const holdYearsInput  = document.getElementById('holdYears');
+const taxTableBody    = document.getElementById('taxTableBody');
+
+function initHoldStratSlider() {
+  updateHoldStratSliderMax();
+  holdStratSlider.addEventListener('input', () => {
+    updateHoldStratLabel();
+    calculateAll();
+  });
+  holdYearsInput.addEventListener('change', () => {
+    updateHoldStratSliderMax();
+    updateHoldStratLabel();
+    calculateAll();
+  });
+  updateHoldStratLabel();
+}
+
+function updateHoldStratSliderMax() {
+  const years = Math.max(1, Number(holdYearsInput.value) || 1);
+  holdStratSlider.max = years + 1;       // last position = Total
+  if (+holdStratSlider.value > years + 1) holdStratSlider.value = years + 1;
+}
+
+function updateHoldStratLabel() {
+  const years = Math.max(1, Number(holdYearsInput.value) || 1);
+  const val = Number(holdStratSlider.value);
+  holdStratLabel.textContent = (val === years + 1) ? `Total (${years} yrs)` : `Year ${val}`;
+}
+
+function fmtMoney(n) {
+  return (typeof money2 === 'function')
+    ? '$' + money2(n)
+    : '$' + (Number(n || 0).toFixed(2));
+}
+
+function updateTaxTable(detail) {
+  if (!taxTableBody) return;
+  const sel = Number(holdStratSlider.value);
+  const yrs = detail.length;
+  taxTableBody.innerHTML = '';
+
+  detail.forEach((d) => {
+    const tr = document.createElement('tr');
+    if (sel === d.year) tr.style.background = '#f3f8ff';
+    tr.innerHTML = `
+      <td style="padding:6px">${d.year}</td>
+      <td style="padding:6px;text-align:right">${fmtMoney(d.depreciation)}</td>
+      <td style="padding:6px;text-align:right">${fmtMoney(d.taxableIncome)}</td>
+      <td style="padding:6px;text-align:right">${fmtMoney(d.allInCashOut)}</td>
+      <td style="padding:6px;text-align:right">${fmtMoney(d.taxes)}</td>`;
+    taxTableBody.appendChild(tr);
+  });
+
+  // Add total row if slider on "Total"
+  if (sel === yrs + 1) {
+    const total = detail.reduce((a, b) => ({
+      depreciation: a.depreciation + b.depreciation,
+      taxableIncome: a.taxableIncome + b.taxableIncome,
+      allInCashOut: a.allInCashOut + b.allInCashOut,
+      taxes: a.taxes + b.taxes
+    }), { depreciation:0, taxableIncome:0, allInCashOut:0, taxes:0 });
+
+    const tr = document.createElement('tr');
+    tr.style.fontWeight = '600';
+    tr.innerHTML = `
+      <td style="padding:6px">Total</td>
+      <td style="padding:6px;text-align:right">${fmtMoney(total.depreciation)}</td>
+      <td style="padding:6px;text-align:right">${fmtMoney(total.taxableIncome)}</td>
+      <td style="padding:6px;text-align:right">${fmtMoney(total.allInCashOut)}</td>
+      <td style="padding:6px;text-align:right">${fmtMoney(total.taxes)}</td>`;
+    taxTableBody.appendChild(tr);
+  }
+}
+
+function updateHoldStratSliderMax() {
+  const years = Math.max(1, Number(holdYearsInput.value) || 1);
+  // last position = cumulative total, so max = years + 1
+  holdStratSlider.max = years + 1;
+  // ensure current slider value stays valid
+  if (Number(holdStratSlider.value) > holdStratSlider.max) holdStratSlider.value = holdStratSlider.max;
+}
+
+function updateHoldStratLabel() {
+  const years = Math.max(1, Number(holdYearsInput.value) || 1);
+  const val = Number(holdStratSlider.value);
+  if (val === years + 1) {
+    holdStratLabel.textContent = `Total ( ${years} yrs )`;
+  } else {
+    holdStratLabel.textContent = `Year ${val}`;
+  }
+}
+
+/* Utility to render money with your existing money2 or fallback */
+function fmtMoney(n){ return (typeof money2 === 'function') ? ('$' + money2(n)) : ('$' + (Number(n).toFixed(2))); }
+
 
         // Button click handlers
         amountButton.addEventListener("click", () => {
@@ -1104,13 +1214,19 @@
             const paybackYears = annualCashFlow > 0 ? (initialInvestment / annualCashFlow) : Infinity;
 
             // depreciation & taxes (simple)
+            // Compute first-year capex depreciation:
+            const firstYearCapexDep = I.capexItems.reduce((s,c) => {
+            const spend = Number(c.spendYear) || 0;
+            return s + ((spend === 1 && c.life > 0) ? (c.cost / c.life) : 0);
+            }, 0);
+
             const depreciableBasis = Math.max(0, I.purchasePrice - I.landValue);
             const depreciationAnnual = depreciableBasis / 27.5;
             const firstYearInterest = (amort[0] && amort[0].interestPaid) ? amort[0].interestPaid : 0;
-            const totalDeductible = depreciationAnnual + operatingExpenses + firstYearInterest;
+            const totalDeductible = depreciationAnnual + operatingExpenses + firstYearInterest + firstYearCapexDep;
             const taxableIncome = effectiveGrossRent - operatingExpenses - depreciationAnnual - firstYearInterest;
             const incomeTaxLiability = taxableIncome > 0 ? taxableIncome * I.taxRate : 0;
-            const taxShield = (depreciationAnnual + firstYearInterest) * I.taxRate;
+            const taxShield = (depreciationAnnual + firstYearInterest + firstYearCapexDep) * I.taxRate;
             const allInOut = annualDebtService + operatingExpenses;
 
             // hold projection
@@ -1144,7 +1260,12 @@
             const interestY = (amortForYears[y - 1] && amortForYears[y - 1].interestPaid) ? amortForYears[y - 1].interestPaid : 0;
 
             // Taxable income: add annual depreciation for CapEx
-            const annualCapExDep = I.capexItems.reduce((sum, c) => sum + (c.life > 0 ? c.cost / c.life : 0), 0);
+            const annualCapExDep = I.capexItems.reduce((sum, c) => {
+            // if spendYear is zero treat it as immediate (spendYear === 1) or require user to input
+            const spend = Number(c.spendYear) || 0;
+            if (spend && spend <= y && c.life > 0) return sum + (c.cost / c.life);
+            return sum;
+            }, 0);
             const taxableY = effGross - (operatingExpensesY + depreciationAnnual + interestY + annualCapExDep);
             const taxY = taxableY > 0 ? taxableY * I.taxRate : 0;
             totalIncomeTaxPaid += taxY;
@@ -1152,7 +1273,8 @@
 
             const bal = (amortForYears[y - 1]) ? amortForYears[y - 1].endBalance : 0;
             yearlyLoanBalances.push(bal);
-            const salePrice = I.appraisedValue * Math.pow(1 + I.appreciation, y);
+            const baseVal = I.appraisedValue || I.purchasePrice;
+            const salePrice = baseVal * Math.pow(1 + I.appreciation, y);
             yearlySalePrices.push(salePrice);
 
             detail.push({
@@ -1163,13 +1285,17 @@
                 cashFlow: cashFlowY,
                 cumulativeCashFlow,
                 loanBalance: bal,
-                salePrice
+                salePrice,
+                depreciation: depreciationAnnual + annualCapExDep,
+                taxableIncome: taxableY,
+                totalDeductible: operatingExpensesY + depreciationAnnual + interestY + annualCapExDep,
+                allInCashOut: operatingExpensesY + annualDebtService + capexSpent,
+                taxes: taxY
             });
         }
 
-
             // sale
-            const finalSalePrice = yearlySalePrices[years - 1] || 0;
+            const finalSalePrice = (yearlySalePrices[years - 1] || (I.appraisedValue || I.purchasePrice)) || 0;
             const loanBalanceAtSale = yearlyLoanBalances[years - 1] || 0;
             const sellingCosts = finalSalePrice * I.sellingCostsPct;
             const netSaleProceedsBeforeTax = finalSalePrice - loanBalanceAtSale - sellingCosts;
@@ -1185,25 +1311,52 @@
             const finalValue = initialInvestment + afterTaxGain;
             const annualizedROI = (initialInvestment && finalValue > 0) ? (Math.pow((finalValue / initialInvestment), 1 / years) - 1) * 100 : 0;
 
-            // update DOM tiles
-            $('monthlyPayment').textContent = '$' + money2(monthlyPayment);
-            $('netMonthly').textContent = '$' + money2(netMonthly);
-            $('annualCash').textContent = '$' + money2(annualCashFlow);
-            $('capRate').textContent = money2(capRate) + '%';
-            $('cashOnCash').textContent = money2(cashOnCash) + '%';
-            $('payback').textContent = isFinite(paybackYears) ? money2(paybackYears) : '—';
-            $('depreciation').textContent = '$' + money2(depreciationAnnual);
-            $('taxableIncome').textContent = '$' + money2(taxableIncome);
-            $('totalDeduct').textContent = '$' + money2(totalDeductible);
-            $('taxLiability').textContent = '$' + money2(totalIncomeTaxPaid + incomeTaxLiability);
-            $('taxShield').textContent = '$' + money2(taxShield);
-            $('allInOut').textContent = '$' + money2(allInOut);
-            $('totalCashFlow').textContent = '$' + money2(cumulativeCashFlow);
-            $('netSale').textContent = '$' + money2(netSaleProceedsBeforeTax);
-            $('totalGain').textContent = '$' + money2(totalGainBeforeTax);
-            $('afterTaxGain').textContent = '$' + money2(afterTaxGain);
-            $('totalROI').textContent = money2(totalROI) + '%';
-            $('annualROI').textContent = money2(annualizedROI) + '%';
+            // ----- Slider Snapshot (single clean block) -----
+            updateHoldStratSliderMax();
+
+            const sel = Number(holdStratSlider.value) || 1;
+            let snap = { depreciation:0, taxableIncome:0, totalDeductible:0, taxes:0, allInCashOut:0 };
+
+            // Build detail already contains per-year fields
+            if (sel === years + 1) {
+            // cumulative total across all years
+            snap = detail.reduce((acc, d) => ({
+                depreciation: acc.depreciation + (d.depreciation || 0),
+                taxableIncome: acc.taxableIncome + (d.taxableIncome || 0),
+                totalDeductible: acc.totalDeductible + (d.totalDeductible || 0),
+                taxes: acc.taxes + (d.taxes || 0),
+                allInCashOut: acc.allInCashOut + (d.allInCashOut || 0)
+            }), { depreciation:0, taxableIncome:0, totalDeductible:0, taxes:0, allInCashOut:0 });
+            } else {
+            // single year snapshot (1-based index)
+            snap = detail[sel - 1] || { depreciation:0, taxableIncome:0, totalDeductible:0, taxes:0, allInCashOut:0 };
+            }
+
+            // --- update the tax & cash tiles (slider-driven) ---
+            // use money2 for formatting (keeps existing style)
+            $('depreciation').textContent = '$' + money2(snap.depreciation || 0);
+            $('taxableIncome').textContent = '$' + money2(snap.taxableIncome || 0);
+            $('totalDeduct').textContent = '$' + money2(snap.totalDeductible || 0);
+            $('taxLiability').textContent = '$' + money2(snap.taxes || 0);
+
+            // Tax shield estimate: use depreciation + first-year interest + first-year capex dep as an approximation
+            const estimatedTaxShield = ((snap.depreciation || 0) + (firstYearInterest || 0) + (firstYearCapexDep || 0)) * (I.taxRate || 0);
+            $('taxShield').textContent = '$' + money2(estimatedTaxShield || 0);
+
+            $('allInOut').textContent = '$' + money2(snap.allInCashOut || 0);
+
+            // refresh the single combined per-year table
+            updateTaxTable(detail);
+
+
+            // --- update the tax tiles ---
+            $('depreciation').textContent = '$' + money2(snap.depreciation || 0);
+            $('taxableIncome').textContent = '$' + money2(snap.taxableIncome || 0);
+            $('totalDeduct').textContent = '$' + money2(snap.totalDeductible || 0);
+            $('taxLiability').textContent = '$' + money2(snap.taxes || 0);
+            $('taxShield').textContent = '$' + money2((snap.depreciation + firstYearCapexDep + firstYearInterest) * I.taxRate || 0);
+            $('allInOut').textContent = '$' + money2(snap.allInCashOut || 0);
+
 
             // render detail table
             const detailDiv = $('detailList');
@@ -1217,13 +1370,18 @@
                 const tr = document.createElement('tr');
                 tr.style.borderTop = '1px solid rgba(9,30,66,0.04)';
                 tr.innerHTML = `<td style="padding:6px">${r.year}</td>
-      <td style="padding:6px">$${money2(r.rent)}</td>
-      <td style="padding:6px">$${money2(r.operatingExpenses)}</td>
-      <td style="padding:6px">$${money2(r.NOI)}</td>
-      <td style="padding:6px">$${money2(r.cashFlow)}</td>
-      <td style="padding:6px">$${money2(r.cumulativeCashFlow)}</td>
-      <td style="padding:6px">$${money2(r.loanBalance)}</td>
-      <td style="padding:6px">$${money2(r.salePrice)}</td>`;
+                    <td style="padding:6px">$${money2(r.rent)}</td>
+                    <td style="padding:6px">$${money2(r.operatingExpenses)}</td>
+                    <td style="padding:6px">$${money2(r.NOI)}</td>
+                    <td style="padding:6px">$${money2(r.cashFlow)}</td>
+                    <td style="padding:6px">$${money2(r.cumulativeCashFlow)}</td>
+                    <td style="padding:6px">$${money2(r.loanBalance)}</td>
+                    <td style="padding:6px">$${money2(r.salePrice)}</td>
+                    <td style="padding:6px">$${money2(r.depreciation)}</td>
+                    <td style="padding:6px">$${money2(r.taxableIncome)}</td>
+                    <td style="padding:6px">$${money2(r.totalDeductible)}</td>
+                    <td style="padding:6px">$${money2(r.taxes)}</td>
+                    <td style="padding:6px">$${money2(r.allInCashOut)}</td>`;
                 tb.appendChild(tr);
             });
             table.appendChild(tb);
@@ -1264,6 +1422,8 @@
                     calculateAll();
                 });
             });
+
+            initHoldStratSlider();
 
             // final initial calculate
             calculateAll();
