@@ -24,16 +24,13 @@
     .layout{display:grid;grid-template-columns:440px 1fr;gap:18px}
     .card{background:var(--bg-1);border-radius:var(--radius);padding:14px;box-shadow:var(--card-shadow);border:1px solid rgba(9,30,66,0.04)}
     .form-row{display:flex;align-items:flex-start;margin-bottom:10px}
-    .form-row label{font-size:10pt;width:220px;font-weight:450;margin-top:4px}
+    .form-row label{width:220px;font-weight:500;margin-top:4px}
     .input-pair{display:flex;gap:16px;align-items:flex-start}
     .input-column{display:flex;flex-direction:column}
-    /* --- Remove spinners from number inputs --- */
-    input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}input[type=number]{-moz-appearance:textfield}
     input[type="number"],input[type="text"],select{padding:8px;border-radius:8px;border:1px solid rgba(9,30,66,0.06);background:transparent;color:inherit;font-size:13px;width:80px}
     .small{font-size:12px;color:var(--muted)}
     .btn{background:var(--accent);border:none;padding:9px 12px;border-radius:10px;color:white;cursor:pointer;font-weight:700}
-    .results{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px;}
-    .results.hold-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .results{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:8px}
     .tile{background:linear-gradient(180deg,rgba(8,16,44,0.02),transparent);padding:12px;border-radius:10px;border:1px solid rgba(9,30,66,0.03)}
     .tile h3{margin:0;font-size:13px;color:var(--muted)}
     .tile p{margin:6px 0 0;font-size:18px;font-weight:700}
@@ -45,9 +42,6 @@
     .remove-btn{background-color:#3d0202;color:white;border-radius:8px;border:1px solid #3d0202;padding:6px 8px}
     .scenario-row{display:flex;gap:8px;margin-top:8px}
     .scenario-row button{padding:6px 8px;border-radius:8px;border:1px solid rgba(9,30,66,0.08);background:#f5f7fb;cursor:pointer}
-    .downpayment-toggle{display:flex;gap:6px;margin-left:-180px;}
-    .downpayment-toggle button{padding: 6px 8px;border-radius: 8px;border: 1px solid rgba(9,30,66,0.08);background: #f5f7fb;cursor: pointer;font-size: 12px;font-weight: 600;color: #0b1220;transition: all 0.15s ease-in-out;}
-    .layout button.active{background:var(--accent);color:white;border-color: var(--accent)}
     .scenario-row button.active{background:var(--accent);color:white;border-color:var(--accent)}
     @media (max-width:1000px){.layout{grid-template-columns:1fr}.charts-row{flex-direction:column}}
     /* extra small helpers */
@@ -81,22 +75,22 @@
               <div class="input-column"><div class="small muted">Amount ($)</div><input id="downPaymentValue" type="number" placeholder="$"></div>
               <div class="input-column"><div class="small muted">Percent (%)</div><input id="downPaymentPercent" type="number" value="20" placeholder="%"></div>
             </div>
-            <div class="downpayment-toggle">
-              <button id="amountButton">Amount</button>
-              <button id="percentButton" class="active">Percent</button>
+            <div class="downpayment-toggle" style="margin-left:-180px">
+              <button id="amountButton" class="active">Amount</button>
+              <button id="percentButton">Percent</button>
             </div>
           </div>
         </div>
 
         <div class="form-row"><label>Loan Interest (%)</label><input id="interestRate" type="number" value="6.5" placeholder="%" /></div>
         <div class="form-row"><label>Loan Term (yrs)</label><input id="loanTerm" type="number" value="30" placeholder="yrs" /></div>
-        <div class="form-row"><label data-tooltip="Typically 2% of Purchase Price">Total Closing Costs ($)</label><input id="closingCosts" type="number" value="6000" placeholder="$" /></div>
+        <div class="form-row"><label title="Typically 2% of Purchase Price">Total Closing Costs ($)</label><input id="closingCosts" type="number" value="6000" placeholder="$" /></div>
         <div class="form-row"><label>Closing Costs paid by Seller ($)</label><input id="sellerpaidclosingCosts" type="number" value="1500" placeholder="$" /></div>
-        <div class="form-row"><label data-tooltip="Will vary on county try 5% as starter">Land Value ($)<span class="help-icon" data-tooltip="Used for depreciation calculations.">ℹ️</span></label><input id="landValue" type="number" value="15000" placeholder="$" /></div>
+        <div class="form-row"><label title="Will vary on county try 5% as starter">Land Value ($)<span class="help-icon" title="Used for depreciation calculations.">ℹ️</span></label><input id="landValue" type="number" value="15000" placeholder="$" /></div>
 
         <hr style="opacity:0.08;margin:12px 0" />
 
-        <div class="section-title"><strong>Rental Unit Income</strong></div>
+        <div class="section-title"><strong>Income & Units</strong></div>
         <div class="form-row"><label># of Units</label><input id="numUnits" type="number" value="1" min="1" /></div>
 
         <div class="small muted" style="margin-bottom:8px">Set rent per unit — add/remove units</div>
@@ -105,32 +99,29 @@
           <div style="display:flex;gap:8px;margin-top:8px">
             <button class="add-btn" id="addUnitBtn">+ Add Unit</button>
             <button class="remove-btn" id="removeUnitBtn">- Remove Unit</button>
-          </div>          
-        </div>
+          </div>
 
-        <!-- Scenario buttons (Enhancement E) -->
-         <div class="section-title"><strong>Investment Return Variables</strong></div>
-         <div class="small muted" style="margin-bottom:8px">Select a scenario or Enter Custom values</div>
-          <div class="scenario-row" id="scenarioRow" style="margin-top:12px; margin-bottom:12px">
+          <!-- Scenario buttons (Enhancement E) -->
+          <div class="scenario-row" id="scenarioRow" style="margin-top:12px">
             <button id="bestBtn">Best</button>
             <button id="avgBtn">Average</button>
             <button id="worstBtn">Worst</button>
             <button id="customBtn" class="active">Custom</button>
           </div>
+        </div>
 
-        <div class="form-row"><label data-tooltip="5% or less is considered healthy">Vacancy Rate (%)</label><input id="vacancyRate" type="number" value="5" placeholder="%" /></div>
+        <div class="form-row"><label title="5% or less is considered healthy">Vacancy Rate (%)</label><input id="vacancyRate" type="number" value="5" placeholder="%" /></div>
         <div class="form-row"><label>Annual Rent Increase (%)</label><input id="rentGrowth" type="number" value="2" step="0.1" placeholder="%" /></div>
-        <div class="form-row"><label data-tooltip="Depends on market, 4% is conservative">Estimated Appreciation (%/yr)</label><input id="appreciation" type="number" value="4" step="0.01" placeholder="%" /></div>
+        <div class="form-row"><label title="Depends on market, 4% is conservative">Estimated Appreciation (%/yr)</label><input id="appreciation" type="number" value="4" step="0.01" placeholder="%" /></div>
 
         <hr style="opacity:0.08;margin:12px 0" />
         <div class="section-title"><strong>Operating Expenses (annual unless noted)</strong></div>
-        <div class="form-row"><label data-tooltip="Depends on State & County, 1% default">Property Taxes ($/yr)</label><input id="propTaxes" type="number" value="3000" placeholder="$" /></div>
+        <div class="form-row"><label title="Depends on State & County, 1% default">Property Taxes ($/yr)</label><input id="propTaxes" type="number" value="3000" placeholder="$" /></div>
         <div class="form-row"><label>Insurance ($/yr)</label><input id="insurance" type="number" value="2000" placeholder="$" /></div>
-        <div class="form-row"><label>Mortgage Insurance ($/yr)</label><input id="mortgageInsurance" type="number" value="0" placeholder="$" /></div>
         <div class="form-row"><label>Utilities ($/mo)</label><input id="utilities" type="number" placeholder="$" /></div>
         <div class="form-row"><label>Other Expenses (HOA, etc) ($/mo)</label><input id="otherExpenses" type="number" placeholder="$" /></div>
-        <div class="form-row"><label data-tooltip="Benchmark suggest 8-12%">Maintenance (% of gross rent / yr)</label><input id="maintenancePct" type="number" value="8" step="0.1" placeholder="%" /></div>
-        <div class="form-row"><label data-tooltip="Expect 8-10%">Management Fee (% of rent)</label><input id="managementFeePct" type="number" value="8" step="0.1" placeholder="%" /></div>
+        <div class="form-row"><label title="Benchmark suggest 8-12%">Maintenance (% of gross rent / yr)</label><input id="maintenancePct" type="number" value="8" step="0.1" placeholder="%" /></div>
+        <div class="form-row"><label title="Expect 8-10%">Management Fee (% of rent)</label><input id="managementFeePct" type="number" value="8" step="0.1" placeholder="%" /></div>
         <div class="form-row"><label>Annual Expense Growth (%)</label><input id="expenseGrowth" type="number" value="0" step="0.1" placeholder="%" /></div>
 
         <hr style="opacity:0.08;margin:12px 0" />
@@ -142,7 +133,7 @@
             <div class="small muted" style="flex:2;min-width:60px;white-space:nowrap">Amount ($)</div>
             <div class="small muted" style="flex:1;min-width:60px;white-space:nowrap">Life (yrs)</div>
             <div class="small muted" style="flex:1;min-width:60px;white-space:nowrap">Spend Year</div>
-            <span class="help-icon" data-tooltip="Enter what year you will spend this from time of ownership">ℹ️</span>
+            <span class="help-icon" title="Enter what year you will spend this from time of ownership">ℹ️</span>
           </div>
           <div class="capex-list" id="capexList"></div>
           <div style="display:flex;gap:8px;margin-top:8px"><button class="add-btn" id="addCapexBtn">+ Add CapEx Item</button></div>
@@ -160,51 +151,51 @@
       <!-- RIGHT: Results & Charts -->
       <div>
         <div class="card">
-            <div class="section-title"><strong>Snapshot — Cashflow & Performance</strong></div>
+          <div class="section-title"><strong>Snapshot — Cashflow & Performance</strong></div>
 
-            <div class="results" id="summaryTiles">
-            <div class="tile" data-tooltip="<strong>Definition:</strong> Monthly principal + interest payment.<br><strong>Formula:</strong> Loan × [r(1+r)^n] / [(1+r)^n − 1]"><h3>Monthly Mortgage</h3><p id="monthlyPayment">$0</p></div>
-            <div class="tile" data-tooltip="<strong>Definition:</strong> Monthly income after all expenses and debt service.<br><strong>Formula:</strong> (Effective Rent − Operating Expenses − Debt Service) ÷ 12"><h3>Net Monthly Cash Flow</h3><p id="netMonthly">$0</p></div>
-            <div class="tile" data-tooltip="<strong>Definition:</strong> Total annual income after expenses and mortgage.<br><strong>Formula:</strong> NOI − Debt Service"><h3>Annual Cash Flow</h3><p id="annualCash">$0</p></div>
-            <div class="tile" data-tooltip="<strong>Definition:</strong> Annual return on property value before financing.<br><strong>Formula:</strong> NOI ÷ Purchase Price × 100"><h3>Cap Rate</h3><p id="capRate">0%</p></div>
-            <div class="tile" data-tooltip="<strong>Definition:</strong> Annual cash return on total cash invested.<br><strong>Formula:</strong> Annual Cash Flow ÷ Initial Investment × 100"><h3>Cash-on-Cash ROI</h3><p id="cashOnCash">0%</p></div>
-            <div class="tile" data-tooltip="<strong>Definition:</strong> Years to recover total cash invested from cash flow.<br><strong>Formula:</strong> Initial Investment ÷ Annual Cash Flow"><h3>Payback (yrs)</h3><p id="payback">—</p></div>
-            </div>
+          <div class="results" id="summaryTiles">
+            <div class="tile"><h3 title="Monthly mortgage payment for the loan (principal + interest)">Monthly Mortgage</h3><p id="monthlyPayment">$0</p></div>
+            <div class="tile"><h3 title="Net monthly cash flow (NOI - debt service)">Net Monthly Cash Flow</h3><p id="netMonthly">$0</p></div>
+            <div class="tile"><h3 title="Annual cash flow (NOI - debt service)">Annual Cash Flow</h3><p id="annualCash">$0</p></div>
+            <div class="tile"><h3 title="Cap Rate = NOI / Purchase Price">Cap Rate</h3><p id="capRate">0%</p></div>
+            <div class="tile"><h3 title="Cash-on-Cash ROI = Annual Cash Flow / Cash Invested">Cash-on-Cash ROI</h3><p id="cashOnCash">0%</p></div>
+            <div class="tile"><h3 title="Payback years = Initial investment / Annual cash flow">Payback (yrs)</h3><p id="payback">—</p></div>
+          </div>
 
-            <div style="margin-top:12px" class="section-title">
-                <strong>Tax, Depreciation, & Cash calcs by year or over total hold strategy</strong>
-            </div>
+          <div style="margin-top:12px" class="section-title"><strong>Tax, Depreciation, & Cash calcs by year or over total hold strategy</strong></div>
 
-            <div style="display:flex;gap:12px;align-items:center;margin:12px 0;">
-                <label for="holdStratSlider" style="min-width:72px;">Select year</label>
-                <input id="holdStratSlider" type="range" min="1" max="2" value="1" style="flex:1">
-                <div style="min-width:140px;text-align:right;"><span id="holdStratLabel">Year 1</span></div>
-            </div>
+          <div style="display:flex;gap:12px;align-items:center;margin:12px 0;">
+            <label for="holdStratSlider" style="min-width:72px;">Select year</label>
+            <input id="holdStratSlider" type="range" min="1" max="2" value="1" style="flex:1">
+            <div style="min-width:140px;text-align:right;"><span id="holdStratLabel">Year 1</span></div>
+          </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Non-cash tax deduction from building value.<br><strong>Formula:</strong> (Purchase Price − Land Value) ÷ 27.5"><h3>Depreciation (yr)</h3><p id="depreciation">$0</p><div class="small muted">27.5-yr residential</div></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Income reported for taxes after deductions.<br><strong>Formula:</strong> Effective Rent − (OpEx + Interest + Depreciation)"><h3>Taxable Income (yr)</h3><p id="taxableIncome">$0</p></div>
-            </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="tile"><h3 title="Annual depreciation (27.5-yr residential)">Depreciation (yr)</h3><p id="depreciation">$0</p><div class="small muted">27.5-yr residential</div></div>
+            <div class="tile"><h3 title="Taxable income for selected year">Taxable Income (yr)</h3><p id="taxableIncome">$0</p></div>
+          </div>
 
-            <div style="margin-top:12px" class="section-title"><strong>All-In Cash Out & Taxes</strong></div>
-            <div class="results">
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Total expenses reducing taxable income.<br><strong>Formula:</strong> Operating Expenses + Interest + Depreciation"><h3>Total Deductible Expenses</h3><p id="totalDeduct">$0</p></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Estimated income tax owed for the year.<br><strong>Formula:</strong> Taxable Income × Income Tax Rate"><h3>Income Tax Liability</h3><p id="taxLiability">$0</p></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Estimated tax savings from deductible expenses.<br><strong>Formula:</strong> (Depreciation + Interest + Other Deductions) × Tax Rate"><h3>Tax Shield (est)</h3><p id="taxShield">$0</p></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Combined annual expenses including debt and CapEx.<br><strong>Formula:</strong> Operating Expenses + Debt Service + CapEx"><h3>Total Annual Cash Outflow</h3><p id="allInOut">$0</p></div>
-            </div>
+          <div style="margin-top:12px" class="section-title"><strong>All-In Cash Out & Taxes</strong></div>
+          <div class="results">
+            <div class="tile"><h3 title="Total deductible expenses this period">Total Deductible Expenses</h3><p id="totalDeduct">$0</p></div>
+            <div class="tile"><h3 title="Income tax liability for year">Income Tax Liability</h3><p id="taxLiability">$0</p></div>
+            <div class="tile"><h3 title="Estimated tax shield from depreciation & interest">Tax Shield (est)</h3><p id="taxShield">$0</p></div>
+            <div class="tile"><h3 title="Total annual cash outflow">Total Annual Cash Outflow</h3><p id="allInOut">$0</p></div>
+          </div>
         </div>
 
         <div style="margin-top:12px" class="card">
-            <div class="section-title"><strong>Hold-Period Strategy Summary – <span id="holdYearsLabel"> yrs</span></strong></div>
-            <div style="display:flex;gap:12px;align-items:start">
-            <div class="results hold-summary">
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Total cumulative cash flow over hold period.<br><strong>Formula:</strong> Σ Annual Cash Flow"><h3>Total Cash Flow (hold)</h3><p id="totalCashFlow">$0</p></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Cash received from sale after loan payoff and selling costs.<br><strong>Formula:</strong> Sale Price − Loan Balance − Selling Costs"><h3>Net Sale Proceeds</h3><p id="netSale">$0</p></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Profit before taxes (cash flow + sale − invested).<br><strong>Formula:</strong> (Cumulative Cash Flow + Net Sale − Initial Investment)"><h3>Total Gain (before tax)</h3><p id="totalGain">$0</p></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Net profit after all taxes.<br><strong>Formula:</strong> Total Gain − Taxes"><h3>Estimated After-Tax Gain</h3><p id="afterTaxGain">$0</p></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Total after-tax return on investment.<br><strong>Formula:</strong> After-Tax Gain ÷ Initial Investment × 100"><h3>Total ROI (hold)</h3><p id="totalROI">0%</p></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Average annual return compounded over hold period.<br><strong>Formula:</strong> [(Final ÷ Initial)^(1/Years) − 1] × 100"><h3>Annualized ROI (CAGR)</h3><p id="annualROI">0%</p></div>
+          <div class="section-title"><strong>Hold-Period Strategy Summary</strong></div>
+          <div style="display:flex;gap:12px;align-items:start">
+            <div style="flex:1">
+              <div class="results" style="margin-top:0">
+                <div class="tile"><h3 title="Total cash received over hold">Total Cash Flow (hold)</h3><p id="totalCashFlow">$0</p></div>
+                <div class="tile"><h3 title="Net sale proceeds before taxes">Net Sale Proceeds</h3><p id="netSale">$0</p></div>
+                <div class="tile"><h3 title="Total gain before tax (cashflow + sale - invested)">Total Gain (before tax)</h3><p id="totalGain">$0</p></div>
+                <div class="tile"><h3 title="Estimated after-tax gain">Estimated After-Tax Gain</h3><p id="afterTaxGain">$0</p></div>
+                <div class="tile"><h3 title="Total ROI (after taxes) over hold">Total ROI (hold)</h3><p id="totalROI">0%</p></div>
+                <div class="tile"><h3 title="Annualized ROI (CAGR)">Annualized ROI (CAGR)</h3><p id="annualROI">0%</p></div>
+              </div>
             </div>
 
             <!-- ROI pie on right -->
@@ -212,7 +203,7 @@
               <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Return Composition (approx)</div>
               <canvas id="roiPie" style="width:100%;height:220px"></canvas>
             </div>
-            </div>
+          </div>
 
           <div style="margin-top:12px" class="section-title"><strong>Projection Charts</strong></div>
           <div class="chart-wrap">
@@ -415,7 +406,6 @@
       appreciation: getNum('appreciation') / 100,
       propTaxes: getNum('propTaxes'),
       insurance: getNum('insurance'),
-      mortgageInsurance: getNum('mortgageInsurance'),
       utilities: getNum('utilities') * 12,
       otherExpenses: getNum('otherExpenses') * 12,
       maintenancePct: getNum('maintenancePct') / 100,
@@ -494,7 +484,6 @@
     const cashOnCash = initialInvestment ? (annualCashFlow / initialInvestment) * 100 : 0;
     const paybackYears = annualCashFlow > 0 ? (initialInvestment / annualCashFlow) : Infinity;
 
-
     /* depreciation & taxes */
     const firstYearCapexDep = I.capexItems.reduce((s,c)=>{
       const spend = Number(c.spendYear) || 0;
@@ -537,13 +526,10 @@
       const baseVal = I.appraisedValue || I.purchasePrice;
       const salePrice = baseVal * Math.pow(1 + I.appreciation, y);
       yearlySalePrices.push(salePrice);
-      const equityRatio = 1 - (amortForYears[y-1].endBalance / I.purchasePrice);
-      const pmiActive = (y <= 3) || (equityRatio < 0.20);
-      const mortgageInsY = pmiActive ? I.mortgageInsurance : 0;
 
       detail.push({
         year: y,
-        rent: effGross,
+        rent: yearRents,
         operatingExpenses: operatingExpensesY,
         NOI: NOIy,
         cashFlow: cashFlowY,
@@ -642,33 +628,15 @@
       { label:'Cumulative Cashflow', data: cashflowSeries, borderColor:'#f59e0b', fill:false, tension:0.2 }
     ]);
 
-    // --- Hold-Period Investment Performance (Bar Chart) ---
-    const ctxPerf = $('cashflowChart').getContext('2d');
-    if (cashflowChart) cashflowChart.destroy();
-    cashflowChart = new Chart(ctxPerf, {
-    type: 'bar',
-    data: {
-        labels: ['Cap Rate', 'Cash-on-Cash ROI', 'IRR (Annualized ROI)'],
-        datasets: [{
-        label: 'Performance (%)',
-        data: [capRate, cashOnCash, annualizedROI],
-        backgroundColor: ['#2563eb', '#16a34a', '#f59e0b']
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false }, title: { display: true, text: 'Investment Performance (Hold Period)' } },
-        scales: {
-        y: {
-            ticks: { callback: v => v + '%' },
-            beginAtZero: true
-        }
-        }
-    }
-    });
-
-
-
+    // right: cashflow stacked bar (gross rent, op ex, cashflow)
+    const grossRentSeries = detail.map(d => Number(d.rent.toFixed(2)));
+    const opExSeries = detail.map(d => Number(d.operatingExpenses.toFixed(2)));
+    const cashFlowBar = detail.map(d => Number(d.cashFlow.toFixed(2)));
+    ensureLineChart('cashflowChart', labels, [
+      { label:'Gross Rent', data: grossRentSeries, stack:'stack1' },
+      { label:'Operating Exp', data: opExSeries, stack:'stack1' },
+      { label:'Net Cash Flow', data: cashFlowBar, stack:'stack1' }
+    ], { plugins:{legend:{position:'top'}} });
 
     /* ROI pie */
     // principal paid total across amortForYears limited to hold years
@@ -699,8 +667,6 @@
     $('afterTaxGain').textContent = '$' + money2(afterTaxGain || 0);
     $('totalROI').textContent = (totalROI || 0).toFixed(1) + '%';
     $('annualROI').textContent = (annualizedROI || 0).toFixed(1) + '%';
-    $('holdYearsLabel').textContent = `${I.holdYears} yrs`;
-
   } // calculateAll
 
   /* Slider & tax table wiring */
@@ -743,7 +709,7 @@
 
     // default scenario to Average on load
     applyScenario('avg');
-    refreshDownPaymentInputs();
+
     calculateAll();
   })();
 
@@ -760,42 +726,6 @@
     a.download = 'real_estate_projection.csv';
     a.click();
   });
-
-  // --- Enable real HTML tooltips ---
-document.addEventListener('mouseover', e => {
-  const tile = e.target.closest('.tile[data-tooltip]');
-  if (!tile) return;
-  const html = tile.getAttribute('data-tooltip');
-  let tip = document.querySelector('#customTooltip');
-  if (!tip) {
-    tip = document.createElement('div');
-    tip.id = 'customTooltip';
-    tip.style.position = 'fixed';
-    tip.style.background = '#111827';
-    tip.style.color = '#f9fafb';
-    tip.style.padding = '8px 10px';
-    tip.style.borderRadius = '8px';
-    tip.style.fontSize = '12px';
-    tip.style.lineHeight = '1.3';
-    tip.style.maxWidth = '260px';
-    tip.style.pointerEvents = 'none';
-    tip.style.zIndex = '9999';
-    tip.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
-    document.body.appendChild(tip);
-  }
-  tip.innerHTML = html;
-  const move = ev => {
-    tip.style.top = (ev.clientY + 16) + 'px';
-    tip.style.left = (ev.clientX + 16) + 'px';
-  };
-  move(e);
-  document.addEventListener('mousemove', move);
-  tile.addEventListener('mouseleave', () => {
-    tip.remove();
-    document.removeEventListener('mousemove', move);
-  }, { once: true });
-});
-
 </script>
 </body>
 </html>
