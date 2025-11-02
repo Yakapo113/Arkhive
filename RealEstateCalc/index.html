@@ -1397,8 +1397,18 @@ function fmtMoney(n){ return (typeof money2 === 'function') ? ('$' + money2(n)) 
                 { label: 'Equity', data: equitySeries, borderColor: '#16a34a', fill: false },
                 { label: 'Cumulative Cashflow', data: cashflowSeries, borderColor: '#f59e0b', fill: false }
             ]);
+
+            // --- Update Hold-Period Summary Tiles ---
+        $('totalCashFlow').textContent = '$' + money2(cumulativeCashFlow || 0);
+        $('netSale').textContent = '$' + money2(netSaleProceedsBeforeTax || 0);
+        $('totalGain').textContent = '$' + money2(totalGainBeforeTax || 0);
+        $('afterTaxGain').textContent = '$' + money2(afterTaxGain || 0);
+        $('totalROI').textContent = (totalROI || 0).toFixed(1) + '%';
+        $('annualROI').textContent = (annualizedROI || 0).toFixed(1) + '%';
+
         }
 
+         
         /* -----------------------
            Initialization
         ----------------------- */
