@@ -54,6 +54,8 @@
     .muted{color:var(--muted);font-size:13px}
     .help-icon{display:inline-block;margin-left:4px;font-size:14px;color:var(--accent)}
     .chart-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+    label[data-tooltip], .tile[data-tooltip] { cursor: help; }
+    .tile[data-tooltip], label[data-tooltip] {cursor: help;}
   </style>
 </head>
 <body>
@@ -126,7 +128,7 @@
         <div class="section-title"><strong>Operating Expenses (annual unless noted)</strong></div>
         <div class="form-row"><label data-tooltip="Depends on State & County, 1% default">Property Taxes ($/yr)</label><input id="propTaxes" type="number" value="3000" placeholder="$" /></div>
         <div class="form-row"><label>Insurance ($/yr)</label><input id="insurance" type="number" value="2000" placeholder="$" /></div>
-        <div class="form-row"><label>Mortgage Insurance ($/yr)</label><input id="mortgageInsurance" type="number" value="0" placeholder="$" /></div>
+        <div class="form-row"><label data-tooltip="<strong>Definition:</strong> Private Mortgage Insurance (PMI) protects lenders when equity is below 20%.<br><strong>Requirement:</strong> Must be paid for until 20% equity is reached. Will auto cancel at 78% equity.">Mortgage Insurance ($/yr)</label><input id="mortgageInsurance" type="number" placeholder="$" /></div>
         <div class="form-row"><label>Utilities ($/mo)</label><input id="utilities" type="number" placeholder="$" /></div>
         <div class="form-row"><label>Other Expenses (HOA, etc) ($/mo)</label><input id="otherExpenses" type="number" placeholder="$" /></div>
         <div class="form-row"><label data-tooltip="Benchmark suggest 8-12%">Maintenance (% of gross rent / yr)</label><input id="maintenancePct" type="number" value="8" step="0.1" placeholder="%" /></div>
@@ -208,9 +210,11 @@
             </div>
 
             <!-- ROI pie on right -->
-            <div style="width:280px">
-              <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Return Composition (approx)</div>
-              <canvas id="roiPie" style="width:100%;height:220px"></canvas>
+            <div style="width:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:auto;">
+            <div style="font-size:13px;color:var(--muted);margin-bottom:8px;text-align:center;">
+                Return Composition (approx)
+            </div>
+            <canvas id="roiPie" style="width:100%;height:220px;display:block;margin:0 auto;"></canvas>
             </div>
             </div>
 
@@ -474,17 +478,30 @@
     return schedule;
   }
 
-  /* Main calculation */
-  function calculateAll(){
+/* Main calculation */
+function calculateAll(){
     const I = gatherInputs();
+
+    // loan & payments
     const loanAmount = Math.max(0, I.purchasePrice - I.dpVal);
     const monthlyPayment = monthlyMortgage(loanAmount, I.interestRate, I.loanTerm);
     const annualDebtService = monthlyPayment * 12;
     const amort = amortSchedule(loanAmount, I.interestRate, I.loanTerm);
 
+    // --- Mortgage Insurance (PMI) for snapshot calculations ---
+    // PMI input is annual; include in snapshots if starting LTV > 80%
+    const mortgageInsuranceAnnual = Number(I.mortgageInsurance || 0);
+    const startingLoanBalance = loanAmount; // at origination
+    const startingEquityRatio = I.purchasePrice ? (1 - (startingLoanBalance / I.purchasePrice)) : 0;
+    const pmiActiveStart = mortgageInsuranceAnnual > 0 && (startingEquityRatio < 0.20);
+    const mortgageInsuranceCostStart = pmiActiveStart ? mortgageInsuranceAnnual : '0';
+
+    // operating items (snapshot-level, include PMI)
     const maintenance = I.grossAnnualRent * I.maintenancePct;
     const managementFee = I.grossAnnualRent * I.managementFeePct;
-    const operatingExpenses = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenance + managementFee;
+    const operatingExpenses = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenance + managementFee + mortgageInsuranceCostStart;
+
+    // income, NOI, cashflow (snapshot)
     const effectiveGrossRent = I.grossAnnualRent * (1 - I.vacancyRate);
     const NOI = effectiveGrossRent - operatingExpenses;
     const annualCashFlow = NOI - annualDebtService;
@@ -516,32 +533,51 @@
 
     const amortForYears = amortSchedule(loanAmount, I.interestRate, I.loanTerm);
 
-    for (let y=1;y<=years;y++){
-      if (y>1) yearRents *= (1 + I.rentGrowth);
-      const maintenanceY = yearRents * I.maintenancePct;
-      const managementFeeY = yearRents * I.managementFeePct;
-      const operatingExpensesY = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenanceY + managementFeeY;
-      const effGross = yearRents * (1 - I.vacancyRate);
-      const NOIy = effGross - operatingExpensesY;
-      const capexSpent = I.capexItems.reduce((s,c)=> s + (c.spendYear === y ? c.cost : 0), 0);
-      const cashFlowY = NOIy - annualDebtService - capexSpent;
-      cumulativeCashFlow += cashFlowY;
-      const interestY = (amortForYears[y-1] && amortForYears[y-1].interestPaid) ? amortForYears[y-1].interestPaid : 0;
-      const annualCapExDep = I.capexItems.reduce((sum,c)=>{ const spend = Number(c.spendYear)||0; if (spend && spend <= y && c.life>0) return sum + (c.cost / c.life); return sum; }, 0);
-      const taxableY = effGross - (operatingExpensesY + depreciationAnnual + interestY + annualCapExDep);
-      const taxY = taxableY > 0 ? taxableY * I.taxRate : 0;
-      totalIncomeTaxPaid += taxY;
-      totalDepreciationTaken += depreciationAnnual + annualCapExDep;
-      const bal = (amortForYears[y-1]) ? amortForYears[y-1].endBalance : 0;
-      yearlyLoanBalances.push(bal);
-      const baseVal = I.appraisedValue || I.purchasePrice;
-      const salePrice = baseVal * Math.pow(1 + I.appreciation, y);
-      yearlySalePrices.push(salePrice);
-      const equityRatio = 1 - (amortForYears[y-1].endBalance / I.purchasePrice);
-      const pmiActive = (y <= 3) || (equityRatio < 0.20);
-      const mortgageInsY = pmiActive ? I.mortgageInsurance : 0;
+    for (let y = 1; y <= years; y++) {
+    if (y > 1) yearRents *= (1 + I.rentGrowth);
 
-      detail.push({
+    // --- amortization balance for this year (needed for equity/PMI decisions)
+    const bal = (amortForYears[y - 1]) ? amortForYears[y - 1].endBalance : 0;
+
+    // --- Mortgage Insurance (PMI) logic ---
+    // annual PMI input from user (0 if not used)
+    const mortgageInsuranceAnnual = Number(I.mortgageInsurance || 0);
+    // equity ratio = (owner equity) ÷ purchase price
+    const equityRatio = I.purchasePrice ? (1 - (bal / I.purchasePrice)) : 0;
+    // PMI active if user entered PMI amount AND equity < 20%
+    const pmiActive = mortgageInsuranceAnnual > 0 && (equityRatio < 0.20);
+    const mortgageInsuranceCost = pmiActive ? mortgageInsuranceAnnual : 0;
+
+    // --- Yearly operating items ---
+    const maintenanceY = yearRents * I.maintenancePct;
+    const managementFeeY = yearRents * I.managementFeePct;
+    const operatingExpensesY = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenanceY + managementFeeY + mortgageInsuranceCost;
+
+    const effGross = yearRents * (1 - I.vacancyRate);
+    const NOIy = effGross - operatingExpensesY;
+    const capexSpent = I.capexItems.reduce((s, c) => s + (c.spendYear === y ? c.cost : 0), 0);
+    const cashFlowY = NOIy - annualDebtService - capexSpent;
+    cumulativeCashFlow += cashFlowY;
+
+    const interestY = (amortForYears[y - 1] && amortForYears[y - 1].interestPaid) ? amortForYears[y - 1].interestPaid : 0;
+    const annualCapExDep = I.capexItems.reduce((sum, c) => {
+        const spend = Number(c.spendYear) || 0;
+        if (spend && spend <= y && c.life > 0) return sum + (c.cost / c.life);
+        return sum;
+    }, 0);
+
+    const taxableY = effGross - (operatingExpensesY + depreciationAnnual + interestY + annualCapExDep);
+    const taxY = taxableY > 0 ? taxableY * I.taxRate : 0;
+    totalIncomeTaxPaid += taxY;
+    totalDepreciationTaken += depreciationAnnual + annualCapExDep;
+
+    yearlyLoanBalances.push(bal);
+
+    const baseVal = I.appraisedValue || I.purchasePrice;
+    const salePrice = baseVal * Math.pow(1 + I.appreciation, y);
+    yearlySalePrices.push(salePrice);
+
+    detail.push({
         year: y,
         rent: effGross,
         operatingExpenses: operatingExpensesY,
@@ -555,8 +591,9 @@
         totalDeductible: operatingExpensesY + depreciationAnnual + interestY + annualCapExDep,
         allInCashOut: operatingExpensesY + annualDebtService + capexSpent,
         taxes: taxY
-      });
+    });
     }
+
 
     /* sale calcs */
     const finalSalePrice = (yearlySalePrices[years-1] || (I.appraisedValue || I.purchasePrice)) || 0;
@@ -761,11 +798,11 @@
     a.click();
   });
 
-  // --- Enable real HTML tooltips ---
+// --- Enable real HTML tooltips (tiles + labels) ---
 document.addEventListener('mouseover', e => {
-  const tile = e.target.closest('.tile[data-tooltip]');
-  if (!tile) return;
-  const html = tile.getAttribute('data-tooltip');
+  const target = e.target.closest('.tile[data-tooltip], label[data-tooltip]');
+  if (!target) return;
+  const html = target.getAttribute('data-tooltip');
   let tip = document.querySelector('#customTooltip');
   if (!tip) {
     tip = document.createElement('div');
@@ -783,14 +820,18 @@ document.addEventListener('mouseover', e => {
     tip.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
     document.body.appendChild(tip);
   }
+
   tip.innerHTML = html;
+
   const move = ev => {
     tip.style.top = (ev.clientY + 16) + 'px';
     tip.style.left = (ev.clientX + 16) + 'px';
   };
   move(e);
+
   document.addEventListener('mousemove', move);
-  tile.addEventListener('mouseleave', () => {
+
+  target.addEventListener('mouseleave', () => {
     tip.remove();
     document.removeEventListener('mousemove', move);
   }, { once: true });
