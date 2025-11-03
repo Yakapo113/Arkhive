@@ -32,6 +32,8 @@
     input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}input[type=number]{-moz-appearance:textfield}
     input[type="number"],input[type="text"],select{padding:8px;border-radius:8px;border:1px solid rgba(9,30,66,0.06);background:transparent;color:inherit;font-size:13px;width:80px}
     .small{font-size:12px;color:var(--muted)}
+    .tile p { margin: 6px 0 0; }
+    .tile .small.muted { font-size: 11px; margin-top: 2px; }
     .btn{background:var(--accent);border:none;padding:9px 12px;border-radius:10px;color:white;cursor:pointer;font-weight:700}
     .results{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px;}
     .results.hold-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -488,92 +490,95 @@
 
 /* Main calculation */
 function calculateAll(){
-    const I = gatherInputs();
+  const I = gatherInputs();
 
-    // loan & payments
-    const loanAmount = Math.max(0, I.purchasePrice - I.dpVal);
-    const monthlyPayment = monthlyMortgage(loanAmount, I.interestRate, I.loanTerm);
-    const annualDebtService = monthlyPayment * 12;
-    const amort = amortSchedule(loanAmount, I.interestRate, I.loanTerm);
+  // loan & payments
+  const loanAmount = Math.max(0, I.purchasePrice - I.dpVal);
+  const monthlyPayment = monthlyMortgage(loanAmount, I.interestRate, I.loanTerm);
+  const annualDebtService = monthlyPayment * 12;
+  const amort = amortSchedule(loanAmount, I.interestRate, I.loanTerm);
 
-    // --- Mortgage Insurance (PMI) for snapshot calculations ---
-    // PMI input is monthly; include in snapshots if starting LTV > 80%
-    const mortgageInsuranceAnnual = Number(I.mortgageInsurance*12 || 0);
-    const startingLoanBalance = loanAmount; // at origination
-    const startingEquityRatio = I.purchasePrice ? (1 - (startingLoanBalance / I.purchasePrice)) : 0;
-    const pmiActiveStart = mortgageInsuranceAnnual > 0 && startingEquityRatio < 0.20;
-    const mortgageInsuranceCostStart = pmiActiveStart ? mortgageInsuranceAnnual : '0';
-   
-    // operating items (snapshot-level, include PMI)
-    const maintenance = I.grossAnnualRent * I.maintenancePct;
-    const managementFee = I.grossAnnualRent * I.managementFeePct;
-    const operatingExpenses = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenance + managementFee + mortgageInsuranceAnnual;
-       
-    // income, NOI, cashflow (snapshot)
-    const effectiveGrossRent = I.grossAnnualRent * (1 - I.vacancyRate);
-    const NOI = effectiveGrossRent - operatingExpenses;
-    const annualCashFlow = NOI - annualDebtService;
-    const netMonthly = annualCashFlow / 12;
-    const capRate = I.purchasePrice ? (NOI / I.purchasePrice) * 100 : 0;
-    const initialInvestment = I.dpVal + I.closingCosts - I.sellerPaidClosingCosts;
-    const cashOnCash = initialInvestment ? (annualCashFlow / initialInvestment) * 100 : 0;
-    const paybackYears = annualCashFlow > 0 ? (initialInvestment / annualCashFlow) : Infinity;
-    const onePercentRule = 5/I.purchasePrice;
+  // --- Mortgage Insurance (PMI) for snapshot calculations ---
+  // PMI input is monthly; include in snapshots if starting LTV > 80%
+  const mortgageInsuranceAnnual = Number(I.mortgageInsurance * 12 || 0);
+  const startingLoanBalance = loanAmount; // at origination
+  const startingEquityRatio = I.purchasePrice ? (1 - (startingLoanBalance / I.purchasePrice)) : 0;
+  const pmiActiveStart = mortgageInsuranceAnnual > 0 && startingEquityRatio < 0.20;
+  const mortgageInsuranceCostStart = pmiActiveStart ? mortgageInsuranceAnnual : 0;
 
+  // operating items (snapshot-level, include PMI)
+  const maintenance = I.grossAnnualRent * I.maintenancePct;
+  const managementFee = I.grossAnnualRent * I.managementFeePct;
+  const operatingExpenses = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenance + managementFee + mortgageInsuranceCostStart;
 
-    /* depreciation & taxes */
-    const firstYearCapexDep = I.capexItems.reduce((s,c)=>{
-      const spend = Number(c.spendYear) || 0;
-      return s + ((spend === 1 && c.life > 0) ? (c.cost / c.life) : 0);
-    }, 0);
-    const depreciableBasis = Math.max(0, I.purchasePrice - I.landValue);
-    const depreciationAnnual = depreciableBasis / 27.5;
-    const firstYearInterest = (amort[0] && amort[0].interestPaid) ? amort[0].interestPaid : 0;
+  // income, NOI, cashflow (snapshot)
+  const effectiveGrossRent = I.grossAnnualRent * (1 - I.vacancyRate);
+  const NOI = effectiveGrossRent - operatingExpenses;
+  const annualCashFlow = NOI - annualDebtService;
+  const netMonthly = annualCashFlow / 12;
+  const capRate = I.purchasePrice ? (NOI / I.purchasePrice) * 100 : 0;
+  const initialInvestment = I.dpVal + I.closingCosts - I.sellerPaidClosingCosts;
+  const cashOnCash = initialInvestment ? (annualCashFlow / initialInvestment) * 100 : 0;
+  const paybackYears = annualCashFlow > 0 ? (initialInvestment / annualCashFlow) : Infinity;
+  const onePercentRule = I.purchasePrice ? (100 * (I.grossAnnualRent / 12) / I.purchasePrice) : 0;
 
-    /* projection loop */
-    const years = Math.max(1, I.holdYears);
-    let yearRents = I.grossAnnualRent;
-    let cumulativeCashFlow = 0;
-    const detail = [];
-    const yearlySalePrices = [];
-    const yearlyLoanBalances = [];
-    let totalIncomeTaxPaid = 0;
-    let totalDepreciationTaken = 0;
+  /* depreciation & taxes */
+  const firstYearCapexDep = I.capexItems.reduce((s,c)=>{
+    const spend = Number(c.spendYear) || 0;
+    return s + ((spend === 1 && c.life > 0) ? (c.cost / c.life) : 0);
+  }, 0);
+  const depreciableBasis = Math.max(0, I.purchasePrice - I.landValue);
+  const depreciationAnnual = depreciableBasis / 27.5;
+  const firstYearInterest = (amort[0] && amort[0].interestPaid) ? amort[0].interestPaid : 0;
 
-    const amortForYears = amortSchedule(loanAmount, I.interestRate, I.loanTerm);
+  /* projection loop (single set of declarations) */
+  const years = Math.max(1, I.holdYears);
+  let yearRents = I.grossAnnualRent;
+  let cumulativeCashFlow = 0;
+  const detail = [];
+  const yearlySalePrices = [];
+  const yearlyLoanBalances = [];
+  let totalIncomeTaxPaid = 0;
+  let totalDepreciationTaken = 0;
 
-    for (let y = 1; y <= years; y++) {
+  const amortForYears = amortSchedule(loanAmount, I.interestRate, I.loanTerm);
+
+  for (let y = 1; y <= years; y++) {
     if (y > 1) yearRents *= (1 + I.rentGrowth);
 
-    // --- amortization balance for this year (needed for equity/PMI decisions)
+    // amortization balance for this year
     const bal = (amortForYears[y - 1]) ? amortForYears[y - 1].endBalance : 0;
 
-    // --- Mortgage Insurance (PMI) logic ---
-    // annual PMI input from user (0 if not used)
-    const mortgageInsuranceAnnual = Number(I.mortgageInsurance*12 || 0);
-    // equity ratio = (owner equity) ÷ purchase price
+    // annual PMI input
+    const mortgageInsuranceAnnualY = Number(I.mortgageInsurance * 12 || 0);
     const equityRatio = I.purchasePrice ? (1 - (bal / I.purchasePrice)) : 0;
-    // PMI active if user entered PMI amount AND equity < 20%
-    const pmiActive = mortgageInsuranceAnnual > 0 && (equityRatio < 0.199999);
-    const mortgageInsuranceCost = pmiActive ? mortgageInsuranceAnnual : 0;
+    const pmiActive = mortgageInsuranceAnnualY > 0 && (equityRatio < 0.199999);
+    const mortgageInsuranceCost = pmiActive ? mortgageInsuranceAnnualY : 0;
 
-    // --- Yearly operating items ---
+    // Yearly operating items
     const maintenanceY = yearRents * I.maintenancePct;
     const managementFeeY = yearRents * I.managementFeePct;
     const operatingExpensesY = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenanceY + managementFeeY + mortgageInsuranceCost;
     const effGross = yearRents * (1 - I.vacancyRate);
     const NOIy = effGross - operatingExpensesY;
     const capexSpent = I.capexItems.reduce((s, c) => s + (c.spendYear === y ? c.cost : 0), 0);
+
+    // interest and capex depreciation for this year (must compute before taxShield)
+    const interestY = (amortForYears[y - 1] && amortForYears[y - 1].interestPaid) ? amortForYears[y - 1].interestPaid : 0;
+    const annualCapExDep = I.capexItems.reduce((sum, c) => {
+      const spend = Number(c.spendYear) || 0;
+      if (spend && spend <= y && c.life > 0) return sum + (c.cost / c.life);
+      return sum;
+    }, 0);
+
+    // annual cashflow & cumulative
     const cashFlowY = NOIy - annualDebtService - capexSpent;
     cumulativeCashFlow += cashFlowY;
 
-    const interestY = (amortForYears[y - 1] && amortForYears[y - 1].interestPaid) ? amortForYears[y - 1].interestPaid : 0;
-    const annualCapExDep = I.capexItems.reduce((sum, c) => {
-        const spend = Number(c.spendYear) || 0;
-        if (spend && spend <= y && c.life > 0) return sum + (c.cost / c.life);
-        return sum;
-    }, 0);
+    // tax shield for this year (depreciation + interest + capex dep)
+    const taxShieldY = (depreciationAnnual + annualCapExDep + interestY) * I.taxRate;
 
+    // taxable income & tax
     const taxableY = effGross - (operatingExpensesY + depreciationAnnual + interestY + annualCapExDep + mortgageInsuranceCost);
     const taxY = taxableY > 0 ? taxableY * I.taxRate : 0;
     totalIncomeTaxPaid += taxY;
@@ -586,195 +591,178 @@ function calculateAll(){
     yearlySalePrices.push(salePrice);
 
     detail.push({
-        year: y,
-        rent: effGross,
-        operatingExpenses: operatingExpensesY,
-        NOI: NOIy,
-        cashFlow: cashFlowY,
-        cumulativeCashFlow,
-        loanBalance: bal,
-        salePrice,
-        depreciation: depreciationAnnual + annualCapExDep,
-        taxableIncome: taxableY,
-        totalDeductible: operatingExpensesY + depreciationAnnual + interestY + annualCapExDep,
-        allInCashOut: operatingExpensesY + annualDebtService + capexSpent,
-        taxes: taxY,
-        netMonthly: cashFlowY / 12,
-        capRate: I.purchasePrice ? (NOIy / I.purchasePrice) * 100 : 0,
-        cashOnCash: initialInvestment ? (cashFlowY / initialInvestment) * 100 : 0
+      year: y,
+      rent: effGross,
+      operatingExpenses: operatingExpensesY,
+      NOI: NOIy,
+      cashFlow: cashFlowY,
+      cumulativeCashFlow,
+      loanBalance: bal,
+      salePrice,
+      depreciation: depreciationAnnual + annualCapExDep,
+      taxableIncome: taxableY,
+      totalDeductible: operatingExpensesY + depreciationAnnual + interestY + annualCapExDep,
+      allInCashOut: operatingExpensesY + annualDebtService + capexSpent,
+      taxes: taxY,
+      netMonthly: cashFlowY / 12,
+      capRate: I.purchasePrice ? (NOIy / I.purchasePrice) * 100 : 0,
+      cashOnCash: initialInvestment ? (cashFlowY / initialInvestment) * 100 : 0,
+      taxShield: taxShieldY
     });
+  } // end for
+
+  // --- sale calcs (unchanged) ---
+  const finalSalePrice = (yearlySalePrices[years-1] || (I.appraisedValue || I.purchasePrice)) || 0;
+  const loanBalanceAtSale = yearlyLoanBalances[years-1] || 0;
+  const sellingCosts = finalSalePrice * I.sellingCostsPct;
+  const netSaleProceedsBeforeTax = finalSalePrice - loanBalanceAtSale - sellingCosts;
+  let capitalGain = finalSalePrice - I.purchasePrice - totalDepreciationTaken;
+  if (capitalGain < 0) capitalGain = 0;
+  const recaptureTax = totalDepreciationTaken * I.recaptureRate;
+  const capGainsTax = capitalGain * I.capGainsRate;
+  const taxesOnSale = recaptureTax + capGainsTax;
+  const totalTaxes = totalIncomeTaxPaid + taxesOnSale;
+  const totalGainBeforeTax = cumulativeCashFlow + netSaleProceedsBeforeTax - initialInvestment;
+  const afterTaxGain = totalGainBeforeTax - totalTaxes;
+  const totalROI = initialInvestment ? ((afterTaxGain / initialInvestment) * 100) : 0;
+  const finalValue = initialInvestment + afterTaxGain;
+  const annualizedROI = (initialInvestment && finalValue > 0) ? (Math.pow((finalValue / initialInvestment), 1 / years) - 1) * 100 : 0;
+
+  /* snapshot slider */
+  updateHoldStratSliderMax();
+  const sel = Number($('holdStratSlider').value) || 1;
+
+  // build totals & averages once
+  const totals = detail.reduce((acc, d) => {
+    for (const key in d) {
+      if (typeof d[key] === 'number') acc[key] = (acc[key] || 0) + d[key];
     }
+    return acc;
+  }, {});
 
+  const avg = {};
+  for (const key in totals) {
+    avg[key] = totals[key] / years;
+  }
 
-    /* sale calcs */
-    const finalSalePrice = (yearlySalePrices[years-1] || (I.appraisedValue || I.purchasePrice)) || 0;
-    const loanBalanceAtSale = yearlyLoanBalances[years-1] || 0;
-    const sellingCosts = finalSalePrice * I.sellingCostsPct;
-    const netSaleProceedsBeforeTax = finalSalePrice - loanBalanceAtSale - sellingCosts;
-    let capitalGain = finalSalePrice - I.purchasePrice - totalDepreciationTaken;
-    if (capitalGain < 0) capitalGain = 0;
-    const recaptureTax = totalDepreciationTaken * I.recaptureRate;
-    const capGainsTax = capitalGain * I.capGainsRate;
-    const taxesOnSale = recaptureTax + capGainsTax;
-    const totalTaxes = totalIncomeTaxPaid + taxesOnSale;
-    const totalGainBeforeTax = cumulativeCashFlow + netSaleProceedsBeforeTax - initialInvestment;
-    const afterTaxGain = totalGainBeforeTax - totalTaxes;
-    const totalROI = initialInvestment ? ((afterTaxGain / initialInvestment) * 100) : 0;
-    const finalValue = initialInvestment + afterTaxGain;
-    const annualizedROI = (initialInvestment && finalValue > 0) ? (Math.pow((finalValue / initialInvestment), 1 / years) - 1) * 100 : 0;
+  let snap;
+  if (sel === years + 1) {
+    // expose both totals and avg for UI consumption
+    snap = { ...totals, avg, isTotal: true, isAverage: true };
+  } else {
+    snap = { ...(detail[sel - 1] || {}), isTotal: false, isAverage: false };
+  }
 
-    /* snapshot slider */
-    updateHoldStratSliderMax();
-    const sel = Number($('holdStratSlider').value) || 1;
-    let snap = { depreciation:0, netMonthly:0, cashFlowY:0, capRate:0, cashOnCash:0, taxableIncome:0, totalDeductible:0, taxes:0, allInCashOut:0 };
-    if (sel === years + 1) {
-    // Calculate AVERAGES across the entire hold period
-    const totals = detail.reduce((acc, d) => {
-        acc.depreciation += d.depreciation || 0;
-        acc.netMonthly += d.netMonthly || 0;
-        acc.cashFlow += d.cashFlow || 0;
-        acc.capRate += d.capRate || 0;
-        acc.cashOnCash += d.cashOnCash || 0;
-        acc.taxableIncome += d.taxableIncome || 0;
-        acc.totalDeductible += d.totalDeductible || 0;
-        acc.taxes += d.taxes || 0;
-        acc.allInCashOut += d.allInCashOut || 0;
-        return acc;
-    }, { depreciation:0, netMonthly:0, cashFlow:0, capRate:0, cashOnCash:0, taxableIncome:0, totalDeductible:0, taxes:0, allInCashOut:0 });
-
-    // compute averages
-    snap = {
-        depreciation: totals.depreciation / years,
-        netMonthly: totals.cashFlow / (years * 12), // average monthly cash flow
-        cashFlow: totals.cashFlow / years,
-        capRate: totals.capRate / years,
-        cashOnCash: totals.cashOnCash / years,
-        taxableIncome: totals.taxableIncome / years,
-        totalDeductible: totals.totalDeductible / years,
-        taxes: totals.taxes / years,
-        allInCashOut: totals.allInCashOut / years,
-        isAverage: true
-    };
+  /* Small helpers for display (local to this function) */
+  function fmtMoney(v){ return '$' + money2(v || 0); }
+  function fmtPct(v){ return (v || 0).toFixed(2) + '%'; }
+  function dualDisplay(id, total, avgVal, opts={isPercent:false, per:'yr'}){
+    const el = $(id);
+    if(!el) return;
+    if (snap.isTotal) {
+      if (opts.isPercent) {
+        el.innerHTML = `<div>${fmtPct(total)}</div><div class="small muted">${fmtPct(avgVal)} (avg/yr)</div>`;
+      } else {
+        const perLabel = opts.per === 'mo' ? '(avg/mo)' : '(avg/yr)';
+        el.innerHTML = `<div>${fmtMoney(total)}</div><div class="small muted">${fmtMoney(avgVal)} ${perLabel}</div>`;
+      }
     } else {
-    snap = detail[sel - 1] || { depreciation:0, netMonthly:0, cashFlow:0, capRate:0, cashOnCash:0, taxableIncome:0, totalDeductible:0, taxes:0, allInCashOut:0 };
-    snap.isAverage = false;
+      if (opts.isPercent) el.textContent = fmtPct(total);
+      else el.textContent = fmtMoney(total);
     }
+  }
 
+  /* Cash Performance Tiles */
+  dualDisplay('netMonthly', snap.netMonthly, snap.avg ? snap.avg.netMonthly : 0, {per:'mo'});
+  dualDisplay('allInOut', snap.allInCashOut, snap.avg ? snap.avg.allInCashOut : 0);
+  dualDisplay('annualCash', snap.cashFlow, snap.avg ? snap.avg.cashFlow : 0);
+  dualDisplay('cashOnCash', snap.cashOnCash, snap.avg ? snap.avg.cashOnCash : 0, {isPercent:true});
+  dualDisplay('capRate', snap.capRate, snap.avg ? snap.avg.capRate : 0, {isPercent:true});
 
-    /* Update snapshot tiles & hold summary tiles */
-    $('monthlyPayment').textContent = '$' + money2(monthlyPayment || 0);
-    $('onePercentRule').textContent = ((100 * (I.grossAnnualRent / 12) / I.purchasePrice) || 0).toFixed(2) + '%';
-    $('payback').textContent = (paybackYears === Infinity) ? '—' : paybackYears.toFixed(1);
+  /* Tax Detail Tiles */
+  dualDisplay('depreciation', snap.depreciation, snap.avg ? snap.avg.depreciation : 0);
+  dualDisplay('totalDeduct', snap.totalDeductible, snap.avg ? snap.avg.totalDeductible : 0);
+  dualDisplay('taxableIncome', snap.taxableIncome, snap.avg ? snap.avg.taxableIncome : 0);
+  dualDisplay('taxShield', snap.taxShield, snap.avg ? snap.avg.taxShield : 0);
+  dualDisplay('taxLiability', snap.taxes, snap.avg ? snap.avg.taxes : 0);
 
-    /* update slider tiles Cash performance*/
-    $('netMonthly').textContent = '$' + money2(snap.netMonthly || 0);
-    $('allInOut').textContent = '$' + money2(snap.allInCashOut || 0);    
-    $('annualCash').textContent = '$' + money2(snap.cashFlow|| 0);
-    $('cashOnCash').textContent = (snap.cashOnCash || 0).toFixed(2) + '%';
-    $('capRate').textContent = (snap.capRate || 0).toFixed(2) + '%';
+  // update snapshot tiles & hold summary tiles
+  $('monthlyPayment').textContent = '$' + money2(monthlyPayment || 0);
+  $('onePercentRule').textContent = onePercentRule.toFixed(2) + '%';
+  $('payback').textContent = (paybackYears === Infinity) ? '—' : paybackYears.toFixed(1);
 
-    // Add or remove "(avg)" indicator on cash performance labels
-    const cashLabels = [
-    ['netMonthly', 'Net Monthly Cash Flow'],
-    ['allInOut', 'Total Annual Cash Outflow'],
-    ['annualCash', 'Net Annual Cash Flow'],
-    ['cashOnCash', 'Cash-on-Cash ROI'],
-    ['capRate', 'Cap Rate']
-    ];
+  //update hold period tiles & label
+  $('totalCashFlow').textContent = '$' + money2(cumulativeCashFlow || 0);
+  $('netSale').textContent = '$' + money2(netSaleProceedsBeforeTax || 0);
+  $('totalGain').textContent = '$' + money2(totalGainBeforeTax || 0);
+  $('afterTaxGain').textContent = '$' + money2(afterTaxGain || 0);
+  $('totalROI').textContent = (totalROI || 0).toFixed(1) + '%';
+  $('annualROI').textContent = (annualizedROI || 0).toFixed(1) + '%';
+  $('holdYearsLabel').textContent = `${I.holdYears} yrs`;
 
-    cashLabels.forEach(([id, baseLabel]) => {
-    const tile = $(id).closest('.tile');
-    const h3 = tile ? tile.querySelector('h3') : null;
-    if (h3) {
-        h3.textContent = baseLabel + (snap.isAverage ? ' (avg)' : '');
-    }
-    });
+  //VISUALS - CHARTS & TABLE (unchanged)
+  const principalPaidTotal = amortForYears.slice(0, years).reduce((s,a)=> s + (a.principalPaid || 0), 0);
+  const appreciationTotal = finalSalePrice - I.purchasePrice;
+  const cashflowTotal = cumulativeCashFlow;
+  const totalTaxShieldEstimate = totalDepreciationTaken * I.taxRate;
+  const pieLabels = ['Appreciation','Loan Paydown','Cash Flow','Tax Shield (est)'];
+  const pieData = [
+    Math.max(0, appreciationTotal),
+    Math.max(0, principalPaidTotal),
+    Math.max(0, cashflowTotal),
+    Math.max(0, totalTaxShieldEstimate)
+  ];
+  ensurePieChart('roiPie', pieLabels, pieData);
 
-    /* update slider tiles tax details*/
-    $('depreciation').textContent = '$' + money2(snap.depreciation || 0);
-    $('totalDeduct').textContent = '$' + money2(snap.totalDeductible || 0);   
-    $('taxableIncome').textContent = '$' + money2(snap.taxableIncome || 0);  
-    const estimatedTaxShield = ((snap.depreciation || 0) + (firstYearInterest || 0) + (firstYearCapexDep || 0)) * (I.taxRate || 0);
-    $('taxShield').textContent = '$' + money2(estimatedTaxShield || 0);  
-    $('taxLiability').textContent = '$' + money2(snap.taxes || 0);
-        
+  const labels = detail.map(d => 'Y' + d.year);
+  const valueSeries = detail.map(d => Number(d.salePrice.toFixed(2)));
+  const equitySeries = detail.map(d => Number((d.salePrice - d.loanBalance).toFixed(2)));
+  const cashflowSeries = detail.map(d => Number(d.cumulativeCashFlow.toFixed(2)));
+  ensureLineChart('projChart', labels, [
+    { label:'Sale Price (proj)', data: valueSeries, borderColor:'#2563eb', fill:false, tension:0.2 },
+    { label:'Equity', data: equitySeries, borderColor:'#16a34a', fill:false, tension:0.2 },
+    { label:'Cumulative Cashflow', data: cashflowSeries, borderColor:'#f59e0b', fill:false, tension:0.2 }
+  ]);
 
-    //update hold period tiles & label
-    $('totalCashFlow').textContent = '$' + money2(cumulativeCashFlow || 0);
-    $('netSale').textContent = '$' + money2(netSaleProceedsBeforeTax || 0);
-    $('totalGain').textContent = '$' + money2(totalGainBeforeTax || 0);
-    $('afterTaxGain').textContent = '$' + money2(afterTaxGain || 0);
-    $('totalROI').textContent = (totalROI || 0).toFixed(1) + '%';
-    $('annualROI').textContent = (annualizedROI || 0).toFixed(1) + '%';
-    $('holdYearsLabel').textContent = `${I.holdYears} yrs`;
-           
-    //VISUALS - CHARTS & TABLE
-    /* ROI pie */
-    // principal paid total across amortForYears limited to hold years
-    const principalPaidTotal = amortForYears.slice(0, years).reduce((s,a)=> s + (a.principalPaid || 0), 0);
-    const appreciationTotal = finalSalePrice - I.purchasePrice;
-    const cashflowTotal = cumulativeCashFlow;
-    const totalTaxShieldEstimate = totalDepreciationTaken * I.taxRate;
-    const pieLabels = ['Appreciation','Loan Paydown','Cash Flow','Tax Shield (est)'];
-    const pieData = [
-      Math.max(0, appreciationTotal),
-      Math.max(0, principalPaidTotal),
-      Math.max(0, cashflowTotal),
-      Math.max(0, totalTaxShieldEstimate)
-    ];
-    ensurePieChart('roiPie', pieLabels, pieData);
-
-    /* update projection charts */
-    const labels = detail.map(d => 'Y' + d.year);
-    const valueSeries = detail.map(d => Number(d.salePrice.toFixed(2)));
-    const equitySeries = detail.map(d => Number((d.salePrice - d.loanBalance).toFixed(2)));
-    const cashflowSeries = detail.map(d => Number(d.cumulativeCashFlow.toFixed(2)));
-        
-    // left: projection (line)
-    ensureLineChart('projChart', labels, [
-      { label:'Sale Price (proj)', data: valueSeries, borderColor:'#2563eb', fill:false, tension:0.2 },
-      { label:'Equity', data: equitySeries, borderColor:'#16a34a', fill:false, tension:0.2 },
-      { label:'Cumulative Cashflow', data: cashflowSeries, borderColor:'#f59e0b', fill:false, tension:0.2 }
-    ]);
-
-    // --- Hold-Period Investment Performance (Bar Chart) ---
-    const ctxPerf = $('cashflowChart').getContext('2d');
-    if (cashflowChart) cashflowChart.destroy();
-    cashflowChart = new Chart(ctxPerf, {
+  // --- Hold-Period Investment Performance (Bar Chart) ---
+  const ctxPerf = $('cashflowChart').getContext('2d');
+  if (cashflowChart) cashflowChart.destroy();
+  cashflowChart = new Chart(ctxPerf, {
     type: 'bar',
     data: {labels: ['Cap Rate', 'Cash-on-Cash ROI', 'IRR (Annualized ROI)'],datasets: [{label: 'Performance (%)',data: [capRate, cashOnCash, annualizedROI],backgroundColor: ['#2563eb', '#16a34a', '#f59e0b']}]},
     options: {responsive: true,plugins: { legend: { display: false }, title: { display: true, text: 'Investment Performance (Hold Period)' } },scales: {y: {ticks: { callback: v => v + '%' },beginAtZero: true}}}
-    });
+  });
 
-    /* render detail table */
-    lastDetail = detail; // store globally for export & other uses
-    const detailDiv = $('detailList');
-    detailDiv.innerHTML = '';
-    const table = document.createElement('table');
-    table.style.width = '100%'; table.style.borderCollapse = 'collapse';
-    table.innerHTML = `<thead><tr style="text-align:left;color:var(--muted);font-size:13px"><th>Year</th><th>Rent</th><th>OpEx</th><th>NOI</th><th>Cash Flow</th><th>Cumulative CF</th><th>Loan Bal</th><th>Sale Price</th><th>Depreciation</th><th>Taxable Income</th><th>Tax Deductions</th><th>Tax Liability</th><th>Cash Out</th></tr></thead>`;
-    const tb = document.createElement('tbody');
-    detail.forEach(r=>{
-      const tr = document.createElement('tr');
-      tr.style.borderTop='1px solid rgba(9,30,66,0.04)';
-      tr.innerHTML = `<td style="padding:6px">${r.year}</td>
-        <td style="padding:6px">$${money2(r.rent)}</td>
-        <td style="padding:6px">$${money2(r.operatingExpenses)}</td>
-        <td style="padding:6px">$${money2(r.NOI)}</td>
-        <td style="padding:6px">$${money2(r.cashFlow)}</td>
-        <td style="padding:6px">$${money2(r.cumulativeCashFlow)}</td>
-        <td style="padding:6px">$${money2(r.loanBalance)}</td>
-        <td style="padding:6px">$${money2(r.salePrice)}</td>
-        <td style="padding:6px">$${money2(r.depreciation)}</td>
-        <td style="padding:6px">$${money2(r.taxableIncome)}</td>
-        <td style="padding:6px">$${money2(r.totalDeductible)}</td>
-        <td style="padding:6px">$${money2(r.taxes)}</td>
-        <td style="padding:6px">$${money2(r.allInCashOut)}</td>`;
-      tb.appendChild(tr);
-    });
-    table.appendChild(tb);
-    detailDiv.appendChild(table);   
-  } // calculateAll
+  /* render detail table */
+  lastDetail = detail; // store globally for export & other uses
+  const detailDiv = $('detailList');
+  detailDiv.innerHTML = '';
+  const table = document.createElement('table');
+  table.style.width = '100%'; table.style.borderCollapse = 'collapse';
+  table.innerHTML = `<thead><tr style="text-align:left;color:var(--muted);font-size:13px"><th>Year</th><th>Rent</th><th>OpEx</th><th>NOI</th><th>Cash Flow</th><th>Cumulative CF</th><th>Loan Bal</th><th>Sale Price</th><th>Depreciation</th><th>Taxable Income</th><th>Tax Deductions</th><th>Tax Liability</th><th>Cash Out</th></tr></thead>`;
+  const tb = document.createElement('tbody');
+  detail.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.style.borderTop='1px solid rgba(9,30,66,0.04)';
+    tr.innerHTML = `<td style="padding:6px">${r.year}</td>
+      <td style="padding:6px">$${money2(r.rent)}</td>
+      <td style="padding:6px">$${money2(r.operatingExpenses)}</td>
+      <td style="padding:6px">$${money2(r.NOI)}</td>
+      <td style="padding:6px">$${money2(r.cashFlow)}</td>
+      <td style="padding:6px">$${money2(r.cumulativeCashFlow)}</td>
+      <td style="padding:6px">$${money2(r.loanBalance)}</td>
+      <td style="padding:6px">$${money2(r.salePrice)}</td>
+      <td style="padding:6px">$${money2(r.depreciation)}</td>
+      <td style="padding:6px">$${money2(r.taxableIncome)}</td>
+      <td style="padding:6px">$${money2(r.totalDeductible)}</td>
+      <td style="padding:6px">$${money2(r.taxes)}</td>
+      <td style="padding:6px">$${money2(r.allInCashOut)}</td>`;
+    tb.appendChild(tr);
+  });
+  table.appendChild(tb);
+  detailDiv.appendChild(table);   
+} // calculateAll
+
 
   /* Slider & tax table wiring */
   const holdStratSlider = $('holdStratSlider');
