@@ -22,7 +22,8 @@
     h1{font-size:20px;margin:0}
     .subtitle{color:var(--muted);font-size:13px}
     .layout{display:grid;grid-template-columns:440px 1fr;gap:18px}
-    .card{background:var(--bg-1);border-radius:var(--radius);padding:14px;box-shadow:var(--card-shadow);border:1px solid rgba(9,30,66,0.04)}
+    .card{background:var(--bg-1);border-radius:var(--radius);margin-bottom: 12px;padding:14px;box-shadow:var(--card-shadow);border:1px solid rgba(9, 30, 66, 0.25)}
+    .card2{background-color: #05d82c00;border-radius:var(--radius);border:1px solid rgba(9,30,66,0.14); display: grid;margin-bottom: 12px;padding: 12px; grid-template-rows: 2fr 2fr;grid-template-columns:1fr 1fr 1fr; gap:10px}
     .form-row{display:flex;align-items:flex-start;margin-bottom:10px}
     .form-row label{font-size:10pt;width:220px;font-weight:450;margin-top:4px}
     .input-pair{display:flex;gap:16px;align-items:flex-start}
@@ -34,7 +35,7 @@
     .btn{background:var(--accent);border:none;padding:9px 12px;border-radius:10px;color:white;cursor:pointer;font-weight:700}
     .results{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px;}
     .results.hold-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-    .tile{background:linear-gradient(180deg,rgba(8,16,44,0.02),transparent);padding:12px;border-radius:10px;border:1px solid rgba(9,30,66,0.03)}
+    .tile{background:linear-gradient(180deg,rgba(8,16,44,0.02),transparent);padding:12px;border-radius:10px;border:1px solid rgba(0, 0, 0, 0.336)}
     .tile h3{margin:0;font-size:13px;color:var(--muted)}
     .tile p{margin:6px 0 0;font-size:18px;font-weight:700}
     .section-title{font-size:14px;margin:8px 0;color:var(--muted);display:flex;align-items:center;justify-content:space-between}
@@ -163,16 +164,16 @@
       <div>
         <div class="card">
             <div class="section-title"><strong>Snapshot — Cashflow & Performance</strong></div>
-
             <div class="results" id="summaryTiles">
-            <div class="tile" data-tooltip="<strong>Definition:</strong> Monthly principal + interest payment.<br><strong>Formula:</strong> Loan × [r(1+r)^n] / [(1+r)^n − 1]"><h3>Monthly Mortgage</h3><p id="monthlyPayment">$0</p></div>
-            <div class="tile" data-tooltip="<strong>Definition:</strong> Monthly income after all expenses and debt service.<br><strong>Formula:</strong> (Effective Rent − Operating Expenses − Debt Service) ÷ 12"><h3>Net Monthly Cash Flow</h3><p id="netMonthly">$0</p></div>
-            <div class="tile" data-tooltip="<strong>Definition:</strong> Total annual income after expenses and mortgage.<br><strong>Formula:</strong> NOI − Debt Service"><h3>Annual Cash Flow</h3><p id="annualCash">$0</p></div>
-            <div class="tile" data-tooltip="<strong>Definition:</strong> Annual return on property value before financing.<br><strong>Formula:</strong> NOI ÷ Purchase Price × 100"><h3>Cap Rate</h3><p id="capRate">0%</p></div>
-            <div class="tile" data-tooltip="<strong>Definition:</strong> Annual cash return on total cash invested.<br><strong>Formula:</strong> Annual Cash Flow ÷ Initial Investment × 100"><h3>Cash-on-Cash ROI</h3><p id="cashOnCash">0%</p></div>
-            <div class="tile" data-tooltip="<strong>Definition:</strong> Years to recover total cash invested from cash flow.<br><strong>Formula:</strong> Initial Investment ÷ Annual Cash Flow"><h3>Payback (yrs)</h3><p id="payback">—</p></div>
-            </div>
 
+                <div class="tile" data-tooltip="<strong>Definition:</strong> Monthly principal + interest payment.<br><strong>Formula:</strong> Loan × [r(1+r)^n] / [(1+r)^n − 1]"><h3>Monthly Mortgage</h3><p id="monthlyPayment">$0</p></div>
+                <div class="tile" data-tooltip="<strong>Definition:</strong> Gauges a property's profitablity<br><strong>Formula:</strong> Gross Monthly Rent / Purchase Price"><h3>1 % Rule</h3><p id="onePercentRule">0%</p></div>
+                <div class="tile" data-tooltip="<strong>Definition:</strong> Years to recover total cash invested from cash flow.<br><strong>Formula:</strong> Initial Investment ÷ Annual Cash Flow"><h3>Payback (yrs)</h3><p id="payback">—</p></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title"><strong>Performance Summary by Year</strong></div>
             <div style="margin-top:12px" class="section-title">
                 <strong>Tax, Depreciation, & Cash calcs by year or over total hold strategy</strong>
             </div>
@@ -183,18 +184,25 @@
                 <div style="min-width:140px;text-align:right;"><span id="holdStratLabel">Year 1</span></div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="margin-top:12px" class="section-title"><strong>Cash Performance</strong></div>
+            <div class="card2">                
+                <div class="tile" data-tooltip="<strong>Definition:</strong> Monthly income after all expenses and debt service.<br><strong>Formula:</strong> (Effective Rent − Operating Expenses − Debt Service) ÷ 12"><h3>Net Monthly Cash Flow</h3><p id="netMonthly">$0</p></div>
+                <div class="tile" data-tooltip="<strong>Definition:</strong> Combined annual expenses including debt and CapEx.<br><strong>Formula:</strong> Operating Expenses + Debt Service + CapEx"><h3>Total Annual Cash Outflow</h3><p id="allInOut">$0</p></div>
+                <div class="tile" data-tooltip="<strong>Definition:</strong> Total annual income after expenses and mortgage.<br><strong>Formula:</strong> NOI − Debt Service"><h3>Net Annual Cash Flow</h3><p id="annualCash">$0</p></div>
+                <div class="tile" data-tooltip="<strong>Definition:</strong> Annual cash return on total cash invested.<br><strong>Formula:</strong> Annual Cash Flow ÷ Initial Investment × 100"><h3>Cash-on-Cash ROI</h3><p id="cashOnCash">0%</p></div>
+                <div class="tile" data-tooltip="<strong>Definition:</strong> Annual return on property value before financing.<br><strong>Formula:</strong> NOI ÷ Purchase Price × 100"><h3>Cap Rate</h3><p id="capRate">0%</p></div>
+            </div>
+            
+            <div style="margin-top:12px" class="section-title"><strong>Tax Details</strong></div>
+            <div class="card2">                
                 <div class="tile" data-tooltip="<strong>Definition:</strong> Non-cash tax deduction from building value.<br><strong>Formula:</strong> (Purchase Price − Land Value) ÷ 27.5"><h3>Depreciation (yr)</h3><p id="depreciation">$0</p><div class="small muted">27.5-yr residential</div></div>
+                <div class="tile" data-tooltip="<strong>Definition:</strong> Total expenses reducing taxable income.<br><strong>Formula:</strong> Operating Expenses + Interest + Depreciation"><h3>Total Deductible Expenses</h3><p id="totalDeduct">$0</p></div>
                 <div class="tile" data-tooltip="<strong>Definition:</strong> Income reported for taxes after deductions.<br><strong>Formula:</strong> Effective Rent − (OpEx + Interest + Depreciation)"><h3>Taxable Income (yr)</h3><p id="taxableIncome">$0</p></div>
+                <div class="tile" data-tooltip="<strong>Definition:</strong> Estimated tax savings from deductible expenses.<br><strong>Formula:</strong> (Depreciation + Interest + Other Deductions) × Tax Rate"><h3>Tax Shield (est)</h3><p id="taxShield">$0</p></div>
+                <div class="tile" data-tooltip="<strong>Definition:</strong> Estimated income tax owed for the year.<br><strong>Formula:</strong> Taxable Income × Income Tax Rate"><h3>Income Tax Liability</h3><p id="taxLiability">$0</p></div>  
             </div>
 
-            <div style="margin-top:12px" class="section-title"><strong>All-In Cash Out & Taxes</strong></div>
-            <div class="results">
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Total expenses reducing taxable income.<br><strong>Formula:</strong> Operating Expenses + Interest + Depreciation"><h3>Total Deductible Expenses</h3><p id="totalDeduct">$0</p></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Estimated income tax owed for the year.<br><strong>Formula:</strong> Taxable Income × Income Tax Rate"><h3>Income Tax Liability</h3><p id="taxLiability">$0</p></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Estimated tax savings from deductible expenses.<br><strong>Formula:</strong> (Depreciation + Interest + Other Deductions) × Tax Rate"><h3>Tax Shield (est)</h3><p id="taxShield">$0</p></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Combined annual expenses including debt and CapEx.<br><strong>Formula:</strong> Operating Expenses + Debt Service + CapEx"><h3>Total Annual Cash Outflow</h3><p id="allInOut">$0</p></div>
-            </div>
+            
         </div>
 
         <div style="margin-top:12px" class="card">
@@ -214,14 +222,14 @@
             <div style="font-size:13px;color:var(--muted);margin-bottom:8px;text-align:center;">
                 Return Composition (approx)
             </div>
-            <canvas id="roiPie" style="width:100%;height:220px;display:block;margin:0 auto;"></canvas>
+            <canvas id="roiPie" style="width:100%;height:220px;display:block;margin:0;"></canvas>
             </div>
             </div>
 
           <div style="margin-top:12px" class="section-title"><strong>Projection Charts</strong></div>
           <div class="chart-wrap">
-            <div><canvas id="projChart" style="max-height:260px"></canvas></div>
-            <div><canvas id="cashflowChart" style="max-height:260px"></canvas></div>
+            <div><canvas id="projChart" style="max-height:160px;margin:0;width:100%;"></canvas></div>
+            <div><canvas id="cashflowChart" style="max-height:160px;margin:0;width:100%;"></canvas></div>
           </div>
         </div>
 
@@ -489,18 +497,18 @@ function calculateAll(){
     const amort = amortSchedule(loanAmount, I.interestRate, I.loanTerm);
 
     // --- Mortgage Insurance (PMI) for snapshot calculations ---
-    // PMI input is annual; include in snapshots if starting LTV > 80%
-    const mortgageInsuranceAnnual = Number(I.mortgageInsurance || 0);
+    // PMI input is monthly; include in snapshots if starting LTV > 80%
+    const mortgageInsuranceAnnual = Number(I.mortgageInsurance*12 || 0);
     const startingLoanBalance = loanAmount; // at origination
     const startingEquityRatio = I.purchasePrice ? (1 - (startingLoanBalance / I.purchasePrice)) : 0;
-    const pmiActiveStart = mortgageInsuranceAnnual > 0 && (startingEquityRatio < 0.20);
+    const pmiActiveStart = mortgageInsuranceAnnual > 0 && startingEquityRatio < 0.20;
     const mortgageInsuranceCostStart = pmiActiveStart ? mortgageInsuranceAnnual : '0';
-
+   
     // operating items (snapshot-level, include PMI)
     const maintenance = I.grossAnnualRent * I.maintenancePct;
     const managementFee = I.grossAnnualRent * I.managementFeePct;
-    const operatingExpenses = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenance + managementFee + mortgageInsuranceCostStart;
-
+    const operatingExpenses = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenance + managementFee + mortgageInsuranceAnnual;
+       
     // income, NOI, cashflow (snapshot)
     const effectiveGrossRent = I.grossAnnualRent * (1 - I.vacancyRate);
     const NOI = effectiveGrossRent - operatingExpenses;
@@ -510,6 +518,7 @@ function calculateAll(){
     const initialInvestment = I.dpVal + I.closingCosts - I.sellerPaidClosingCosts;
     const cashOnCash = initialInvestment ? (annualCashFlow / initialInvestment) * 100 : 0;
     const paybackYears = annualCashFlow > 0 ? (initialInvestment / annualCashFlow) : Infinity;
+    const onePercentRule = 5/I.purchasePrice;
 
 
     /* depreciation & taxes */
@@ -541,18 +550,17 @@ function calculateAll(){
 
     // --- Mortgage Insurance (PMI) logic ---
     // annual PMI input from user (0 if not used)
-    const mortgageInsuranceAnnual = Number(I.mortgageInsurance || 0);
+    const mortgageInsuranceAnnual = Number(I.mortgageInsurance*12 || 0);
     // equity ratio = (owner equity) ÷ purchase price
     const equityRatio = I.purchasePrice ? (1 - (bal / I.purchasePrice)) : 0;
     // PMI active if user entered PMI amount AND equity < 20%
-    const pmiActive = mortgageInsuranceAnnual > 0 && (equityRatio < 0.20);
+    const pmiActive = mortgageInsuranceAnnual > 0 && (equityRatio < 0.199999);
     const mortgageInsuranceCost = pmiActive ? mortgageInsuranceAnnual : 0;
 
     // --- Yearly operating items ---
     const maintenanceY = yearRents * I.maintenancePct;
     const managementFeeY = yearRents * I.managementFeePct;
     const operatingExpensesY = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenanceY + managementFeeY + mortgageInsuranceCost;
-
     const effGross = yearRents * (1 - I.vacancyRate);
     const NOIy = effGross - operatingExpensesY;
     const capexSpent = I.capexItems.reduce((s, c) => s + (c.spendYear === y ? c.cost : 0), 0);
@@ -566,7 +574,7 @@ function calculateAll(){
         return sum;
     }, 0);
 
-    const taxableY = effGross - (operatingExpensesY + depreciationAnnual + interestY + annualCapExDep);
+    const taxableY = effGross - (operatingExpensesY + depreciationAnnual + interestY + annualCapExDep + mortgageInsuranceCost);
     const taxY = taxableY > 0 ? taxableY * I.taxRate : 0;
     totalIncomeTaxPaid += taxY;
     totalDepreciationTaken += depreciationAnnual + annualCapExDep;
@@ -590,7 +598,10 @@ function calculateAll(){
         taxableIncome: taxableY,
         totalDeductible: operatingExpensesY + depreciationAnnual + interestY + annualCapExDep,
         allInCashOut: operatingExpensesY + annualDebtService + capexSpent,
-        taxes: taxY
+        taxes: taxY,
+        netMonthly: cashFlowY / 12,
+        capRate: I.purchasePrice ? (NOIy / I.purchasePrice) * 100 : 0,
+        cashOnCash: initialInvestment ? (cashFlowY / initialInvestment) * 100 : 0
     });
     }
 
@@ -615,27 +626,125 @@ function calculateAll(){
     /* snapshot slider */
     updateHoldStratSliderMax();
     const sel = Number($('holdStratSlider').value) || 1;
-    let snap = { depreciation:0, taxableIncome:0, totalDeductible:0, taxes:0, allInCashOut:0 };
+    let snap = { depreciation:0, netMonthly:0, cashFlowY:0, capRate:0, cashOnCash:0, taxableIncome:0, totalDeductible:0, taxes:0, allInCashOut:0 };
     if (sel === years + 1) {
-      snap = detail.reduce((acc,d)=>({
-        depreciation: acc.depreciation + (d.depreciation || 0),
-        taxableIncome: acc.taxableIncome + (d.taxableIncome || 0),
-        totalDeductible: acc.totalDeductible + (d.totalDeductible || 0),
-        taxes: acc.taxes + (d.taxes || 0),
-        allInCashOut: acc.allInCashOut + (d.allInCashOut || 0)
-      }), {depreciation:0,taxableIncome:0,totalDeductible:0,taxes:0,allInCashOut:0});
+    // Calculate AVERAGES across the entire hold period
+    const totals = detail.reduce((acc, d) => {
+        acc.depreciation += d.depreciation || 0;
+        acc.netMonthly += d.netMonthly || 0;
+        acc.cashFlow += d.cashFlow || 0;
+        acc.capRate += d.capRate || 0;
+        acc.cashOnCash += d.cashOnCash || 0;
+        acc.taxableIncome += d.taxableIncome || 0;
+        acc.totalDeductible += d.totalDeductible || 0;
+        acc.taxes += d.taxes || 0;
+        acc.allInCashOut += d.allInCashOut || 0;
+        return acc;
+    }, { depreciation:0, netMonthly:0, cashFlow:0, capRate:0, cashOnCash:0, taxableIncome:0, totalDeductible:0, taxes:0, allInCashOut:0 });
+
+    // compute averages
+    snap = {
+        depreciation: totals.depreciation / years,
+        netMonthly: totals.cashFlow / (years * 12), // average monthly cash flow
+        cashFlow: totals.cashFlow / years,
+        capRate: totals.capRate / years,
+        cashOnCash: totals.cashOnCash / years,
+        taxableIncome: totals.taxableIncome / years,
+        totalDeductible: totals.totalDeductible / years,
+        taxes: totals.taxes / years,
+        allInCashOut: totals.allInCashOut / years,
+        isAverage: true
+    };
     } else {
-      snap = detail[sel - 1] || { depreciation:0, taxableIncome:0, totalDeductible:0, taxes:0, allInCashOut:0 };
+    snap = detail[sel - 1] || { depreciation:0, netMonthly:0, cashFlow:0, capRate:0, cashOnCash:0, taxableIncome:0, totalDeductible:0, taxes:0, allInCashOut:0 };
+    snap.isAverage = false;
     }
 
-    /* update tiles */
+
+    /* Update snapshot tiles & hold summary tiles */
+    $('monthlyPayment').textContent = '$' + money2(monthlyPayment || 0);
+    $('onePercentRule').textContent = ((100 * (I.grossAnnualRent / 12) / I.purchasePrice) || 0).toFixed(2) + '%';
+    $('payback').textContent = (paybackYears === Infinity) ? '—' : paybackYears.toFixed(1);
+
+    /* update slider tiles Cash performance*/
+    $('netMonthly').textContent = '$' + money2(snap.netMonthly || 0);
+    $('allInOut').textContent = '$' + money2(snap.allInCashOut || 0);    
+    $('annualCash').textContent = '$' + money2(snap.cashFlow|| 0);
+    $('cashOnCash').textContent = (snap.cashOnCash || 0).toFixed(2) + '%';
+    $('capRate').textContent = (snap.capRate || 0).toFixed(2) + '%';
+
+    // Add or remove "(avg)" indicator on cash performance labels
+    const cashLabels = [
+    ['netMonthly', 'Net Monthly Cash Flow'],
+    ['allInOut', 'Total Annual Cash Outflow'],
+    ['annualCash', 'Net Annual Cash Flow'],
+    ['cashOnCash', 'Cash-on-Cash ROI'],
+    ['capRate', 'Cap Rate']
+    ];
+
+    cashLabels.forEach(([id, baseLabel]) => {
+    const tile = $(id).closest('.tile');
+    const h3 = tile ? tile.querySelector('h3') : null;
+    if (h3) {
+        h3.textContent = baseLabel + (snap.isAverage ? ' (avg)' : '');
+    }
+    });
+
+    /* update slider tiles tax details*/
     $('depreciation').textContent = '$' + money2(snap.depreciation || 0);
-    $('taxableIncome').textContent = '$' + money2(snap.taxableIncome || 0);
-    $('totalDeduct').textContent = '$' + money2(snap.totalDeductible || 0);
-    $('taxLiability').textContent = '$' + money2(snap.taxes || 0);
+    $('totalDeduct').textContent = '$' + money2(snap.totalDeductible || 0);   
+    $('taxableIncome').textContent = '$' + money2(snap.taxableIncome || 0);  
     const estimatedTaxShield = ((snap.depreciation || 0) + (firstYearInterest || 0) + (firstYearCapexDep || 0)) * (I.taxRate || 0);
-    $('taxShield').textContent = '$' + money2(estimatedTaxShield || 0);
-    $('allInOut').textContent = '$' + money2(snap.allInCashOut || 0);
+    $('taxShield').textContent = '$' + money2(estimatedTaxShield || 0);  
+    $('taxLiability').textContent = '$' + money2(snap.taxes || 0);
+        
+
+    //update hold period tiles & label
+    $('totalCashFlow').textContent = '$' + money2(cumulativeCashFlow || 0);
+    $('netSale').textContent = '$' + money2(netSaleProceedsBeforeTax || 0);
+    $('totalGain').textContent = '$' + money2(totalGainBeforeTax || 0);
+    $('afterTaxGain').textContent = '$' + money2(afterTaxGain || 0);
+    $('totalROI').textContent = (totalROI || 0).toFixed(1) + '%';
+    $('annualROI').textContent = (annualizedROI || 0).toFixed(1) + '%';
+    $('holdYearsLabel').textContent = `${I.holdYears} yrs`;
+           
+    //VISUALS - CHARTS & TABLE
+    /* ROI pie */
+    // principal paid total across amortForYears limited to hold years
+    const principalPaidTotal = amortForYears.slice(0, years).reduce((s,a)=> s + (a.principalPaid || 0), 0);
+    const appreciationTotal = finalSalePrice - I.purchasePrice;
+    const cashflowTotal = cumulativeCashFlow;
+    const totalTaxShieldEstimate = totalDepreciationTaken * I.taxRate;
+    const pieLabels = ['Appreciation','Loan Paydown','Cash Flow','Tax Shield (est)'];
+    const pieData = [
+      Math.max(0, appreciationTotal),
+      Math.max(0, principalPaidTotal),
+      Math.max(0, cashflowTotal),
+      Math.max(0, totalTaxShieldEstimate)
+    ];
+    ensurePieChart('roiPie', pieLabels, pieData);
+
+    /* update projection charts */
+    const labels = detail.map(d => 'Y' + d.year);
+    const valueSeries = detail.map(d => Number(d.salePrice.toFixed(2)));
+    const equitySeries = detail.map(d => Number((d.salePrice - d.loanBalance).toFixed(2)));
+    const cashflowSeries = detail.map(d => Number(d.cumulativeCashFlow.toFixed(2)));
+        
+    // left: projection (line)
+    ensureLineChart('projChart', labels, [
+      { label:'Sale Price (proj)', data: valueSeries, borderColor:'#2563eb', fill:false, tension:0.2 },
+      { label:'Equity', data: equitySeries, borderColor:'#16a34a', fill:false, tension:0.2 },
+      { label:'Cumulative Cashflow', data: cashflowSeries, borderColor:'#f59e0b', fill:false, tension:0.2 }
+    ]);
+
+    // --- Hold-Period Investment Performance (Bar Chart) ---
+    const ctxPerf = $('cashflowChart').getContext('2d');
+    if (cashflowChart) cashflowChart.destroy();
+    cashflowChart = new Chart(ctxPerf, {
+    type: 'bar',
+    data: {labels: ['Cap Rate', 'Cash-on-Cash ROI', 'IRR (Annualized ROI)'],datasets: [{label: 'Performance (%)',data: [capRate, cashOnCash, annualizedROI],backgroundColor: ['#2563eb', '#16a34a', '#f59e0b']}]},
+    options: {responsive: true,plugins: { legend: { display: false }, title: { display: true, text: 'Investment Performance (Hold Period)' } },scales: {y: {ticks: { callback: v => v + '%' },beginAtZero: true}}}
+    });
 
     /* render detail table */
     lastDetail = detail; // store globally for export & other uses
@@ -664,80 +773,7 @@ function calculateAll(){
       tb.appendChild(tr);
     });
     table.appendChild(tb);
-    detailDiv.appendChild(table);
-
-    /* update projection charts */
-    const labels = detail.map(d => 'Y' + d.year);
-    const valueSeries = detail.map(d => Number(d.salePrice.toFixed(2)));
-    const equitySeries = detail.map(d => Number((d.salePrice - d.loanBalance).toFixed(2)));
-    const cashflowSeries = detail.map(d => Number(d.cumulativeCashFlow.toFixed(2)));
-
-    // left: projection (line)
-    ensureLineChart('projChart', labels, [
-      { label:'Sale Price (proj)', data: valueSeries, borderColor:'#2563eb', fill:false, tension:0.2 },
-      { label:'Equity', data: equitySeries, borderColor:'#16a34a', fill:false, tension:0.2 },
-      { label:'Cumulative Cashflow', data: cashflowSeries, borderColor:'#f59e0b', fill:false, tension:0.2 }
-    ]);
-
-    // --- Hold-Period Investment Performance (Bar Chart) ---
-    const ctxPerf = $('cashflowChart').getContext('2d');
-    if (cashflowChart) cashflowChart.destroy();
-    cashflowChart = new Chart(ctxPerf, {
-    type: 'bar',
-    data: {
-        labels: ['Cap Rate', 'Cash-on-Cash ROI', 'IRR (Annualized ROI)'],
-        datasets: [{
-        label: 'Performance (%)',
-        data: [capRate, cashOnCash, annualizedROI],
-        backgroundColor: ['#2563eb', '#16a34a', '#f59e0b']
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false }, title: { display: true, text: 'Investment Performance (Hold Period)' } },
-        scales: {
-        y: {
-            ticks: { callback: v => v + '%' },
-            beginAtZero: true
-        }
-        }
-    }
-    });
-
-
-
-
-    /* ROI pie */
-    // principal paid total across amortForYears limited to hold years
-    const principalPaidTotal = amortForYears.slice(0, years).reduce((s,a)=> s + (a.principalPaid || 0), 0);
-    const appreciationTotal = finalSalePrice - I.purchasePrice;
-    const cashflowTotal = cumulativeCashFlow;
-    const totalTaxShieldEstimate = totalDepreciationTaken * I.taxRate;
-    const pieLabels = ['Appreciation','Loan Paydown','Cash Flow','Tax Shield (est)'];
-    const pieData = [
-      Math.max(0, appreciationTotal),
-      Math.max(0, principalPaidTotal),
-      Math.max(0, cashflowTotal),
-      Math.max(0, totalTaxShieldEstimate)
-    ];
-    ensurePieChart('roiPie', pieLabels, pieData);
-
-    /* Update snapshot tiles & hold summary tiles */
-    $('monthlyPayment').textContent = '$' + money2(monthlyPayment || 0);
-    $('netMonthly').textContent = '$' + money2(netMonthly || 0);
-    $('annualCash').textContent = '$' + money2(annualCashFlow || 0);
-    $('capRate').textContent = (capRate || 0).toFixed(2) + '%';
-    $('cashOnCash').textContent = (cashOnCash || 0).toFixed(2) + '%';
-    $('payback').textContent = (paybackYears === Infinity) ? '—' : paybackYears.toFixed(1);
-
-    $('totalCashFlow').textContent = '$' + money2(cumulativeCashFlow || 0);
-    $('netSale').textContent = '$' + money2(netSaleProceedsBeforeTax || 0);
-    $('totalGain').textContent = '$' + money2(totalGainBeforeTax || 0);
-    $('afterTaxGain').textContent = '$' + money2(afterTaxGain || 0);
-    $('totalROI').textContent = (totalROI || 0).toFixed(1) + '%';
-    $('annualROI').textContent = (annualizedROI || 0).toFixed(1) + '%';
-    $('holdYearsLabel').textContent = `${I.holdYears} yrs`;
-
+    detailDiv.appendChild(table);   
   } // calculateAll
 
   /* Slider & tax table wiring */
@@ -781,7 +817,6 @@ function calculateAll(){
     // default scenario to Average on load
     applyScenario('avg');
     refreshDownPaymentInputs();
-    calculateAll();
   })();
 
   /* Export button - uses lastDetail */
