@@ -16,18 +16,22 @@
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
     html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-0),#eef3fb 100%);color:#0b1220}
-    .container{max-width:1200px;margin:28px auto;padding:20px}
+    .container{max-width:1100px;margin:28px auto;padding:20px}
     header{display:flex;gap:14px;align-items:center;margin-bottom:18px}
     .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(180deg,#e6f0ff,#cfe3ff);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent)}
     h1{font-size:20px;margin:0}
     .subtitle{color:var(--muted);font-size:13px}
-    .layout{display:grid;grid-template-columns:440px 1fr;gap:18px}
+    .layout{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:18px}
     .card{background:var(--bg-1);border-radius:var(--radius);margin-bottom: 12px;padding:14px;box-shadow:var(--card-shadow);border:1px solid rgba(9, 30, 66, 0.25)}
-    .card2{background-color: #05d82c00;border-radius:var(--radius);border:1px solid rgba(9,30,66,0.14); display: grid;margin-bottom: 12px;padding: 12px; grid-template-rows: 2fr 2fr;grid-template-columns:1fr 1fr 1fr; gap:10px}
-    .form-row{display:flex;align-items:flex-start;margin-bottom:10px}
-    .form-row label{font-size:10pt;width:220px;font-weight:450;margin-top:4px}
-    .input-pair{display:flex;gap:16px;align-items:flex-start}
-    .input-column{display:flex;flex-direction:column}
+    .card2{background-color: #05d82c00;border-radius:var(--radius);border:1px solid rgba(9,30,66,0.14); display: grid;margin-bottom: 12px;padding: 12px; grid-template-rows: 2fr 2fr;grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px}
+    .canvas {max-width:100%}
+    .form-row{display:flex;align-items:flex-start;margin-bottom:10px;gap: 8px;min-width:0}
+    .form-row > div{flex:1}
+    .form-row label{font-size:10pt;width:220px;font-weight:450;margin-top:4px;flex: 0 0 200px;max-width: 200px}
+    .form-row input {width: 100%;max-width:140px}
+    .input-pair{display:flex;gap:10px;align-items:flex-start}
+    .input-column{display:flex;flex-direction:column; flex:1;min-width:0}
+    .input-column input{width:100%;box-sizing: border-box}
     /* --- Remove spinners from number inputs --- */
     input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}input[type=number]{-moz-appearance:textfield}
     input[type="number"],input[type="text"],select{padding:8px;border-radius:8px;border:1px solid rgba(9,30,66,0.06);background:transparent;color:inherit;font-size:13px;width:80px}
@@ -48,8 +52,6 @@
     .remove-btn{background-color:#3d0202;color:white;border-radius:8px;border:1px solid #3d0202;padding:6px 8px}
     .scenario-row{display:flex;gap:8px;margin-top:8px}
     .scenario-row button{padding:6px 8px;border-radius:8px;border:1px solid rgba(9,30,66,0.08);background:#f5f7fb;cursor:pointer}
-    .downpayment-toggle{display:flex;gap:6px;margin-left:-180px;}
-    .downpayment-toggle button{padding: 6px 8px;border-radius: 8px;border: 1px solid rgba(9,30,66,0.08);background: #f5f7fb;cursor: pointer;font-size: 12px;font-weight: 600;color: #0b1220;transition: all 0.15s ease-in-out;}
     .layout button.active{background:var(--accent);color:white;border-color: var(--accent)}
     .scenario-row button.active{background:var(--accent);color:white;border-color:var(--accent)}
     @media (max-width:1000px){.layout{grid-template-columns:1fr}.charts-row{flex-direction:column}}
@@ -57,8 +59,14 @@
     .muted{color:var(--muted);font-size:13px}
     .help-icon{display:inline-block;margin-left:4px;font-size:14px;color:var(--accent)}
     .chart-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
-    label[data-tooltip], .tile[data-tooltip] { cursor: help; }
-    .tile[data-tooltip], label[data-tooltip] {cursor: help;}
+    label[data-tooltip], .tile[data-tooltip] { cursor: help}
+    .tile[data-tooltip], label[data-tooltip] {cursor: help}
+    html, body{overflow-x:hidden}
+    table{border-collapse:collapse;width:100%;min-width: 900px}
+    .table-scroll { overflow-x:auto;max-width: 100%}
+    th,td{white-space:nowrap}
+    table thead {position: sticky;top: 0;background: var(--bg-1);z-index: 1}
+    tbody tr:hover {background: rgba(37, 99, 235, 0.05)}
   </style>
 </head>
 <body>
@@ -85,11 +93,7 @@
             <div class="input-pair">
               <div class="input-column"><div class="small muted">Amount ($)</div><input id="downPaymentValue" type="number" placeholder="$"></div>
               <div class="input-column"><div class="small muted">Percent (%)</div><input id="downPaymentPercent" type="number" value="20" placeholder="%"></div>
-            </div>
-            <div class="downpayment-toggle">
-              <button id="amountButton">Amount</button>
-              <button id="percentButton" class="active">Percent</button>
-            </div>
+            </div>          
           </div>
         </div>
 
@@ -275,44 +279,54 @@
     wrap.appendChild(lbl); wrap.appendChild(inp); return wrap;
   }
 
-  /* Down payment controls */
-  const purchasePriceInput = $('purchasePrice');
-  const downPaymentValueInput = $('downPaymentValue');
-  const downPaymentPercentInput = $('downPaymentPercent');
-  const amountButton = $('amountButton');
-  const percentButton = $('percentButton');
-  let downPaymentMode = "percent";
+/* Down payment controls */
+const purchasePriceInput = $('purchasePrice');
+const downPaymentValueInput = $('downPaymentValue');
+const downPaymentPercentInput = $('downPaymentPercent');
 
-  function updateDownPaymentFromAmount() {
-    const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
-    const amount = parseFloat(downPaymentValueInput.value) || 0;
-    const percent = purchasePrice ? (amount / purchasePrice) * 100 : 20;
-    downPaymentPercentInput.value = percent.toFixed(1);
+let activeField = null; // Tracks the field user is currently editing
+
+/* Update functions */
+function updatePercentFromAmount() {
+  const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
+  const amount = parseFloat(downPaymentValueInput.value) || 0;
+  const percent = purchasePrice ? (amount / purchasePrice) * 100 : 0;
+  downPaymentPercentInput.value = percent.toFixed(1);
+}
+
+function updateAmountFromPercent() {
+  const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
+  const percent = parseFloat(downPaymentPercentInput.value) || 0;
+  const amount = (percent / 100) * purchasePrice;
+  downPaymentValueInput.value = amount.toFixed(0);
+}
+
+/* Event listeners to track active field */
+downPaymentValueInput.addEventListener('focus', () => activeField = 'amount');
+downPaymentPercentInput.addEventListener('focus', () => activeField = 'percent');
+downPaymentValueInput.addEventListener('blur', () => activeField = null);
+downPaymentPercentInput.addEventListener('blur', () => activeField = null);
+
+/* Event listeners to update the other field */
+downPaymentValueInput.addEventListener('input', () => {
+  if (activeField === 'amount') updatePercentFromAmount();
+});
+
+downPaymentPercentInput.addEventListener('input', () => {
+  if (activeField === 'percent') updateAmountFromPercent();
+});
+
+/* Update both fields if purchase price changes */
+purchasePriceInput.addEventListener('input', () => {
+  if (activeField === 'amount') {
+    updatePercentFromAmount();
+  } else if (activeField === 'percent') {
+    updateAmountFromPercent();
+  } else {
+    // Default: update percent from amount if neither field is active
+    updatePercentFromAmount();
   }
-  function updateDownPaymentFromPercent() {
-    const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
-    const percent = parseFloat(downPaymentPercentInput.value) || 20;
-    const amount = (percent / 100) * purchasePrice;
-    downPaymentValueInput.value = amount.toFixed(0);
-  }
-  function refreshDownPaymentInputs(){
-    if (downPaymentMode === "amount") {
-      downPaymentValueInput.removeAttribute("readonly");
-      downPaymentPercentInput.setAttribute("readonly", true);
-      updateDownPaymentFromAmount();
-      amountButton.classList.add("active"); percentButton.classList.remove("active");
-    } else {
-      downPaymentPercentInput.removeAttribute("readonly");
-      downPaymentValueInput.setAttribute("readonly", true);
-      updateDownPaymentFromPercent();
-      percentButton.classList.add("active"); amountButton.classList.remove("active");
-    }
-  }
-  amountButton.addEventListener('click', ()=>{ downPaymentMode='amount'; refreshDownPaymentInputs(); });
-  percentButton.addEventListener('click', ()=>{ downPaymentMode='percent'; refreshDownPaymentInputs(); });
-  purchasePriceInput.addEventListener('input', refreshDownPaymentInputs);
-  downPaymentValueInput.addEventListener('input', ()=>{ if (downPaymentMode==='amount') updateDownPaymentFromAmount(); });
-  downPaymentPercentInput.addEventListener('input', ()=>{ if (downPaymentMode==='percent') updateDownPaymentFromPercent(); });
+});
 
   /* Scenario buttons */
   const bestBtn = $('bestBtn'), avgBtn = $('avgBtn'), worstBtn = $('worstBtn'), customBtn = $('customBtn');
@@ -760,7 +774,11 @@ function calculateAll(){
     tb.appendChild(tr);
   });
   table.appendChild(tb);
-  detailDiv.appendChild(table);   
+
+  const wrap = document.createElement('div');
+  wrap.className = 'table-scroll';
+  wrap.appendChild(table);
+  detailDiv.appendChild(wrap);  
 } // calculateAll
 
 
