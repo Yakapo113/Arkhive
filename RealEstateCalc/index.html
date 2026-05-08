@@ -54,13 +54,53 @@
     .scenario-row button{padding:6px 8px;border-radius:8px;border:1px solid rgba(9,30,66,0.08);background:#f5f7fb;cursor:pointer}
     .layout button.active{background:var(--accent);color:white;border-color: var(--accent)}
     .scenario-row button.active{background:var(--accent);color:white;border-color:var(--accent)}
-    @media (max-width:1000px){.layout{grid-template-columns:1fr}.charts-row{flex-direction:column}}
+    /* ── Responsive ── */
+    @media (max-width:1000px){
+      .layout{grid-template-columns:1fr}
+      .charts-row{flex-direction:column}
+      .chart-wrap{grid-template-columns:1fr}
+    }
+    @media (max-width:640px){
+      .container{margin:12px auto;padding:10px}
+      h1{font-size:16px}
+      .logo{width:44px;height:44px;font-size:13px}
+      .card,.card2{padding:10px}
+      /* Stack label above input on small screens */
+      .form-row{flex-direction:column;gap:4px}
+      .form-row label{flex:none;width:auto;max-width:none;font-size:11px}
+      .form-row input{max-width:100%;width:100%;box-sizing:border-box}
+      .form-row > div{width:100%}
+      /* Down payment pair stacks */
+      .input-pair{flex-direction:column}
+      .input-column input{max-width:100%;width:100%}
+      /* Results grid single column */
+      .results{grid-template-columns:1fr 1fr}
+      .results.hold-summary{grid-template-columns:1fr 1fr}
+      /* card2 single column */
+      .card2{grid-template-columns:1fr 1fr;grid-template-rows:auto}
+      /* Hold strategy layout */
+      div[style*="display:flex;gap:12px;align-items:start"]{flex-direction:column}
+      canvas#roiPie{width:100% !important;height:180px !important}
+      div[style*="width:280px"]{width:100% !important}
+      /* Scenario buttons wrap */
+      .scenario-row{flex-wrap:wrap}
+      /* Unit & CapEx items */
+      .unit-item{flex-wrap:wrap}
+      .unit-item input{width:100%;max-width:100%;box-sizing:border-box}
+      /* CapEx items */
+      .capex-item{display:flex;flex-wrap:wrap;gap:4px}
+      .capex-item input{width:calc(50% - 4px);box-sizing:border-box}
+      /* Table wrapper already scrolls; just reduce font */
+      table{font-size:11px}
+      th,td{padding:4px !important}
+      /* Tile text */
+      .tile p{font-size:15px}
+    }
     /* extra small helpers */
     .muted{color:var(--muted);font-size:13px}
     .help-icon{display:inline-block;margin-left:4px;font-size:14px;color:var(--accent)}
     .chart-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
-    label[data-tooltip], .tile[data-tooltip] { cursor: help}
-    .tile[data-tooltip], label[data-tooltip] {cursor: help}
+    label[data-tooltip], .tile[data-tooltip] { cursor: help }
     html, body{overflow-x:hidden}
     table{border-collapse:collapse;width:100%;min-width: 900px}
     .table-scroll { overflow-x:auto;max-width: 100%}
@@ -135,7 +175,7 @@
         <div class="section-title"><strong>Operating Expenses (annual unless noted)</strong></div>
         <div class="form-row"><label data-tooltip="Depends on State & County, 1% default">Property Taxes ($/yr)</label><input id="propTaxes" type="number" value="3000" placeholder="$" /></div>
         <div class="form-row"><label>Insurance ($/yr)</label><input id="insurance" type="number" value="2000" placeholder="$" /></div>
-        <div class="form-row"><label data-tooltip="<strong>Definition:</strong> Private Mortgage Insurance (PMI) protects lenders when equity is below 20%.<br><strong>Requirement:</strong> Must be paid for until 20% equity is reached. Will auto cancel at 78% equity.">Mortgage Insurance ($/yr)</label><input id="mortgageInsurance" type="number" placeholder="$" /></div>
+        <div class="form-row"><label data-tooltip="<strong>Definition:</strong> Private Mortgage Insurance (PMI) protects lenders when equity is below 20%.<br><strong>Requirement:</strong> Must be paid for until 20% equity is reached. Will auto cancel at 78% equity.<br><strong>Note:</strong> Enter monthly amount — it is annualized automatically.">Mortgage Insurance ($/mo)</label><input id="mortgageInsurance" type="number" placeholder="$/mo" /></div>
         <div class="form-row"><label>Utilities ($/mo)</label><input id="utilities" type="number" placeholder="$" /></div>
         <div class="form-row"><label>Other Expenses (HOA, etc) ($/mo)</label><input id="otherExpenses" type="number" placeholder="$" /></div>
         <div class="form-row"><label>Maintenance (% of gross rent / yr)</label><input id="maintenancePct" type="number" value="8" step="0.1" placeholder="%" /></div>
@@ -213,7 +253,6 @@
 
         <div style="margin-top:12px" class="card">
             <div class="section-title"><strong>Hold-Period Strategy Summary – <span id="holdYearsLabel"> yrs</span></strong></div>
-            <div style="display:flex;gap:12px;align-items:start">
             <div class="results hold-summary">
                 <div class="tile" data-tooltip="<strong>Definition:</strong> Total cumulative cash flow over hold period.<br><strong>Formula:</strong> Σ Annual Cash Flow"><h3>Total Cash Flow (hold)</h3><p id="totalCashFlow">$0</p></div>
                 <div class="tile" data-tooltip="<strong>Definition:</strong> Cash received from sale after loan payoff and selling costs.<br><strong>Formula:</strong> Sale Price − Loan Balance − Selling Costs"><h3>Net Sale Proceeds</h3><p id="netSale">$0</p></div>
@@ -221,15 +260,6 @@
                 <div class="tile" data-tooltip="<strong>Definition:</strong> Net profit after all taxes.<br><strong>Formula:</strong> Total Gain − Taxes"><h3>Estimated After-Tax Gain</h3><p id="afterTaxGain">$0</p></div>
                 <div class="tile" data-tooltip="<strong>Definition:</strong> Total after-tax return on investment.<br><strong>Formula:</strong> After-Tax Gain ÷ Initial Investment × 100"><h3>Total ROI (hold)</h3><p id="totalROI">0%</p></div>
                 <div class="tile" data-tooltip="<strong>Definition:</strong> Average annual return compounded over hold period.<br><strong>Formula:</strong> [(Final ÷ Initial)^(1/Years) − 1] × 100"><h3>Annualized ROI (CAGR)</h3><p id="annualROI">0%</p></div>
-            </div>
-
-            <!-- ROI pie on right -->
-            <div style="width:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:auto;">
-            <div style="font-size:13px;color:var(--muted);margin-bottom:8px;text-align:center;">
-                Return Composition (approx)
-            </div>
-            <canvas id="roiPie" style="width:100%;height:220px;display:block;margin:0;"></canvas>
-            </div>
             </div>
 
           <div style="margin-top:12px" class="section-title"><strong>Projection Charts</strong></div>
@@ -397,7 +427,7 @@ purchasePriceInput.addEventListener('input', () => {
 
   /* capex item creator */
   function createCapexItem(name='', cost='', life='', spendYear='') {
-    const wrap = document.createElement('div'); wrap.className='capex-item';
+    const wrap = document.createElement('div'); wrap.className='capex-item'; wrap.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
     const nameI = document.createElement('input'); nameI.type='text'; nameI.placeholder='Item'; nameI.value=name; nameI.style.width='40%';
     const costI = document.createElement('input'); costI.type='number'; costI.placeholder='$'; costI.value=cost; costI.style.width='30%';
     const lifeI = document.createElement('input'); lifeI.type='number'; lifeI.value=life; lifeI.style.width='20%'; lifeI.placeholder='yrs';
@@ -409,7 +439,7 @@ purchasePriceInput.addEventListener('input', () => {
   }
 
   /* Charts */
-  let projChart = null, cashflowChart=null, roiChart=null;
+  let projChart = null, cashflowChart = null;
   function ensureLineChart(canvasId, labels=[], datasets=[], opts={}) {
     const ctx = $(canvasId).getContext('2d');
     if (canvasId === 'projChart') {
@@ -419,11 +449,6 @@ purchasePriceInput.addEventListener('input', () => {
       if (!cashflowChart) cashflowChart = new Chart(ctx, { type:'bar', data:{labels,datasets}, options: Object.assign({responsive:true,plugins:{legend:{position:'top'}},scales:{x:{stacked:true},y:{stacked:true}}}, opts) });
       else { cashflowChart.data.labels = labels; cashflowChart.data.datasets = datasets; cashflowChart.update(); }
     }
-  }
-  function ensurePieChart(canvasId, labels=[], data=[]) {
-    const ctx = $(canvasId).getContext('2d');
-    if (!roiChart) roiChart = new Chart(ctx, { type:'pie', data:{labels,datasets:[{data, backgroundColor:['#2563eb','#16a34a','#f59e0b','#6b7280']}] , }, options:{responsive:true,plugins:{legend:{position:'bottom'}}} });
-    else { roiChart.data.labels = labels; roiChart.data.datasets[0].data = data; roiChart.update(); }
   }
 
   /* Gather inputs */
@@ -443,7 +468,7 @@ purchasePriceInput.addEventListener('input', () => {
       appreciation: getNum('appreciation') / 100,
       propTaxes: getNum('propTaxes'),
       insurance: getNum('insurance'),
-      mortgageInsurance: getNum('mortgageInsurance'),
+      mortgageInsurance: getNum('mortgageInsurance') * 12, // input is $/mo → annual
       utilities: getNum('utilities') * 12,
       otherExpenses: getNum('otherExpenses') * 12,
       maintenancePct: getNum('maintenancePct') / 100,
@@ -510,11 +535,12 @@ function calculateAll(){
   const loanAmount = Math.max(0, I.purchasePrice - I.dpVal);
   const monthlyPayment = monthlyMortgage(loanAmount, I.interestRate, I.loanTerm);
   const annualDebtService = monthlyPayment * 12;
-  const amort = amortSchedule(loanAmount, I.interestRate, I.loanTerm);
+  // single amort schedule reused everywhere
+  const amortForYears = amortSchedule(loanAmount, I.interestRate, I.loanTerm);
 
   // --- Mortgage Insurance (PMI) for snapshot calculations ---
   // PMI input is monthly; include in snapshots if starting LTV > 80%
-  const mortgageInsuranceAnnual = Number(I.mortgageInsurance * 12 || 0);
+  const mortgageInsuranceAnnual = Number(I.mortgageInsurance || 0);
   const startingLoanBalance = loanAmount; // at origination
   const startingEquityRatio = I.purchasePrice ? (1 - (startingLoanBalance / I.purchasePrice)) : 0;
   const pmiActiveStart = mortgageInsuranceAnnual > 0 && startingEquityRatio < 0.20;
@@ -543,7 +569,7 @@ function calculateAll(){
   }, 0);
   const depreciableBasis = Math.max(0, I.purchasePrice - I.landValue);
   const depreciationAnnual = depreciableBasis / 27.5;
-  const firstYearInterest = (amort[0] && amort[0].interestPaid) ? amort[0].interestPaid : 0;
+  const firstYearInterest = amortForYears[0]?.interestPaid ?? 0;
 
   /* projection loop (single set of declarations) */
   const years = Math.max(1, I.holdYears);
@@ -555,8 +581,6 @@ function calculateAll(){
   let totalIncomeTaxPaid = 0;
   let totalDepreciationTaken = 0;
 
-  const amortForYears = amortSchedule(loanAmount, I.interestRate, I.loanTerm);
-
   for (let y = 1; y <= years; y++) {
     if (y > 1) yearRents *= (1 + I.rentGrowth);
 
@@ -564,7 +588,7 @@ function calculateAll(){
     const bal = (amortForYears[y - 1]) ? amortForYears[y - 1].endBalance : 0;
 
     // annual PMI input
-    const mortgageInsuranceAnnualY = Number(I.mortgageInsurance * 12 || 0);
+    const mortgageInsuranceAnnualY = Number(I.mortgageInsurance || 0); // already annualized in gatherInputs
     const equityRatio = I.purchasePrice ? (1 - (bal / I.purchasePrice)) : 0;
     const pmiActive = mortgageInsuranceAnnualY > 0 && (equityRatio < 0.199999);
     const mortgageInsuranceCost = pmiActive ? mortgageInsuranceAnnualY : 0;
@@ -589,11 +613,10 @@ function calculateAll(){
     const cashFlowY = NOIy - annualDebtService - capexSpent;
     cumulativeCashFlow += cashFlowY;
 
-    // tax shield for this year (depreciation + interest + capex dep)
+    // taxable income: rent minus operating expenses (incl PMI), depreciation, and interest
+    const taxableY = effGross - operatingExpensesY - depreciationAnnual - interestY - annualCapExDep;
+    // tax shield: non-cash/deductible items × rate
     const taxShieldY = (depreciationAnnual + annualCapExDep + interestY) * I.taxRate;
-
-    // taxable income & tax
-    const taxableY = effGross - (operatingExpensesY + depreciationAnnual + interestY + annualCapExDep + mortgageInsuranceCost);
     const taxY = taxableY > 0 ? taxableY * I.taxRate : 0;
     totalIncomeTaxPaid += taxY;
     totalDepreciationTaken += depreciationAnnual + annualCapExDep;
@@ -630,7 +653,7 @@ function calculateAll(){
   const loanBalanceAtSale = yearlyLoanBalances[years-1] || 0;
   const sellingCosts = finalSalePrice * I.sellingCostsPct;
   const netSaleProceedsBeforeTax = finalSalePrice - loanBalanceAtSale - sellingCosts;
-  let capitalGain = finalSalePrice - I.purchasePrice - totalDepreciationTaken;
+  let capitalGain = finalSalePrice - I.purchasePrice - sellingCosts;
   if (capitalGain < 0) capitalGain = 0;
   const recaptureTax = totalDepreciationTaken * I.recaptureRate;
   const capGainsTax = capitalGain * I.capGainsRate;
@@ -715,19 +738,6 @@ function calculateAll(){
   $('holdYearsLabel').textContent = `${I.holdYears} yrs`;
 
   //VISUALS - CHARTS & TABLE (unchanged)
-  const principalPaidTotal = amortForYears.slice(0, years).reduce((s,a)=> s + (a.principalPaid || 0), 0);
-  const appreciationTotal = finalSalePrice - I.purchasePrice;
-  const cashflowTotal = cumulativeCashFlow;
-  const totalTaxShieldEstimate = totalDepreciationTaken * I.taxRate;
-  const pieLabels = ['Appreciation','Loan Paydown','Cash Flow','Tax Shield (est)'];
-  const pieData = [
-    Math.max(0, appreciationTotal),
-    Math.max(0, principalPaidTotal),
-    Math.max(0, cashflowTotal),
-    Math.max(0, totalTaxShieldEstimate)
-  ];
-  ensurePieChart('roiPie', pieLabels, pieData);
-
   const labels = detail.map(d => 'Y' + d.year);
   const valueSeries = detail.map(d => Number(d.salePrice.toFixed(2)));
   const equitySeries = detail.map(d => Number((d.salePrice - d.loanBalance).toFixed(2)));
@@ -804,6 +814,22 @@ function calculateAll(){
     updateHoldStratLabel();
   }
 
+  /* Refresh down payment display on load */
+  function refreshDownPaymentInputs() {
+    // On load, if percent is set but amount isn't, derive amount from percent
+    const pp = parseFloat(purchasePriceInput.value) || 0;
+    const pct = parseFloat(downPaymentPercentInput.value) || 0;
+    const amt = parseFloat(downPaymentValueInput.value) || 0;
+    if (pct && !amt && pp) {
+      downPaymentValueInput.value = ((pct / 100) * pp).toFixed(0);
+    } else if (amt && !pct && pp) {
+      downPaymentPercentInput.value = ((amt / pp) * 100).toFixed(1);
+    } else if (pct && pp) {
+      // percent wins on initial load
+      downPaymentValueInput.value = ((pct / 100) * pp).toFixed(0);
+    }
+  }
+
   /* Initialization */
   (function init(){
     const initialNum = Math.max(0, parseInt(numUnitsInput.value || 0));
@@ -814,15 +840,16 @@ function calculateAll(){
       while (unitRents.length < initialNum) unitRents.push(last);
     }
     refreshUnitsFromState();
+    refreshDownPaymentInputs();
 
-    // global small listeners
+    // Wire up global input listeners
     document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', ()=>{ calculateAll(); }));
 
+    // Init slider BEFORE first calculateAll so max/label are correct
     initHoldStratSlider();
 
-    // default scenario to Average on load
+    // Apply default scenario (triggers calculateAll internally)
     applyScenario('avg');
-    refreshDownPaymentInputs();
   })();
 
   /* Export button - uses lastDetail */
@@ -839,44 +866,57 @@ function calculateAll(){
     a.click();
   });
 
-// --- Enable real HTML tooltips (tiles + labels) ---
-document.addEventListener('mouseover', e => {
-  const target = e.target.closest('.tile[data-tooltip], label[data-tooltip]');
-  if (!target) return;
-  const html = target.getAttribute('data-tooltip');
-  let tip = document.querySelector('#customTooltip');
-  if (!tip) {
-    tip = document.createElement('div');
-    tip.id = 'customTooltip';
-    tip.style.position = 'fixed';
-    tip.style.background = '#111827';
-    tip.style.color = '#f9fafb';
-    tip.style.padding = '8px 10px';
-    tip.style.borderRadius = '8px';
-    tip.style.fontSize = '12px';
-    tip.style.lineHeight = '1.3';
-    tip.style.maxWidth = '260px';
-    tip.style.pointerEvents = 'none';
-    tip.style.zIndex = '9999';
-    tip.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
-    document.body.appendChild(tip);
+// --- Tooltip system ---
+(function () {
+  // Create one persistent tooltip element
+  const tip = document.createElement('div');
+  tip.id = 'customTooltip';
+  Object.assign(tip.style, {
+    position: 'fixed', display: 'none',
+    background: '#111827', color: '#f9fafb',
+    padding: '8px 10px', borderRadius: '8px',
+    fontSize: '12px', lineHeight: '1.5',
+    maxWidth: '280px', pointerEvents: 'none',
+    zIndex: '9999', boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+    transition: 'opacity 0.1s'
+  });
+  document.body.appendChild(tip);
+
+  let currentTarget = null;
+
+  function positionTip(x, y) {
+    const pad = 12;
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let left = x + 16, top = y + 16;
+    if (left + tw + pad > window.innerWidth)  left = x - tw - 8;
+    if (top  + th + pad > window.innerHeight) top  = y - th - 8;
+    tip.style.left = Math.max(pad, left) + 'px';
+    tip.style.top  = Math.max(pad, top)  + 'px';
   }
 
-  tip.innerHTML = html;
+  document.addEventListener('mouseover', e => {
+    const target = e.target.closest('[data-tooltip]');
+    if (!target || target === currentTarget) return;
+    currentTarget = target;
+    tip.innerHTML = target.getAttribute('data-tooltip');
+    tip.style.display = 'block';
+    positionTip(e.clientX, e.clientY);
+  });
 
-  const move = ev => {
-    tip.style.top = (ev.clientY + 16) + 'px';
-    tip.style.left = (ev.clientX + 16) + 'px';
-  };
-  move(e);
+  document.addEventListener('mousemove', e => {
+    if (!currentTarget) return;
+    positionTip(e.clientX, e.clientY);
+  });
 
-  document.addEventListener('mousemove', move);
-
-  target.addEventListener('mouseleave', () => {
-    tip.remove();
-    document.removeEventListener('mousemove', move);
-  }, { once: true });
-});
+  document.addEventListener('mouseout', e => {
+    if (!currentTarget) return;
+    // Only hide when truly leaving the target (not just moving between children)
+    if (!currentTarget.contains(e.relatedTarget)) {
+      tip.style.display = 'none';
+      currentTarget = null;
+    }
+  });
+})();
 
 </script>
 </body>
