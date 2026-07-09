@@ -58,6 +58,8 @@
     .acctGrid select{font-size:11.5px;padding:6px 2px 6px 5px}
     .saveSummary{font-size:12px;color:var(--ink);background:#eef4ff;border:1px solid rgba(37,99,235,.18);border-radius:8px;padding:8px 10px;margin-top:8px;line-height:1.5}
     .saveSummary b{color:var(--accent)}
+    .fraNote{font-size:12px;color:var(--ink);margin:2px 0 4px}
+    .fraNote b{color:var(--accent)}
     .scenHead{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;font-size:13px}
     .dot{width:11px;height:11px;border-radius:50%}
     details.adv summary{cursor:pointer;font-size:12px;color:var(--accent);list-style:none;margin-top:4px}
@@ -152,11 +154,9 @@
 
         <div class="card">
           <h2>Social Security</h2>
-          <div class="grid2">
-            <div class="field"><label>Benefit at full age $/mo</label><input id="ssFRA" type="number" value="2400"></div>
-            <div class="field"><label>Full retirement age</label><input id="fraAge" type="number" value="67"></div>
-          </div>
-          <div class="hint">Your estimated benefit at full retirement age (see <a href="https://www.ssa.gov/myaccount/" target="_blank" rel="noopener">ssa.gov</a>). Each plan below picks its own claim age; claiming earlier/later adjusts the amount.</div>
+          <div class="field"><label>Benefit at full retirement age $/mo <span class="tip" tabindex="0">i<span class="tipbox">Your estimated monthly benefit at your <b>full retirement age</b> (FRA). Find it on your statement at ssa.gov. Claiming earlier reduces it; each year you wait past FRA (up to 70) adds ~8%.</span></span></label><input id="ssFRA" type="number" value="2400"></div>
+          <div class="fraNote" id="fraNote"></div>
+          <div class="hint">Your FRA is set automatically from your age (SSA rules: 67 if born 1960+). Each plan below claims between <b>62</b> (earliest allowed) and <b>70</b> (waiting longer adds nothing). See <a href="https://www.ssa.gov/myaccount/" target="_blank" rel="noopener">ssa.gov</a>.</div>
         </div>
 
         <div class="card">
@@ -280,7 +280,8 @@ function readGlobals(){
     gainFrac:num('gainFrac',50)/100,
     desiredMonthly:num('desiredMonthly',0),
     ssFRA:num('ssFRA',0),
-    fraAge:num('fraAge',67),
+    birthYear:(new Date().getFullYear() - Math.round(num('currentAge',45))),
+    get fraAge(){ return fraFromBirthYear(this.birthYear); },
     rmdAge:Math.round(num('rmdAge',73)),
   };
 }
@@ -309,8 +310,19 @@ function readOther(g){
   }));
 }
 function readScenario(key){
-  return { retire: Math.round(num(key+'_retire',60)), claim: Math.round(num(key+'_claim',67)) };
+  return { retire: Math.round(num(key+'_retire',60)), claim: clampClaim(num(key+'_claim',67)) };
 }
+
+/* ---------- Full retirement age from birth year (SSA rules) ---------- */
+function fraFromBirthYear(y){
+  if(!y || y<=1937) return 65;
+  if(y<=1942) return 65 + ({1938:2,1939:4,1940:6,1941:8,1942:10}[y])/12;
+  if(y<=1954) return 66;
+  if(y<=1959) return 66 + ({1955:2,1956:4,1957:6,1958:8,1959:10}[y])/12;
+  return 67;                       // born 1960 or later
+}
+function fmtFRA(fra){ const yr=Math.floor(fra+1e-6), mo=Math.round((fra-yr)*12); return mo?`${yr} yr ${mo} mo`:`${yr}`; }
+const clampClaim = a => Math.min(70, Math.max(62, Math.round(a)));   // SSA: 62 earliest, 70 max useful
 
 /* ---------- Social Security claim-age adjustment ---------- */
 function adjustSS(benefitFRA, claimAge, fraAge){
@@ -507,6 +519,7 @@ function recompute(){
   deb=setTimeout(()=>{
     const g=readGlobals(); const accounts=readAccounts(g); const other=readOther(g);
     if(g.planAge<=g.currentAge) return;
+    $('fraNote').innerHTML = `Full retirement age: <b>${fmtFRA(g.fraAge)}</b> <span style="color:var(--muted)">(born ~${g.birthYear})</span>`;
     const sA=readScenario('A'), sB=readScenario('B');
     const detA=simulate(g,accounts,other,sA), detB=simulate(g,accounts,other,sB);
     const mcA=monteCarlo(g,accounts,other,sA,MC_RUNS), mcB=monteCarlo(g,accounts,other,sB,MC_RUNS);
@@ -572,7 +585,7 @@ function loadDemo(){
   $('expReturn').value=6; $('inflation').value=2.5;
   $('vol').value=12; $('ordRate').value=18; $('ltcgRate').value=15; $('gainFrac').value=50; $('rmdAge').value=73;
   $('desiredMonthly').value=6000;
-  $('ssFRA').value=2400; $('fraAge').value=67;
+  $('ssFRA').value=2400;
   $('A_retire').value=55; $('A_claim').value=62;
   $('B_retire').value=62; $('B_claim').value=67;
   accountCard({label:'401(k)',   value:450000, type:'401(k) / IRA', contrib:1500, draw:60});
@@ -595,8 +608,11 @@ document.querySelectorAll('#focusSeg button').forEach(b=>b.onclick=()=>{
   recompute();
 });
 ['currentAge','planAge','expReturn','inflation','vol','ordRate','ltcgRate','gainFrac','rmdAge',
- 'desiredMonthly','ssFRA','fraAge','A_retire','A_claim','B_retire','B_claim']
+ 'desiredMonthly','ssFRA','A_retire','A_claim','B_retire','B_claim']
  .forEach(id=>$(id).addEventListener('input',recompute));
+
+// enforce SSA claim bounds (62–70) when the user leaves the field
+['A_claim','B_claim'].forEach(id=>$(id).addEventListener('change',()=>{ $(id).value=clampClaim(num(id,67)); recompute(); }));
 
 ['desiredMonthly','ssFRA'].forEach(id=>attachCurrency($(id)));
 

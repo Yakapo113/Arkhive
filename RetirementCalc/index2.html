@@ -37,6 +37,8 @@
     .card{background:var(--bg-1);border-radius:var(--radius);margin-bottom:14px;padding:14px 15px;box-shadow:var(--card-shadow);border:1px solid var(--line-strong)}
     .card h2{font-size:13px;margin:0 0 10px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
     .card .hint{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.45}
+    .fraNote{font-size:12px;color:var(--ink);margin:2px 0 10px}
+    .fraNote b{color:var(--accent)}
     label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
     input[type=number],input[type=text]{width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;font-size:13.5px}
     input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
@@ -96,11 +98,12 @@
           <h2>The basics</h2>
           <div class="grid2">
             <div class="field"><label>Your benefit at full age $/mo</label><input id="fraBenefit" type="number" value="2400"></div>
-            <div class="field"><label>Full retirement age</label><input id="fraAge" type="number" value="67"></div>
+            <div class="field"><label>Your birth year</label><input id="birthYear" type="number" value="1965"></div>
           </div>
           <div class="field"><label>Plan to live to age</label><input id="planAge" type="number" value="90"></div>
+          <div class="fraNote" id="fraNote"></div>
           <button id="autofill" class="btn ghost sm">Auto-fill the 3 strategies from this</button>
-          <div class="hint">Find your estimated benefit at full retirement age at <a href="https://www.ssa.gov/myaccount/" target="_blank" rel="noopener">ssa.gov</a>. Auto-fill uses the official SSA formula to estimate the monthly check at each claim age.</div>
+          <div class="hint">Enter your birth year — we set your full retirement age using the official SSA rules (67 if born 1960+). Find your estimated FRA benefit at <a href="https://www.ssa.gov/myaccount/" target="_blank" rel="noopener">ssa.gov</a>. You can claim as early as <b>62</b> and gain nothing by waiting past <b>70</b>.</div>
         </div>
 
         <div class="card">
@@ -207,6 +210,18 @@ function attachCurrency(input){
   if(input.value!=='') formatCurrency(input);
 }
 
+/* Full retirement age from birth year (SSA rules) */
+function fraFromBirthYear(y){
+  if(!y || y<=1937) return 65;
+  if(y<=1942) return 65 + ({1938:2,1939:4,1940:6,1941:8,1942:10}[y])/12;
+  if(y<=1954) return 66;
+  if(y<=1959) return 66 + ({1955:2,1956:4,1957:6,1958:8,1959:10}[y])/12;
+  return 67;                       // born 1960 or later
+}
+function fmtFRA(fra){ const yr=Math.floor(fra+1e-6), mo=Math.round((fra-yr)*12); return mo?`${yr} yr ${mo} mo`:`${yr}`; }
+const clampClaim = a => Math.min(70, Math.max(62, Math.round(a)));   // SSA: 62 earliest, 70 max useful
+function currentFRA(){ return fraFromBirthYear(Math.round(num('birthYear',1965))); }
+
 /* SSA claim-age adjustment from the full-retirement-age benefit */
 function adjustSS(benefitFRA, claimAge, fraAge){
   const m = Math.round((claimAge-fraAge)*12);
@@ -221,7 +236,7 @@ function adjustSS(benefitFRA, claimAge, fraAge){
 function readStrategies(){
   return ['A','B','C'].map(k=>({
     id:k, color:COLORS[k],
-    claim: Math.round(num(k+'_age',67)),
+    claim: clampClaim(num(k+'_age',67)),
     amt: num(k+'_amt',0)
   }));
 }
@@ -359,6 +374,8 @@ function recompute(){
   if(deb) clearTimeout(deb);
   deb=setTimeout(()=>{
     const g={ planAge:Math.round(num('planAge',90)), ret:num('ret',5)/100, cola:num('cola',2.5)/100, tax:num('tax',0)/100 };
+    const fra=currentFRA();
+    $('fraNote').innerHTML = `Full retirement age: <b>${fmtFRA(fra)}</b> <span style="color:var(--muted)">(born ${Math.round(num('birthYear',1965))})</span>`;
     const strats=readStrategies();
     const startAge=Math.min(...strats.map(s=>s.claim));
     if(g.planAge<=startAge) return;
@@ -373,7 +390,7 @@ function recompute(){
 
 /* auto-fill strategies from FRA benefit using the SSA formula */
 function autofill(){
-  const fra=num('fraBenefit',2400), fa=num('fraAge',67);
+  const fra=num('fraBenefit',2400), fa=currentFRA();
   $('A_amt').value=Math.round(adjustSS(fra,Math.round(num('A_age',62)),fa));
   $('B_amt').value=Math.round(adjustSS(fra,Math.round(num('B_age',67)),fa));
   $('C_amt').value=Math.round(adjustSS(fra,Math.round(num('C_age',70)),fa));
@@ -388,8 +405,11 @@ document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#modeSeg button').forEach(x=>x.classList.toggle('on',x===b));
   recompute();
 });
-['fraBenefit','fraAge','planAge','ret','cola','tax','A_age','A_amt','B_age','B_amt','C_age','C_amt']
+['fraBenefit','birthYear','planAge','ret','cola','tax','A_age','A_amt','B_age','B_amt','C_age','C_amt']
   .forEach(id=>$(id).addEventListener('input',recompute));
+
+// enforce SSA claim bounds (62–70) when the user leaves the field
+['A_age','B_age','C_age'].forEach(id=>$(id).addEventListener('change',()=>{ $(id).value=clampClaim(num(id,67)); recompute(); }));
 
 ['fraBenefit','A_amt','B_amt','C_amt'].forEach(id=>attachCurrency($(id)));
 
