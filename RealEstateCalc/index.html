@@ -3,7 +3,30 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Real Estate Investment Simulator</title>
+  <title>Real Estate Investment Calculator – Cap Rate, Cash Flow &amp; ROI (Free)</title>
+  <meta name="description" content="Free real estate investment calculator. Instantly analyze a rental property's cap rate, cash-on-cash return, monthly cash flow, DSCR, and long-term ROI including taxes, depreciation, and appreciation." />
+  <link rel="canonical" href="https://arkhive.us/RealEstateCalc/" />
+  <meta name="robots" content="index,follow" />
+  <!-- Open Graph / social sharing -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Free Real Estate Investment Calculator" />
+  <meta property="og:description" content="Analyze a rental property's cap rate, cash flow, DSCR, and ROI in seconds — free, no signup." />
+  <meta property="og:url" content="https://arkhive.us/RealEstateCalc/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Free Real Estate Investment Calculator" />
+  <meta name="twitter:description" content="Analyze a rental property's cap rate, cash flow, DSCR, and ROI in seconds — free, no signup." />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Real Estate Investment Calculator",
+    "url": "https://arkhive.us/RealEstateCalc/",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Any (web browser)",
+    "description": "Free real estate investment calculator for rental property cap rate, cash-on-cash return, monthly cash flow, DSCR, and long-term ROI including taxes, depreciation, and appreciation.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
@@ -22,6 +45,7 @@
     h1{font-size:20px;margin:0}
     .subtitle{color:var(--muted);font-size:13px}
     .layout{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:18px}
+    .layout>div{min-width:0}
     .card{background:var(--bg-1);border-radius:var(--radius);margin-bottom: 12px;padding:14px;box-shadow:var(--card-shadow);border:1px solid rgba(9, 30, 66, 0.25)}
     .card2{background-color: #05d82c00;border-radius:var(--radius);border:1px solid rgba(9,30,66,0.14); display: grid;margin-bottom: 12px;padding: 12px; grid-template-rows: 2fr 2fr;grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px}
     .canvas {max-width:100%}
@@ -76,9 +100,10 @@
     .scenario-row button.active{background:var(--accent);color:white;border-color:var(--accent)}
     /* ── Responsive ── */
     @media (max-width:1000px){
-      .layout{grid-template-columns:1fr}
+      .layout{grid-template-columns:minmax(0,1fr)}
       .charts-row{flex-direction:column}
-      .chart-wrap{grid-template-columns:1fr}
+      /* .card-prefixed to outrank the base .chart-wrap rule defined later in the sheet */
+      .card .chart-wrap{grid-template-columns:1fr}
     }
     @media (max-width:640px){
       .container{margin:12px auto;padding:10px}
@@ -328,6 +353,50 @@
   const $ = id => document.getElementById(id);
   const money2 = v => (Number(v) || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
 
+  /* Parse a possibly comma-/$-formatted string to a number (empty → 0) */
+  const parseNum = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g, '')); return isNaN(n) ? 0 : n; };
+  /* Format an integer with thousands separators for display in an input */
+  const fmtInt = n => Math.round(Number(n) || 0).toLocaleString('en-US');
+
+  /* Currency inputs: show thousands separators as the user types, keeping the
+     caret in place. The underlying value is parsed with parseNum() everywhere. */
+  const CURRENCY_IDS = ['purchasePrice','appraisedValue','downPaymentValue','closingCosts',
+    'sellerpaidclosingCosts','landValue','propTaxes','insurance','mortgageInsurance','utilities','otherExpenses'];
+
+  function formatCurrency(input) {
+    const focused = document.activeElement === input;
+    const raw = input.value;
+    const caret = focused ? input.selectionStart : 0;
+    const digitsBeforeCaret = focused ? raw.slice(0, caret).replace(/[^0-9]/g, '').length : 0;
+
+    let cleaned = raw.replace(/[^0-9.]/g, '');              // digits + dots only
+    const firstDot = cleaned.indexOf('.');
+    if (firstDot !== -1) {                                   // keep only the first dot
+      cleaned = cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, '');
+    }
+    let [intPart, decPart] = cleaned.split('.');
+    intPart = (intPart || '').replace(/^0+(?=\d)/, '');      // strip leading zeros
+    const withCommas = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const formatted = decPart !== undefined ? withCommas + '.' + decPart : withCommas;
+    input.value = formatted;
+
+    if (focused) {                                          // restore caret at same digit offset
+      let pos = 0, seen = 0;
+      while (pos < formatted.length && seen < digitsBeforeCaret) {
+        if (/[0-9]/.test(formatted[pos])) seen++;
+        pos++;
+      }
+      input.setSelectionRange(pos, pos);
+    }
+  }
+
+  function attachCurrency(input) {
+    input.type = 'text';
+    input.setAttribute('inputmode', 'decimal');
+    input.addEventListener('input', () => formatCurrency(input));
+    if (input.value !== '') formatCurrency(input);          // format any preset value
+  }
+
   /* State */
   const unitsList = $('unitsList');
   const capexList = $('capexList');
@@ -348,7 +417,8 @@
   function createUnitInput(index, value='') {
     const wrap = document.createElement('div'); wrap.className = 'unit-item';
     const lbl = document.createElement('div'); lbl.className='small muted'; lbl.style.minWidth='60px'; lbl.textContent = 'Unit ' + (index+1) + ' ($)';
-    const inp = document.createElement('input'); inp.type='number'; inp.value=value; inp.placeholder='$'; inp.dataset.unitIndex=index; inp.style.flex='1';
+    const inp = document.createElement('input'); inp.value=value; inp.placeholder='$'; inp.dataset.unitIndex=index; inp.style.flex='1';
+    attachCurrency(inp);
     wrap.appendChild(lbl); wrap.appendChild(inp); return wrap;
   }
 
@@ -361,17 +431,17 @@ let activeField = null; // Tracks the field user is currently editing
 
 /* Update functions */
 function updatePercentFromAmount() {
-  const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
-  const amount = parseFloat(downPaymentValueInput.value) || 0;
+  const purchasePrice = parseNum(purchasePriceInput.value);
+  const amount = parseNum(downPaymentValueInput.value);
   const percent = purchasePrice ? (amount / purchasePrice) * 100 : 0;
   downPaymentPercentInput.value = percent.toFixed(1);
 }
 
 function updateAmountFromPercent() {
-  const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
-  const percent = parseFloat(downPaymentPercentInput.value) || 0;
+  const purchasePrice = parseNum(purchasePriceInput.value);
+  const percent = parseNum(downPaymentPercentInput.value);
   const amount = (percent / 100) * purchasePrice;
-  downPaymentValueInput.value = amount.toFixed(0);
+  downPaymentValueInput.value = fmtInt(amount);
 }
 
 /* Event listeners to track active field */
@@ -436,8 +506,8 @@ purchasePriceInput.addEventListener('input', () => {
   function refreshUnitsFromState() {
     const n = Math.max(0, parseInt(numUnitsInput.value || 0));
     if (!unitRents.length) {
-      const existing = unitsList.querySelectorAll('input[type="number"]');
-      if (existing.length) unitRents = Array.from(existing).map(i=>Number(i.value||''));
+      const existing = unitsList.querySelectorAll('input');
+      if (existing.length) unitRents = Array.from(existing).map(i=>parseNum(i.value));
     }
     const old = unitRents.slice(0);
     unitRents.length = 0;
@@ -454,7 +524,7 @@ purchasePriceInput.addEventListener('input', () => {
   inputsCard.addEventListener('input', (ev)=>{
     const t = ev.target; if (!t) return;
     if (t.dataset && t.dataset.unitIndex !== undefined) {
-      const idx = Number(t.dataset.unitIndex); unitRents[idx] = Number(t.value || 0);
+      const idx = Number(t.dataset.unitIndex); unitRents[idx] = parseNum(t.value);
       setActiveScenario('custom'); // editing rents = custom
     }
     calculateAll();
@@ -472,7 +542,7 @@ purchasePriceInput.addEventListener('input', () => {
   function createCapexItem(name='', cost='', life='', spendYear='') {
     const wrap = document.createElement('div'); wrap.className='capex-item';
     const nameI = document.createElement('input'); nameI.type='text'; nameI.placeholder='e.g. Roof'; nameI.value=name; nameI.className='capex-name';
-    const costI = document.createElement('input'); costI.type='number'; costI.placeholder='$'; costI.value=cost;
+    const costI = document.createElement('input'); costI.placeholder='$'; costI.value=cost; attachCurrency(costI);
     const lifeI = document.createElement('input'); lifeI.type='number'; lifeI.value=life; lifeI.placeholder='yrs';
     const spendYearI = document.createElement('input'); spendYearI.type='number'; spendYearI.placeholder='yr'; spendYearI.value=spendYear;
     const btn = document.createElement('button'); btn.type='button'; btn.className='remove-btn'; btn.textContent='×'; btn.title='Remove item';
@@ -554,7 +624,7 @@ purchasePriceInput.addEventListener('input', () => {
 
   /* Gather inputs */
   function gatherInputs() {
-    const getNum = id => Number($(id)?.value || 0);
+    const getNum = id => parseNum($(id)?.value);
     const obj = {
       purchasePrice: getNum('purchasePrice'),
       appraisedValue: getNum('appraisedValue'),
@@ -587,7 +657,7 @@ purchasePriceInput.addEventListener('input', () => {
       const inputs = Array.from(div.querySelectorAll('input'));
       if (inputs.length >= 4) {
         const name = inputs[0].value || '';
-        const cost = Number(inputs[1].value || 0);
+        const cost = parseNum(inputs[1].value);
         const life = Number(inputs[2].value || 0);
         const spendYear = Number(inputs[3].value || 0);
         obj.capexItems.push({name,cost,life,spendYear});
@@ -674,13 +744,16 @@ function calculateAll(){
   const pmiActiveStart = mortgageInsuranceAnnual > 0 && startingEquityRatio < 0.20;
   const mortgageInsuranceCostStart = pmiActiveStart ? mortgageInsuranceAnnual : 0;
 
-  // operating items (snapshot-level, include PMI)
+  // income (snapshot)
+  const effectiveGrossRent = I.grossAnnualRent * (1 - I.vacancyRate);
+
+  // operating items (snapshot-level, include PMI). Management fee is charged on
+  // COLLECTED rent, so it scales down with vacancy; maintenance is a reserve on gross rent.
   const maintenance = I.grossAnnualRent * I.maintenancePct;
-  const managementFee = I.grossAnnualRent * I.managementFeePct;
+  const managementFee = effectiveGrossRent * I.managementFeePct;
   const operatingExpenses = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenance + managementFee + mortgageInsuranceCostStart;
 
-  // income, NOI, cashflow (snapshot)
-  const effectiveGrossRent = I.grossAnnualRent * (1 - I.vacancyRate);
+  // NOI, cashflow (snapshot)
   const NOI = effectiveGrossRent - operatingExpenses;
   const annualCashFlow = NOI - annualDebtService;
   const netMonthly = annualCashFlow / 12;
@@ -741,10 +814,10 @@ function calculateAll(){
     // fixed-dollar items (taxes, insurance, utilities, other) scale with expenseGrowth instead.
     const expenseGrowthFactor = Math.pow(1 + I.expenseGrowth, y - 1);
     const fixedExpensesY = (I.propTaxes + I.insurance + I.utilities + I.otherExpenses) * expenseGrowthFactor;
-    const maintenanceY = yearRents * I.maintenancePct;
-    const managementFeeY = yearRents * I.managementFeePct;
-    const operatingExpensesY = fixedExpensesY + maintenanceY + managementFeeY + mortgageInsuranceCost;
     const effGross = yearRents * (1 - I.vacancyRate);
+    const maintenanceY = yearRents * I.maintenancePct;        // reserve on gross rent
+    const managementFeeY = effGross * I.managementFeePct;     // on collected rent → drops with vacancy
+    const operatingExpensesY = fixedExpensesY + maintenanceY + managementFeeY + mortgageInsuranceCost;
     const NOIy = effGross - operatingExpensesY;
     const capexSpent = I.capexItems.reduce((s, c) => s + (c.spendYear === y ? c.cost : 0), 0);
 
@@ -1012,24 +1085,27 @@ function calculateAll(){
   /* Refresh down payment display on load */
   function refreshDownPaymentInputs() {
     // On load, if percent is set but amount isn't, derive amount from percent
-    const pp = parseFloat(purchasePriceInput.value) || 0;
-    const pct = parseFloat(downPaymentPercentInput.value) || 0;
-    const amt = parseFloat(downPaymentValueInput.value) || 0;
+    const pp = parseNum(purchasePriceInput.value);
+    const pct = parseNum(downPaymentPercentInput.value);
+    const amt = parseNum(downPaymentValueInput.value);
     if (pct && !amt && pp) {
-      downPaymentValueInput.value = ((pct / 100) * pp).toFixed(0);
+      downPaymentValueInput.value = fmtInt((pct / 100) * pp);
     } else if (amt && !pct && pp) {
       downPaymentPercentInput.value = ((amt / pp) * 100).toFixed(1);
     } else if (pct && pp) {
       // percent wins on initial load
-      downPaymentValueInput.value = ((pct / 100) * pp).toFixed(0);
+      downPaymentValueInput.value = fmtInt((pct / 100) * pp);
     }
   }
 
   /* Initialization */
   (function init(){
+    // Turn currency fields into comma-formatted text inputs (and format preset values)
+    CURRENCY_IDS.forEach(id => { const el = $(id); if (el) attachCurrency(el); });
+
     const initialNum = Math.max(0, parseInt(numUnitsInput.value || 0));
-    const existing = unitsList.querySelectorAll('input[type="number"]');
-    if (existing.length) unitRents = Array.from(existing).map(i => Number(i.value || 0));
+    const existing = unitsList.querySelectorAll('input');
+    if (existing.length) unitRents = Array.from(existing).map(i => parseNum(i.value));
     if (unitRents.length < initialNum) {
       const last = unitRents.length ? unitRents[unitRents.length - 1] : '';
       while (unitRents.length < initialNum) unitRents.push(last);
