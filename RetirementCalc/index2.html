@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Social Security Break-Even Calculator – When Should I Claim? (Free)</title>
+  <meta name="description" content="Free Social Security break-even calculator. Compare claiming at 62, 67, or 70 — see the exact break-even age, including the 'true' break-even when you invest early checks (opportunity cost), with COLA and taxes." />
+  <link rel="canonical" href="https://arkhive.us/RetirementCalc/index2.html" />
+  <meta name="robots" content="index,follow" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232563eb'/%3E%3Cpath d='M24 66 L44 46 L58 60 L78 34' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='78' cy='34' r='6' fill='white'/%3E%3C/svg%3E" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Social Security Break-Even Calculator" />
+  <meta property="og:description" content="Compare claiming at 62, 67, or 70 and see the exact break-even age — including the true break-even when you invest early checks." />
+  <meta property="og:url" content="https://arkhive.us/RetirementCalc/index2.html" />
+  <meta name="twitter:card" content="summary" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --bg-0:#f5f7fb; --bg-1:#ffffff; --muted:#52606a; --ink:#0b1220;
+      --accent:#2563eb; --A:#ea580c; --B:#2563eb; --C:#16a34a;
+      --good:#16a34a; --warn:#d97706; --bad:#dc2626;
+      --line:rgba(9,30,66,0.14); --line-strong:rgba(9,30,66,0.25);
+      --card-shadow:0 6px 22px rgba(38,56,100,0.06); --radius:12px;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:linear-gradient(180deg,var(--bg-0),#eef3fb 100%);color:var(--ink)}
+    .container{max-width:1180px;margin:24px auto;padding:0 18px 48px}
+    header{display:flex;gap:14px;align-items:center;margin-bottom:16px}
+    .logo{width:52px;height:52px;border-radius:12px;background:linear-gradient(180deg,#e6f0ff,#cfe3ff);display:flex;align-items:center;justify-content:center}
+    .logo svg{width:30px;height:30px}
+    h1{font-size:21px;margin:0}
+    .subtitle{color:var(--muted);font-size:13px;margin-top:2px}
+    .layout{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:18px;align-items:start}
+    .layout>div{min-width:0}
+    @media (max-width:900px){.layout{grid-template-columns:1fr}}
+    .card{background:var(--bg-1);border-radius:var(--radius);margin-bottom:14px;padding:14px 15px;box-shadow:var(--card-shadow);border:1px solid var(--line-strong)}
+    .card h2{font-size:13px;margin:0 0 10px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
+    .card .hint{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.45}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+    input[type=number],input[type=text]{width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;font-size:13.5px}
+    input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+    input[type=number]{-moz-appearance:textfield}
+    input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+    .field{margin-bottom:10px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn{background:var(--accent);border:none;padding:8px 12px;border-radius:9px;color:#fff;cursor:pointer;font-weight:600;font-size:13px}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line-strong)}
+    .btn.sm{padding:6px 9px;font-size:12px}
+    .stratHead,.stratRow{display:grid;grid-template-columns:24px 1fr 1fr;gap:8px;align-items:center}
+    .stratHead{font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:6px}
+    .stratRow{margin-bottom:7px}
+    .badge{width:22px;height:22px;border-radius:6px;color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+    .seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden}
+    .seg button{background:transparent;border:none;padding:6px 13px;font-size:12.5px;cursor:pointer;color:var(--muted);font-weight:600}
+    .seg button.on{background:var(--accent);color:#fff}
+    /* result cards */
+    .be-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+    @media (max-width:680px){.be-cards{grid-template-columns:1fr}}
+    .be{border-radius:var(--radius);padding:13px;border:1px solid var(--line-strong);background:var(--bg-1);box-shadow:var(--card-shadow)}
+    .be .lbl{font-size:11.5px;color:var(--muted);margin-bottom:6px;line-height:1.35}
+    .be .big{font-size:24px;font-weight:800;line-height:1}
+    .be .cap{font-size:11.5px;color:var(--muted);margin-top:6px}
+    .be.never .big{font-size:16px;color:var(--muted)}
+    .chartCard{background:var(--bg-1);border-radius:var(--radius);padding:14px 15px;box-shadow:var(--card-shadow);border:1px solid var(--line-strong);margin-bottom:14px}
+    .chartCard .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+    .chartTitle{font-weight:700;font-size:14px}
+    canvas{max-width:100%}
+    .totals{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+    .tot{border:1px solid var(--line);border-radius:10px;padding:10px}
+    .tot .h{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+    .tot .v{font-size:18px;font-weight:800;margin-top:4px}
+    .tot.win{border-color:rgba(22,163,74,.5);background:linear-gradient(180deg,rgba(22,163,74,.08),transparent)}
+    .tot.win .v{color:#15803d}
+    .foot{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:6px}
+    .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+    .xlink{display:block;margin-top:10px;padding:10px 12px;border-radius:9px;background:#eef4ff;border:1px solid rgba(37,99,235,.25);color:#1d4ed8;font-size:12.5px;text-decoration:none;font-weight:600;line-height:1.4}
+    .xlink:hover{background:#e2ecff}
+    .xlink .arrow{float:right}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo"><svg viewBox="0 0 100 100"><path d="M24 66 L44 46 L58 60 L78 34" fill="none" stroke="#2563eb" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="78" cy="34" r="6" fill="#2563eb"/></svg></div>
+      <div>
+        <h1>Social Security Break-Even</h1>
+        <div class="subtitle">When should you claim? Compare 62 vs 67 vs 70 — and see the break-even age, even if you invest early checks.</div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- INPUTS -->
+      <div>
+        <div class="card">
+          <h2>The basics</h2>
+          <div class="grid2">
+            <div class="field"><label>Your benefit at full age $/mo</label><input id="fraBenefit" type="number" value="2400"></div>
+            <div class="field"><label>Full retirement age</label><input id="fraAge" type="number" value="67"></div>
+          </div>
+          <div class="field"><label>Plan to live to age</label><input id="planAge" type="number" value="90"></div>
+          <button id="autofill" class="btn ghost sm">Auto-fill the 3 strategies from this</button>
+          <div class="hint">Find your estimated benefit at full retirement age at <a href="https://www.ssa.gov/myaccount/" target="_blank" rel="noopener">ssa.gov</a>. Auto-fill uses the official SSA formula to estimate the monthly check at each claim age.</div>
+        </div>
+
+        <div class="card">
+          <h2>Claiming strategies</h2>
+          <div class="stratHead"><div></div><div>Claim age</div><div>Monthly $</div></div>
+          <div class="stratRow">
+            <div class="badge" style="background:var(--A)">A</div>
+            <input id="A_age" type="number" value="62">
+            <input id="A_amt" type="number" value="1680">
+          </div>
+          <div class="stratRow">
+            <div class="badge" style="background:var(--B)">B</div>
+            <input id="B_age" type="number" value="67">
+            <input id="B_amt" type="number" value="2400">
+          </div>
+          <div class="stratRow">
+            <div class="badge" style="background:var(--C)">C</div>
+            <input id="C_age" type="number" value="70">
+            <input id="C_amt" type="number" value="2976">
+          </div>
+          <div class="hint">Edit any age or amount directly. If you have exact numbers from your SSA statement, type them in.</div>
+        </div>
+
+        <div class="card">
+          <h2>The "true" break-even</h2>
+          <div class="field">
+            <label>Compare using</label>
+            <div class="seg" id="modeSeg">
+              <button data-m="simple" class="on">Just the checks</button>
+              <button data-m="invested">Invest early checks</button>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label>Investment return %/yr</label><input id="ret" type="number" step="0.1" value="5"></div>
+            <div class="field"><label>SS raises (COLA) %/yr</label><input id="cola" type="number" step="0.1" value="2.5"></div>
+          </div>
+          <div class="field"><label>Tax on benefits % (optional)</label><input id="tax" type="number" step="1" value="0"></div>
+          <div class="hint"><b>Just the checks:</b> pure lifetime totals — the classic break-even. <b>Invest early checks:</b> the money you'd collect sooner is invested at your return rate, so claiming early gets credit for growth. This pushes the break-even later — the "true" comparison if you'd invest the difference.</div>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div>
+        <div class="be-cards" id="beCards"></div>
+
+        <div class="chartCard">
+          <div class="top">
+            <div class="chartTitle">Lifetime money collected by age</div>
+            <div class="foot" style="margin:0" id="modeLabel"></div>
+          </div>
+          <canvas id="cumChart" height="210"></canvas>
+          <div class="foot">Each line is your running total from a strategy. Where a later-claiming line crosses above an earlier one is the break-even age — live past it and waiting wins. Dashed vertical lines mark the crossings.</div>
+        </div>
+
+        <div class="chartCard">
+          <div class="top"><div class="chartTitle">Total collected if you live to age <span id="planAgeLabel">90</span></div></div>
+          <div class="totals" id="totals"></div>
+          <div class="foot" style="margin-top:10px">The monthly check trade-off: claim early for smaller checks that start sooner, or wait for bigger checks that start later.</div>
+          <canvas id="monthlyChart" height="150" style="margin-top:6px"></canvas>
+        </div>
+
+        <div class="card">
+          <div class="foot" style="font-size:12px">
+            Planning model, not financial advice. Amounts grow with the COLA you set; the "invest" mode compounds each check at your return rate (nominal). Real Social Security taxation depends on your total income (up to 85% of benefits taxable) — the tax field here is a flat simplification. Spousal/survivor benefits and earnings-test rules aren't modeled. Confirm your numbers at ssa.gov.
+          </div>
+          <a class="xlink" href="index.html">Got your claim age? Model your whole retirement — savings, spending &amp; whether it lasts <span class="arrow">→</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ============================================================
+   Social Security Break-Even — single-file engine
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const COLORS = {A:'#ea580c', B:'#2563eb', C:'#16a34a'};
+let mode = 'simple';
+const money = n => (n<0?'-':'') + '$' + Math.abs(Math.round(n)).toLocaleString();
+const moneyK = n => { const a=Math.abs(n),s=n<0?'-':'';
+  if(a>=1e6) return s+'$'+(a/1e6).toFixed(a>=1e7?0:1)+'M';
+  if(a>=1e3) return s+'$'+Math.round(a/1e3)+'k'; return s+'$'+Math.round(a); };
+function num(id,d=0){ const v=parseFloat($(id).value); return isNaN(v)?d:v; }
+
+/* SSA claim-age adjustment from the full-retirement-age benefit */
+function adjustSS(benefitFRA, claimAge, fraAge){
+  const m = Math.round((claimAge-fraAge)*12);
+  if(m===0) return benefitFRA;
+  if(m<0){ const e=Math.abs(m), first=Math.min(36,e);
+    const red = first*(5/9)/100 + Math.max(0,e-36)*(5/12)/100;
+    return benefitFRA*(1-red); }
+  const cap=Math.min(m, Math.round((70-fraAge)*12));
+  return benefitFRA*(1+cap*(2/3)/100);
+}
+
+function readStrategies(){
+  return ['A','B','C'].map(k=>({
+    id:k, color:COLORS[k],
+    claim: Math.round(num(k+'_age',67)),
+    amt: num(k+'_amt',0)
+  }));
+}
+
+/* Build cumulative "money collected" series for one strategy, indexed by age.
+   FV accumulation: acc = acc*(1+ret) + yearlyBenefit(after tax). ret=0 in simple mode. */
+function buildSeries(strat, ages, g){
+  const ret = mode==='invested' ? g.ret : 0;
+  const out=[]; let acc=0;
+  for(const age of ages){
+    let b=0;
+    if(age>=strat.claim){
+      const yrsSince = age-strat.claim;
+      b = strat.amt*12*Math.pow(1+g.cola, yrsSince)*(1-g.tax);
+    }
+    acc = acc*(1+ret) + b;
+    out.push(acc);
+  }
+  return out;
+}
+
+/* First age where the later-claiming strategy overtakes the earlier one.
+   Requires it to be genuinely behind first (both sit at $0 before either claims),
+   then linearly interpolates the crossing to a fractional age. */
+function breakEven(ages, earlier, later){
+  let wasBehind=false;
+  for(let i=0;i<ages.length;i++){
+    if(later[i] < earlier[i]-1e-6){ wasBehind=true; continue; }
+    if(wasBehind && later[i] >= earlier[i]){
+      const d0 = later[i-1]-earlier[i-1], d1 = later[i]-earlier[i];
+      const frac = d0===d1 ? 0 : d0/(d0-d1);
+      return ages[i-1] + frac;
+    }
+  }
+  return null; // never overtakes within plan horizon
+}
+
+let cumChart=null, monthlyChart=null;
+const hexA=(hex,a)=>{const n=parseInt(hex.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;};
+
+/* plugin: dashed vertical lines at break-even ages */
+const bePlugin = {
+  id:'bePlugin',
+  afterDatasetsDraw(chart){
+    const be = chart.$breakEvens; if(!be) return;
+    const {ctx, chartArea:{top,bottom}, scales:{x}} = chart;
+    ctx.save(); ctx.setLineDash([5,4]); ctx.lineWidth=1.5;
+    be.forEach(p=>{
+      const px = x.getPixelForValue(Math.round(p.age));
+      if(px<x.left||px>x.right) return;
+      ctx.strokeStyle='rgba(15,23,42,.35)';
+      ctx.beginPath(); ctx.moveTo(px,top); ctx.lineTo(px,bottom); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='#0f172a'; ctx.font='700 11px Inter,system-ui'; ctx.textAlign='center';
+      ctx.fillText(Math.round(p.age), px, top+12);
+      ctx.setLineDash([5,4]);
+    });
+    ctx.restore();
+  }
+};
+
+function renderCards(strats, series, ages, g){
+  // pairwise: later vs earlier by claim age. Order strategies by claim age.
+  const order=[...strats].sort((a,b)=>a.claim-b.claim);
+  const pairs=[];
+  for(let i=0;i<order.length;i++) for(let j=i+1;j<order.length;j++){
+    const e=order[i], l=order[j];
+    if(l.claim===e.claim) continue;
+    const be = breakEven(ages, series[e.id], series[l.id]);
+    pairs.push({e,l,be});
+  }
+  const html = pairs.map(p=>{
+    if(p.be===null){
+      return `<div class="be never">
+        <div class="lbl"><span class="dot" style="background:${p.l.color}"></span> Claiming at <b>${p.l.claim}</b> vs <span class="dot" style="background:${p.e.color}"></span> <b>${p.e.claim}</b></div>
+        <div class="big">Never</div>
+        <div class="cap">Claiming at ${p.e.claim} stays ahead through age ${g.planAge}.</div></div>`;
+    }
+    const past = p.be<=g.planAge;
+    return `<div class="be">
+      <div class="lbl"><span class="dot" style="background:${p.l.color}"></span> Claiming at <b>${p.l.claim}</b> beats <span class="dot" style="background:${p.e.color}"></span> <b>${p.e.claim}</b> if you live past</div>
+      <div class="big" style="color:${p.l.color}">age ${Math.round(p.be)}</div>
+      <div class="cap">${past?`Live past ${Math.round(p.be)} → waiting until ${p.l.claim} wins.`:`Beyond your plan age — claiming ${p.e.claim} wins in your horizon.`}</div></div>`;
+  }).join('');
+  $('beCards').innerHTML = html;
+  return pairs;
+}
+
+function renderCum(strats, series, ages, pairs){
+  const ds = strats.map(s=>({
+    label:`Claim at ${s.claim} (${s.id})`, data:series[s.id],
+    borderColor:s.color, backgroundColor:hexA(s.color,.06),
+    borderWidth:2.5, pointRadius:0, tension:.15, fill:false
+  }));
+  if(cumChart) cumChart.destroy();
+  cumChart = new Chart($('cumChart').getContext('2d'),{
+    type:'line', data:{labels:ages, datasets:ds},
+    options:{responsive:true, animation:false, interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{usePointStyle:true,boxWidth:8,font:{size:12}}},
+        tooltip:{callbacks:{title:i=>'Age '+i[0].label,label:c=>c.dataset.label+': '+money(c.parsed.y)}}},
+      scales:{x:{title:{display:true,text:'Age you live to'},grid:{display:false}},
+        y:{title:{display:true,text:'Total collected'},ticks:{callback:v=>moneyK(v)},grid:{color:'rgba(9,30,66,.06)'},beginAtZero:true}}},
+    plugins:[bePlugin]
+  });
+  cumChart.$breakEvens = pairs.filter(p=>p.be!==null && p.be<=ages[ages.length-1]).map(p=>({age:p.be}));
+  cumChart.update();
+}
+
+function renderTotals(strats, series, ages, g){
+  const totals = strats.map(s=>({s, total: series[s.id][series[s.id].length-1]}));
+  const max = Math.max(...totals.map(t=>t.total));
+  $('planAgeLabel').textContent=g.planAge; $('totals').innerHTML = totals.map(t=>`
+    <div class="tot ${t.total===max?'win':''}">
+      <div class="h"><span class="dot" style="background:${t.s.color}"></span>Claim at ${t.s.claim}${t.total===max?' · best':''}</div>
+      <div class="v">${money(t.total)}</div>
+    </div>`).join('');
+
+  // monthly benefit step lines (with COLA)
+  const ds = strats.map(s=>({
+    label:`Claim at ${s.claim}`, borderColor:s.color, borderWidth:2, pointRadius:0, stepped:true,
+    data: ages.map(age=> age>=s.claim ? Math.round(s.amt*Math.pow(1+g.cola, age-s.claim)) : null), spanGaps:false
+  }));
+  if(monthlyChart) monthlyChart.destroy();
+  monthlyChart = new Chart($('monthlyChart').getContext('2d'),{
+    type:'line', data:{labels:ages, datasets:ds},
+    options:{responsive:true, animation:false, interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{title:i=>'Age '+i[0].label,label:c=>c.raw==null?null:c.dataset.label+': '+money(c.raw)+'/mo'}}},
+      scales:{x:{grid:{display:false}},y:{title:{display:true,text:'$ / month'},ticks:{callback:v=>moneyK(v)},grid:{color:'rgba(9,30,66,.06)'}}}}
+  });
+}
+
+let deb=null;
+function recompute(){
+  if(deb) clearTimeout(deb);
+  deb=setTimeout(()=>{
+    const g={ planAge:Math.round(num('planAge',90)), ret:num('ret',5)/100, cola:num('cola',2.5)/100, tax:num('tax',0)/100 };
+    const strats=readStrategies();
+    const startAge=Math.min(...strats.map(s=>s.claim));
+    if(g.planAge<=startAge) return;
+    const ages=[]; for(let a=startAge;a<=g.planAge;a++) ages.push(a);
+    const series={}; strats.forEach(s=> series[s.id]=buildSeries(s,ages,g));
+    const pairs=renderCards(strats,series,ages,g);
+    renderCum(strats,series,ages,pairs);
+    renderTotals(strats,series,ages,g);
+    $('modeLabel').textContent = mode==='invested' ? 'Mode: early checks invested at '+num('ret',5)+'%' : 'Mode: pure lifetime totals';
+  },110);
+}
+
+/* auto-fill strategies from FRA benefit using the SSA formula */
+function autofill(){
+  const fra=num('fraBenefit',2400), fa=num('fraAge',67);
+  $('A_amt').value=Math.round(adjustSS(fra,Math.round(num('A_age',62)),fa));
+  $('B_amt').value=Math.round(adjustSS(fra,Math.round(num('B_age',67)),fa));
+  $('C_amt').value=Math.round(adjustSS(fra,Math.round(num('C_age',70)),fa));
+  recompute();
+}
+
+/* wire up */
+$('autofill').onclick=autofill;
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{
+  mode=b.dataset.m;
+  document.querySelectorAll('#modeSeg button').forEach(x=>x.classList.toggle('on',x===b));
+  recompute();
+});
+['fraBenefit','fraAge','planAge','ret','cola','tax','A_age','A_amt','B_age','B_amt','C_age','C_amt']
+  .forEach(id=>$(id).addEventListener('input',recompute));
+
+recompute();
+</script>
+</body>
+</html>
