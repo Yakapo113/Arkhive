@@ -27,7 +27,7 @@
     .canvas {max-width:100%}
     .form-row{display:flex;align-items:flex-start;margin-bottom:10px;gap: 8px;min-width:0}
     .form-row > div{flex:1}
-    .form-row label{font-size:10pt;width:220px;font-weight:450;margin-top:4px;flex: 0 0 200px;max-width: 200px}
+    .form-row > label{font-size:10pt;width:220px;font-weight:450;margin-top:4px;flex: 0 0 200px;max-width: 200px}
     .form-row input {width: 100%;max-width:140px}
     .input-pair{display:flex;gap:10px;align-items:flex-start}
     .input-column{display:flex;flex-direction:column; flex:1;min-width:0}
@@ -44,6 +44,26 @@
     .tile{background:linear-gradient(180deg,rgba(8,16,44,0.02),transparent);padding:12px;border-radius:10px;border:1px solid rgba(0, 0, 0, 0.336)}
     .tile h3{margin:0;font-size:13px;color:var(--muted)}
     .tile p{margin:6px 0 0;font-size:18px;font-weight:700}
+    /* Gut-check scoring colors */
+    .tile.good{border-color:rgba(22,163,74,0.4);background:linear-gradient(180deg,rgba(22,163,74,0.10),transparent)}
+    .tile.good h3{color:#15803d}
+    .tile.good p{color:#15803d}
+    .tile.warn{border-color:rgba(217,119,6,0.4);background:linear-gradient(180deg,rgba(217,119,6,0.10),transparent)}
+    .tile.warn h3{color:#b45309}
+    .tile.warn p{color:#b45309}
+    .tile.bad{border-color:rgba(220,38,38,0.4);background:linear-gradient(180deg,rgba(220,38,38,0.10),transparent)}
+    .tile.bad h3{color:#b91c1c}
+    .tile.bad p{color:#b91c1c}
+    .verdict{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;font-weight:700;font-size:14px}
+    .verdict.good{background:#dcfce7;color:#15803d}
+    .verdict.warn{background:#fef3c7;color:#b45309}
+    .verdict.bad{background:#fee2e2;color:#b91c1c}
+    /* Collapsible advanced section */
+    .advanced-summary{cursor:pointer;list-style:none;background:var(--bg-1);border-radius:var(--radius);box-shadow:var(--card-shadow);border:1px solid rgba(9,30,66,0.25);padding:14px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+    .advanced-summary::-webkit-details-marker{display:none}
+    .advanced-summary::marker{content:''}
+    .advanced-summary::before{content:'▸';color:var(--accent);display:inline-block;transition:transform .15s}
+    details[open] > .advanced-summary::before{transform:rotate(90deg)}
     .section-title{font-size:14px;margin:8px 0;color:var(--muted);display:flex;align-items:center;justify-content:space-between}
     .list{background:rgba(38,56,100,0.03);padding:8px;border-radius:10px}
     .unit-item{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}
@@ -67,7 +87,7 @@
       .card,.card2{padding:10px}
       /* Stack label above input on small screens */
       .form-row{flex-direction:column;gap:4px}
-      .form-row label{flex:none;width:auto;max-width:none;font-size:11px}
+      .form-row > label{flex:none;width:auto;max-width:none;font-size:11px}
       .form-row input{max-width:100%;width:100%;box-sizing:border-box}
       .form-row > div{width:100%}
       /* Down payment pair stacks */
@@ -87,9 +107,12 @@
       /* Unit & CapEx items */
       .unit-item{flex-wrap:wrap}
       .unit-item input{width:100%;max-width:100%;box-sizing:border-box}
-      /* CapEx items */
-      .capex-item{display:flex;flex-wrap:wrap;gap:4px}
-      .capex-item input{width:calc(50% - 4px);box-sizing:border-box}
+      /* CapEx: hide header row; name spans full width, others share a row.
+         .list-prefixed to outrank the base .capex-item grid rule that appears
+         later in the stylesheet (equal specificity would otherwise lose). */
+      .list .capex-item-headers{display:none}
+      .list .capex-item{grid-template-columns:1fr 1fr 1fr 32px}
+      .list .capex-item .capex-name{grid-column:1 / -1}
       /* Table wrapper already scrolls; just reduce font */
       table{font-size:11px}
       th,td{padding:4px !important}
@@ -99,6 +122,11 @@
     /* extra small helpers */
     .muted{color:var(--muted);font-size:13px}
     .help-icon{display:inline-block;margin-left:4px;font-size:14px;color:var(--accent)}
+    /* CapEx: shared grid so header labels line up with their inputs */
+    .capex-item-headers, .capex-item{display:grid;grid-template-columns:minmax(70px,1.7fr) 1fr 1fr 1fr 32px;gap:8px;align-items:center}
+    .capex-item{margin-bottom:6px}
+    .list .capex-item input{width:100%;min-width:0;max-width:none;box-sizing:border-box;padding:6px 8px}
+    .capex-item .remove-btn{padding:6px 0;width:100%}
     .chart-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
     label[data-tooltip], .tile[data-tooltip] { cursor: help }
     html, body{overflow-x:hidden}
@@ -124,29 +152,29 @@
       <div class="card" id="inputsCard">
         <div class="section-title"><strong>Property & Financing</strong></div>
 
-        <div class="form-row"><label>Purchase Price ($)</label><input id="purchasePrice" type="number" value="300000" placeholder="$" /></div>
-        <div class="form-row"><label>Appraised Value ($)</label><input id="appraisedValue" type="number" placeholder="$" /></div>
+        <div class="form-row"><label for="purchasePrice">Purchase Price ($)</label><input id="purchasePrice" type="number" value="300000" placeholder="$" /></div>
+        <div class="form-row"><label for="appraisedValue">Appraised Value ($)</label><input id="appraisedValue" type="number" placeholder="$" /></div>
 
         <div class="form-row">
           <label>Down Payment</label>
           <div style="display:flex;flex-direction:column">
             <div class="input-pair">
-              <div class="input-column"><div class="small muted">Amount ($)</div><input id="downPaymentValue" type="number" placeholder="$"></div>
-              <div class="input-column"><div class="small muted">Percent (%)</div><input id="downPaymentPercent" type="number" value="20" placeholder="%"></div>
+              <div class="input-column"><label class="small muted" for="downPaymentValue">Amount ($)</label><input id="downPaymentValue" type="number" placeholder="$"></div>
+              <div class="input-column"><label class="small muted" for="downPaymentPercent">Percent (%)</label><input id="downPaymentPercent" type="number" value="20" placeholder="%"></div>
             </div>          
           </div>
         </div>
 
-        <div class="form-row"><label>Loan Interest (%)</label><input id="interestRate" type="number" value="6.5" placeholder="%" /></div>
-        <div class="form-row"><label>Loan Term (yrs)</label><input id="loanTerm" type="number" value="30" placeholder="yrs" /></div>
-        <div class="form-row"><label data-tooltip="Typically 2% of Purchase Price">Total Closing Costs ($)</label><input id="closingCosts" type="number" value="6000" placeholder="$" /></div>
-        <div class="form-row"><label>Closing Costs paid by Seller ($)</label><input id="sellerpaidclosingCosts" type="number" value="1500" placeholder="$" /></div>
-        <div class="form-row"><label data-tooltip="Will vary on county try 5% as starter">Land Value ($)<span class="help-icon" data-tooltip="Used for depreciation calculations.">ℹ️</span></label><input id="landValue" type="number" value="15000" placeholder="$" /></div>
+        <div class="form-row"><label for="interestRate">Loan Interest (%)</label><input id="interestRate" type="number" value="6.5" placeholder="%" /></div>
+        <div class="form-row"><label for="loanTerm">Loan Term (yrs)</label><input id="loanTerm" type="number" value="30" placeholder="yrs" /></div>
+        <div class="form-row"><label for="closingCosts" data-tooltip="Typically 2% of Purchase Price">Total Closing Costs ($)</label><input id="closingCosts" type="number" value="6000" placeholder="$" /></div>
+        <div class="form-row"><label for="sellerpaidclosingCosts">Closing Costs paid by Seller ($)</label><input id="sellerpaidclosingCosts" type="number" value="1500" placeholder="$" /></div>
+        <div class="form-row"><label for="landValue" data-tooltip="Will vary on county try 5% as starter">Land Value ($)<span class="help-icon" data-tooltip="Used for depreciation calculations.">ℹ️</span></label><input id="landValue" type="number" value="15000" placeholder="$" /></div>
 
         <hr style="opacity:0.08;margin:12px 0" />
 
         <div class="section-title"><strong>Rental Unit Income</strong></div>
-        <div class="form-row"><label># of Units</label><input id="numUnits" type="number" value="1" min="1" /></div>
+        <div class="form-row"><label for="numUnits"># of Units</label><input id="numUnits" type="number" value="1" min="1" /></div>
 
         <div class="small muted" style="margin-bottom:8px">Set rent per unit — add/remove units</div>
         <div class="list card" style="padding:10px;margin-bottom:8px">
@@ -167,31 +195,31 @@
             <button id="customBtn" class="active">Custom</button>
           </div>
 
-        <div class="form-row"><label>Vacancy Rate (%)</label><input id="vacancyRate" type="number" value="5" placeholder="%" /></div>
-        <div class="form-row"><label>Annual Rent Increase (%)</label><input id="rentGrowth" type="number" value="2" step="0.1" placeholder="%" /></div>
-        <div class="form-row"><label>Estimated Appreciation (%/yr)</label><input id="appreciation" type="number" value="4" step="0.01" placeholder="%" /></div>
+        <div class="form-row"><label for="vacancyRate">Vacancy Rate (%)</label><input id="vacancyRate" type="number" value="5" placeholder="%" /></div>
+        <div class="form-row"><label for="rentGrowth">Annual Rent Increase (%)</label><input id="rentGrowth" type="number" value="2" step="0.1" placeholder="%" /></div>
+        <div class="form-row"><label for="appreciation">Estimated Appreciation (%/yr)</label><input id="appreciation" type="number" value="4" step="0.01" placeholder="%" /></div>
 
         <hr style="opacity:0.08;margin:12px 0" />
         <div class="section-title"><strong>Operating Expenses (annual unless noted)</strong></div>
-        <div class="form-row"><label data-tooltip="Depends on State & County, 1% default">Property Taxes ($/yr)</label><input id="propTaxes" type="number" value="3000" placeholder="$" /></div>
-        <div class="form-row"><label>Insurance ($/yr)</label><input id="insurance" type="number" value="2000" placeholder="$" /></div>
-        <div class="form-row"><label data-tooltip="<strong>Definition:</strong> Private Mortgage Insurance (PMI) protects lenders when equity is below 20%.<br><strong>Requirement:</strong> Must be paid for until 20% equity is reached. Will auto cancel at 78% equity.<br><strong>Note:</strong> Enter monthly amount — it is annualized automatically.">Mortgage Insurance ($/mo)</label><input id="mortgageInsurance" type="number" placeholder="$/mo" /></div>
-        <div class="form-row"><label>Utilities ($/mo)</label><input id="utilities" type="number" placeholder="$" /></div>
-        <div class="form-row"><label>Other Expenses (HOA, etc) ($/mo)</label><input id="otherExpenses" type="number" placeholder="$" /></div>
-        <div class="form-row"><label>Maintenance (% of gross rent / yr)</label><input id="maintenancePct" type="number" value="8" step="0.1" placeholder="%" /></div>
-        <div class="form-row"><label>Management Fee (% of rent)</label><input id="managementFeePct" type="number" value="8" step="0.1" placeholder="%" /></div>
-        <div class="form-row"><label>Annual Expense Growth (%)</label><input id="expenseGrowth" type="number" value="0" step="0.1" placeholder="%" /></div>
+        <div class="form-row"><label for="propTaxes" data-tooltip="Depends on State & County, 1% default">Property Taxes ($/yr)</label><input id="propTaxes" type="number" value="3000" placeholder="$" /></div>
+        <div class="form-row"><label for="insurance">Insurance ($/yr)</label><input id="insurance" type="number" value="2000" placeholder="$" /></div>
+        <div class="form-row"><label for="mortgageInsurance" data-tooltip="<strong>Definition:</strong> Private Mortgage Insurance (PMI) protects lenders when equity is below 20%.<br><strong>Requirement:</strong> This calculator applies the cost each year until your equity (based on the amortization schedule) reaches 20%, then drops it.<br><strong>Note:</strong> Enter monthly amount — it is annualized automatically.">Mortgage Insurance ($/mo)</label><input id="mortgageInsurance" type="number" placeholder="$/mo" /></div>
+        <div class="form-row"><label for="utilities">Utilities ($/mo)</label><input id="utilities" type="number" placeholder="$" /></div>
+        <div class="form-row"><label for="otherExpenses">Other Expenses (HOA, etc) ($/mo)</label><input id="otherExpenses" type="number" placeholder="$" /></div>
+        <div class="form-row"><label for="maintenancePct">Maintenance (% of gross rent / yr)</label><input id="maintenancePct" type="number" value="8" step="0.1" placeholder="%" /></div>
+        <div class="form-row"><label for="managementFeePct">Management Fee (% of rent)</label><input id="managementFeePct" type="number" value="8" step="0.1" placeholder="%" /></div>
+        <div class="form-row"><label for="expenseGrowth">Annual Expense Growth (%)</label><input id="expenseGrowth" type="number" value="0" step="0.1" placeholder="%" /></div>
 
         <hr style="opacity:0.08;margin:12px 0" />
         <div class="section-title"><strong>Capital Expenditures</strong></div>
         <div class="small muted">Add replacement cost & life</div>
         <div class="list card" style="padding:10px;margin-bottom:8px">
-          <div class="capex-item-headers" style="display:flex; gap:12px; margin-bottom:4px;">
-            <div class="small muted" style="flex:2;min-width:120px;white-space:nowrap">Item</div>
-            <div class="small muted" style="flex:2;min-width:60px;white-space:nowrap">Amount ($)</div>
-            <div class="small muted" style="flex:1;min-width:60px;white-space:nowrap">Life (yrs)</div>
-            <div class="small muted" style="flex:1;min-width:60px;white-space:nowrap">Spend Year</div>
-            <span class="help-icon" data-tooltip="Enter what year you will spend this from time of ownership">ℹ️</span>
+          <div class="capex-item-headers" style="margin-bottom:4px">
+            <div class="small muted">Item</div>
+            <div class="small muted">Amount ($)</div>
+            <div class="small muted">Life (yrs)</div>
+            <div class="small muted" style="white-space:nowrap">Spend Yr<span class="help-icon" data-tooltip="Enter what year (from time of ownership) you'll spend this. Life is how many years the item lasts, used to spread its depreciation.">ℹ️</span></div>
+            <div></div>
           </div>
           <div class="capex-list" id="capexList"></div>
           <div style="display:flex;gap:8px;margin-top:8px"><button class="add-btn" id="addCapexBtn">+ Add CapEx Item</button></div>
@@ -199,25 +227,36 @@
 
         <hr style="opacity:0.08;margin:12px 0" />
         <div class="section-title"><strong>Strategy & Taxes</strong></div>
-        <div class="form-row"><label>Hold Period (yrs)</label><input id="holdYears" type="number" value="10" /></div>
-        <div class="form-row"><label>Selling Costs (% of sale)</label><input id="sellingCostsPct" type="number" step="0.1" value="6" /></div>
-        <div class="form-row"><label>Marginal Income Tax Rate (%)</label><input id="taxRate" type="number" step="0.1" value="24" /></div>
-        <div class="form-row"><label>Capital Gains Tax Rate (%)</label><input id="capGainsRate" type="number" step="0.1" value="15" /></div>
-        <div class="form-row"><label>Depreciation Recapture Rate (%)</label><input id="recaptureRate" type="number" step="0.1" value="25" /></div>
+        <div class="form-row"><label for="holdYears">Hold Period (yrs)</label><input id="holdYears" type="number" value="10" /></div>
+        <div class="form-row"><label for="sellingCostsPct">Selling Costs (% of sale)</label><input id="sellingCostsPct" type="number" step="0.1" value="6" /></div>
+        <div class="form-row"><label for="taxRate">Marginal Income Tax Rate (%)</label><input id="taxRate" type="number" step="0.1" value="24" /></div>
+        <div class="form-row"><label for="capGainsRate">Capital Gains Tax Rate (%)</label><input id="capGainsRate" type="number" step="0.1" value="15" /></div>
+        <div class="form-row"><label for="recaptureRate">Depreciation Recapture Rate (%)</label><input id="recaptureRate" type="number" step="0.1" value="25" /></div>
       </div>
 
       <!-- RIGHT: Results & Charts -->
       <div>
         <div class="card">
-            <div class="section-title"><strong>Snapshot — Cashflow & Performance</strong></div>
-            <div class="results" id="summaryTiles">
+            <div class="section-title"><strong>Quick Deal Screen</strong><span class="small muted">Year 1 snapshot</span></div>
+            <div style="margin:4px 0 14px"><span id="verdictBadge" class="verdict">—</span></div>
+            <div class="results" id="gutCheckTiles">
+                <div class="tile" id="tile-onePercentRule" data-tooltip="<strong>Definition:</strong> Gauges a property's profitability.<br><strong>Formula:</strong> Gross Monthly Rent ÷ Purchase Price<br><strong>Rule of thumb:</strong> ≥1% good · 0.8–1% caution · &lt;0.8% weak"><h3>1% Rule</h3><p id="onePercentRule">0%</p></div>
+                <div class="tile" id="tile-capRate" data-tooltip="<strong>Definition:</strong> Annual return on property value before financing.<br><strong>Formula:</strong> NOI ÷ Purchase Price × 100<br><strong>Rule of thumb:</strong> ≥8% good · 5–8% caution · &lt;5% weak"><h3>Cap Rate</h3><p id="gcCapRate">0%</p></div>
+                <div class="tile" id="tile-cashOnCash" data-tooltip="<strong>Definition:</strong> Annual cash return on cash invested.<br><strong>Formula:</strong> Annual Cash Flow ÷ Initial Investment × 100<br><strong>Rule of thumb:</strong> ≥10% good · 5–10% caution · &lt;5% weak"><h3>Cash-on-Cash ROI</h3><p id="gcCashOnCash">0%</p></div>
+                <div class="tile" id="tile-dscr" data-tooltip="<strong>Definition:</strong> Whether rental income covers the mortgage payment.<br><strong>Formula:</strong> NOI ÷ Annual Debt Service<br><strong>Rule of thumb:</strong> ≥1.25 good · 1.0–1.25 caution · &lt;1.0 weak (property doesn't cover its own debt)"><h3>DSCR</h3><p id="gcDscr">0.00</p></div>
+                <div class="tile" id="tile-grm" data-tooltip="<strong>Definition:</strong> Quick price-to-rent ratio for comparing similar listings.<br><strong>Formula:</strong> Purchase Price ÷ Gross Annual Rent<br><strong>Rule of thumb:</strong> ≤8 good · 8–12 caution · &gt;12 weak (varies a lot by market)"><h3>GRM</h3><p id="gcGrm">0.0</p></div>
+                <div class="tile" id="tile-netMonthly" data-tooltip="<strong>Definition:</strong> Monthly income after all expenses and debt service.<br><strong>Formula:</strong> (Effective Rent − Operating Expenses − Debt Service) ÷ 12<br><strong>Rule of thumb (per unit):</strong> ≥$100 good · $0–$100 caution · negative weak"><h3>Monthly Cash Flow</h3><p id="gcNetMonthly">$0</p></div>
+            </div>
 
+            <div class="small muted" style="margin-top:14px">Reference (not scored)</div>
+            <div class="results" style="margin-top:6px">
                 <div class="tile" data-tooltip="<strong>Definition:</strong> Monthly principal + interest payment.<br><strong>Formula:</strong> Loan × [r(1+r)^n] / [(1+r)^n − 1]"><h3>Monthly Mortgage</h3><p id="monthlyPayment">$0</p></div>
-                <div class="tile" data-tooltip="<strong>Definition:</strong> Gauges a property's profitablity<br><strong>Formula:</strong> Gross Monthly Rent / Purchase Price"><h3>1 % Rule</h3><p id="onePercentRule">0%</p></div>
                 <div class="tile" data-tooltip="<strong>Definition:</strong> Years to recover total cash invested from cash flow.<br><strong>Formula:</strong> Initial Investment ÷ Annual Cash Flow"><h3>Payback (yrs)</h3><p id="payback">—</p></div>
             </div>
         </div>
 
+        <details id="advancedDetails">
+          <summary class="advanced-summary">Advanced: Multi-Year Tax &amp; Cash Flow Simulator</summary>
         <div class="card">
             <div class="section-title"><strong>Performance Summary by Year</strong></div>
             <div style="margin-top:12px" class="section-title">
@@ -264,16 +303,20 @@
 
           <div style="margin-top:12px" class="section-title"><strong>Projection Charts</strong></div>
           <div class="chart-wrap">
-            <div><canvas id="projChart" style="max-height:160px;margin:0;width:100%;"></canvas></div>
-            <div><canvas id="cashflowChart" style="max-height:160px;margin:0;width:100%;"></canvas></div>
+            <div style="height:250px"><canvas id="rentBreakdownChart"></canvas></div>
+            <div style="height:250px"><canvas id="annualCashflowChart"></canvas></div>
           </div>
+          <div style="height:270px;margin-top:16px"><canvas id="wealthChart"></canvas></div>
         </div>
 
-        <div style="margin-top:12px" class="card">
-          <div class="section-title"><strong>Detailed Values</strong></div>
-          <button id="exportBtn" class="btn">Export Results to CSV</button>
-          <div id="detailList" class="list" style="margin-top:8px"></div>
-        </div>
+        <details id="detailTableDetails" style="margin-top:12px">
+          <summary class="advanced-summary">Detailed Values — Year-by-Year Table</summary>
+          <div class="card">
+            <button id="exportBtn" class="btn">Export Results to CSV</button>
+            <div id="detailList" class="list" style="margin-top:8px"></div>
+          </div>
+        </details>
+        </details>
 
         <footer style="margin-top:12px"><div class="small muted">Prototype: uses simplified tax approximations (inputs for capital gains & recapture rates provided).</div></footer>
       </div>
@@ -427,28 +470,86 @@ purchasePriceInput.addEventListener('input', () => {
 
   /* capex item creator */
   function createCapexItem(name='', cost='', life='', spendYear='') {
-    const wrap = document.createElement('div'); wrap.className='capex-item'; wrap.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
-    const nameI = document.createElement('input'); nameI.type='text'; nameI.placeholder='Item'; nameI.value=name; nameI.style.width='40%';
-    const costI = document.createElement('input'); costI.type='number'; costI.placeholder='$'; costI.value=cost; costI.style.width='30%';
-    const lifeI = document.createElement('input'); lifeI.type='number'; lifeI.value=life; lifeI.style.width='20%'; lifeI.placeholder='yrs';
-    const spendYearI = document.createElement('input'); spendYearI.type='number'; spendYearI.placeholder='yr'; spendYearI.value=spendYear; spendYearI.style.width='20%';
-    const btn = document.createElement('button'); btn.type='button'; btn.className='remove-btn'; btn.textContent='x'; btn.title='Remove item';
+    const wrap = document.createElement('div'); wrap.className='capex-item';
+    const nameI = document.createElement('input'); nameI.type='text'; nameI.placeholder='e.g. Roof'; nameI.value=name; nameI.className='capex-name';
+    const costI = document.createElement('input'); costI.type='number'; costI.placeholder='$'; costI.value=cost;
+    const lifeI = document.createElement('input'); lifeI.type='number'; lifeI.value=life; lifeI.placeholder='yrs';
+    const spendYearI = document.createElement('input'); spendYearI.type='number'; spendYearI.placeholder='yr'; spendYearI.value=spendYear;
+    const btn = document.createElement('button'); btn.type='button'; btn.className='remove-btn'; btn.textContent='×'; btn.title='Remove item';
     btn.addEventListener('click', ()=>{ wrap.remove(); calculateAll(); });
     wrap.appendChild(nameI); wrap.appendChild(costI); wrap.appendChild(lifeI); wrap.appendChild(spendYearI); wrap.appendChild(btn);
     return wrap;
   }
 
   /* Charts */
-  let projChart = null, cashflowChart = null;
-  function ensureLineChart(canvasId, labels=[], datasets=[], opts={}) {
-    const ctx = $(canvasId).getContext('2d');
-    if (canvasId === 'projChart') {
-      if (!projChart) projChart = new Chart(ctx, { type:'line', data:{labels,datasets}, options: Object.assign({responsive:true,plugins:{legend:{position:'top'}},interaction:{mode:'index',intersect:false}}, opts) });
-      else { projChart.data.labels = labels; projChart.data.datasets = datasets; projChart.update(); }
-    } else {
-      if (!cashflowChart) cashflowChart = new Chart(ctx, { type:'bar', data:{labels,datasets}, options: Object.assign({responsive:true,plugins:{legend:{position:'top'}},scales:{x:{stacked:true},y:{stacked:true}}}, opts) });
-      else { cashflowChart.data.labels = labels; cashflowChart.data.datasets = datasets; cashflowChart.update(); }
-    }
+  const charts = { rent: null, annualCf: null, wealth: null };
+  const CHART_COLORS = {
+    blue:'#2563eb', green:'#16a34a', amber:'#f59e0b', red:'#dc2626',
+    slate:'#64748b', violet:'#7c3aed', cyan:'#0891b2', pink:'#db2777', mist:'#cbd5e1'
+  };
+  const money0 = v => '$' + Math.round(Number(v) || 0).toLocaleString();
+
+  /* Render the three gut-check charts. ctx carries year-1 / hold-level values
+     precomputed inside calculateAll so the chart code stays declarative. */
+  function renderCharts(detail, ctx) {
+    const labels = detail.map(d => 'Y' + d.year);
+    const baseOpts = extra => Object.assign({
+      responsive:true, maintainAspectRatio:false
+    }, extra);
+
+    // 1) Where your rent goes (doughnut) — follows the year slider (see ctx.rentSplit)
+    const rs = ctx.rentSplit || {};
+    const slices = [
+      ['Mortgage (P&I)',    rs.mortgage,   CHART_COLORS.blue],
+      ['Property Tax',      rs.taxes,      CHART_COLORS.violet],
+      ['Insurance',         rs.insurance,  CHART_COLORS.cyan],
+      ['Maintenance',       rs.maintenance,CHART_COLORS.amber],
+      ['Management',        rs.management, CHART_COLORS.pink],
+      ['Other / Utilities', rs.other,      CHART_COLORS.slate],
+      ['Vacancy Loss',      rs.vacancy,    CHART_COLORS.mist],
+      ['CapEx',             rs.capex,      CHART_COLORS.red],
+      ['Cash Flow (kept)',  rs.cashFlow,   CHART_COLORS.green]
+    ].filter(s => (s[1] || 0) > 0.5);
+    if (charts.rent) charts.rent.destroy();
+    charts.rent = new Chart($('rentBreakdownChart').getContext('2d'), {
+      type:'doughnut',
+      data:{ labels: slices.map(s=>s[0]), datasets:[{ data: slices.map(s=>s[1]), backgroundColor: slices.map(s=>s[2]), borderColor:'#fff', borderWidth:1 }] },
+      options: baseOpts({ plugins:{
+        legend:{ position:'right', labels:{ boxWidth:12, font:{size:11} } },
+        title:{ display:true, text: ctx.rentTitle || 'Where Your Rent Goes' },
+        tooltip:{ callbacks:{ label:c=>` ${c.label}: ${money0(c.parsed)}` } }
+      } })
+    });
+
+    // 2) Net cash flow by year (green when positive, red when negative)
+    const cfData = detail.map(d => Number((d.cashFlow || 0).toFixed(0)));
+    if (charts.annualCf) charts.annualCf.destroy();
+    charts.annualCf = new Chart($('annualCashflowChart').getContext('2d'), {
+      type:'bar',
+      data:{ labels, datasets:[{ label:'Net Cash Flow', data:cfData, backgroundColor: cfData.map(v => v>=0 ? CHART_COLORS.green : CHART_COLORS.red) }] },
+      options: baseOpts({
+        plugins:{ legend:{display:false}, title:{ display:true, text:'Net Cash Flow by Year' }, tooltip:{ callbacks:{ label:c=>' '+money0(c.parsed.y) } } },
+        scales:{ y:{ ticks:{ callback:v=>money0(v) } } }
+      })
+    });
+
+    // 3) Wealth build-up (stacked): the three ways the deal makes money over the hold
+    const cumCf   = detail.map(d => Number((d.cumulativeCashFlow || 0).toFixed(0)));
+    const paydown = detail.map(d => Number((ctx.loanAmount - d.loanBalance).toFixed(0)));
+    const apprec  = detail.map(d => Number((d.salePrice - ctx.baseVal).toFixed(0)));
+    if (charts.wealth) charts.wealth.destroy();
+    charts.wealth = new Chart($('wealthChart').getContext('2d'), {
+      type:'bar',
+      data:{ labels, datasets:[
+        { label:'Cumulative Cash Flow', data:cumCf,   backgroundColor:CHART_COLORS.green },
+        { label:'Loan Paydown (equity)', data:paydown, backgroundColor:CHART_COLORS.blue },
+        { label:'Appreciation Gain',     data:apprec,  backgroundColor:CHART_COLORS.amber }
+      ] },
+      options: baseOpts({
+        plugins:{ legend:{ position:'top' }, title:{ display:true, text:'Wealth Build-Up Over Hold Period' }, tooltip:{ callbacks:{ label:c=>` ${c.dataset.label}: ${money0(c.parsed.y)}` } } },
+        scales:{ x:{ stacked:true }, y:{ stacked:true, ticks:{ callback:v=>money0(v) } } }
+      })
+    });
   }
 
   /* Gather inputs */
@@ -527,6 +628,33 @@ purchasePriceInput.addEventListener('input', () => {
     return schedule;
   }
 
+  /* Gut-check scoring: rule-of-thumb thresholds, higher-is-better unless opts.invert */
+  function scoreThreshold(value, greenAt, amberAt, opts={invert:false}) {
+    if (opts.invert) {
+      if (value <= greenAt) return 'good';
+      if (value <= amberAt) return 'warn';
+      return 'bad';
+    }
+    if (value >= greenAt) return 'good';
+    if (value >= amberAt) return 'warn';
+    return 'bad';
+  }
+  function setTileStatus(wrapperId, status) {
+    const el = $(wrapperId);
+    if (!el) return;
+    el.classList.remove('good', 'warn', 'bad');
+    if (status === 'good' || status === 'warn' || status === 'bad') el.classList.add(status);
+  }
+  function computeVerdict(statuses) {
+    const scored = statuses.filter(s => s !== 'na');
+    if (!scored.length) return { cls: 'warn', text: 'Enter rent & price to see your deal score.' };
+    const goods = scored.filter(s => s === 'good').length;
+    const bads = scored.filter(s => s === 'bad').length;
+    if (bads >= 3) return { cls: 'bad', text: '⚠ Weak deal — several metrics miss the mark.' };
+    if (goods >= 4) return { cls: 'good', text: '✓ Looks solid — worth digging deeper.' };
+    return { cls: 'warn', text: '◐ Mixed signals — worth a closer look.' };
+  }
+
 /* Main calculation */
 function calculateAll(){
   const I = gatherInputs();
@@ -562,14 +690,30 @@ function calculateAll(){
   const paybackYears = annualCashFlow > 0 ? (initialInvestment / annualCashFlow) : Infinity;
   const onePercentRule = I.purchasePrice ? (100 * (I.grossAnnualRent / 12) / I.purchasePrice) : 0;
 
+  // DSCR: N/A (treated as passing) when there's no debt to cover
+  let dscr = 0, dscrDisplay = 'N/A', dscrStatus = 'na';
+  if (annualDebtService > 0) {
+    dscr = NOI / annualDebtService;
+    dscrDisplay = dscr.toFixed(2);
+    dscrStatus = scoreThreshold(dscr, 1.25, 1.0);
+  } else if (I.purchasePrice > 0) {
+    dscrStatus = 'good';
+  }
+
+  // GRM: N/A until rent is entered (price ÷ 0 rent is meaningless, not "great")
+  let grm = 0, grmDisplay = 'N/A', grmStatus = 'na';
+  if (I.grossAnnualRent > 0) {
+    grm = I.purchasePrice / I.grossAnnualRent;
+    grmDisplay = grm.toFixed(1);
+    grmStatus = scoreThreshold(grm, 8, 12, { invert: true });
+  }
+
+  const numUnitsForCashFlow = Math.max(1, I.unitRents.length);
+  const netMonthlyPerUnit = netMonthly / numUnitsForCashFlow;
+
   /* depreciation & taxes */
-  const firstYearCapexDep = I.capexItems.reduce((s,c)=>{
-    const spend = Number(c.spendYear) || 0;
-    return s + ((spend === 1 && c.life > 0) ? (c.cost / c.life) : 0);
-  }, 0);
   const depreciableBasis = Math.max(0, I.purchasePrice - I.landValue);
   const depreciationAnnual = depreciableBasis / 27.5;
-  const firstYearInterest = amortForYears[0]?.interestPaid ?? 0;
 
   /* projection loop (single set of declarations) */
   const years = Math.max(1, I.holdYears);
@@ -593,10 +737,13 @@ function calculateAll(){
     const pmiActive = mortgageInsuranceAnnualY > 0 && (equityRatio < 0.199999);
     const mortgageInsuranceCost = pmiActive ? mortgageInsuranceAnnualY : 0;
 
-    // Yearly operating items
+    // Yearly operating items. Maintenance/management already scale with rent growth;
+    // fixed-dollar items (taxes, insurance, utilities, other) scale with expenseGrowth instead.
+    const expenseGrowthFactor = Math.pow(1 + I.expenseGrowth, y - 1);
+    const fixedExpensesY = (I.propTaxes + I.insurance + I.utilities + I.otherExpenses) * expenseGrowthFactor;
     const maintenanceY = yearRents * I.maintenancePct;
     const managementFeeY = yearRents * I.managementFeePct;
-    const operatingExpensesY = I.propTaxes + I.insurance + I.utilities + I.otherExpenses + maintenanceY + managementFeeY + mortgageInsuranceCost;
+    const operatingExpensesY = fixedExpensesY + maintenanceY + managementFeeY + mortgageInsuranceCost;
     const effGross = yearRents * (1 - I.vacancyRate);
     const NOIy = effGross - operatingExpensesY;
     const capexSpent = I.capexItems.reduce((s, c) => s + (c.spendYear === y ? c.cost : 0), 0);
@@ -644,7 +791,20 @@ function calculateAll(){
       netMonthly: cashFlowY / 12,
       capRate: I.purchasePrice ? (NOIy / I.purchasePrice) * 100 : 0,
       cashOnCash: initialInvestment ? (cashFlowY / initialInvestment) * 100 : 0,
-      taxShield: taxShieldY
+      taxShield: taxShieldY,
+      // Where each year's scheduled rent goes — used by the "Where Your Rent Goes" doughnut.
+      // Slices partition gross scheduled rent: vacancy + opex + mortgage + capex + kept cash flow.
+      rentSplit: {
+        mortgage: annualDebtService,
+        taxes: I.propTaxes * expenseGrowthFactor,
+        insurance: I.insurance * expenseGrowthFactor,
+        maintenance: maintenanceY,
+        management: managementFeeY,
+        other: (I.utilities + I.otherExpenses) * expenseGrowthFactor + mortgageInsuranceCost,
+        vacancy: yearRents * I.vacancyRate,
+        capex: capexSpent,
+        cashFlow: Math.max(0, cashFlowY)
+      }
     });
   } // end for
 
@@ -693,11 +853,16 @@ function calculateAll(){
   /* Small helpers for display (local to this function) */
   function fmtMoney(v){ return '$' + money2(v || 0); }
   function fmtPct(v){ return (v || 0).toFixed(2) + '%'; }
-  function dualDisplay(id, total, avgVal, opts={isPercent:false, per:'yr'}){
+  function dualDisplay(id, total, avgVal, opts={isPercent:false, per:'yr', showSum:true}){
     const el = $(id);
     if(!el) return;
     if (snap.isTotal) {
-      if (opts.isPercent) {
+      if (!opts.showSum) {
+        // Summing a rate (%) or a per-month figure across years isn't a meaningful number —
+        // show the yearly average as the headline instead.
+        if (opts.isPercent) el.innerHTML = `<div>${fmtPct(avgVal)}</div><div class="small muted">avg/yr over hold period</div>`;
+        else el.innerHTML = `<div>${fmtMoney(avgVal)}</div><div class="small muted">avg/${opts.per} over hold period</div>`;
+      } else if (opts.isPercent) {
         el.innerHTML = `<div>${fmtPct(total)}</div><div class="small muted">${fmtPct(avgVal)} (avg/yr)</div>`;
       } else {
         const perLabel = opts.per === 'mo' ? '(avg/mo)' : '(avg/yr)';
@@ -710,11 +875,11 @@ function calculateAll(){
   }
 
   /* Cash Performance Tiles */
-  dualDisplay('netMonthly', snap.netMonthly, snap.avg ? snap.avg.netMonthly : 0, {per:'mo'});
+  dualDisplay('netMonthly', snap.netMonthly, snap.avg ? snap.avg.netMonthly : 0, {per:'mo', showSum:false});
   dualDisplay('allInOut', snap.allInCashOut, snap.avg ? snap.avg.allInCashOut : 0);
   dualDisplay('annualCash', snap.cashFlow, snap.avg ? snap.avg.cashFlow : 0);
-  dualDisplay('cashOnCash', snap.cashOnCash, snap.avg ? snap.avg.cashOnCash : 0, {isPercent:true});
-  dualDisplay('capRate', snap.capRate, snap.avg ? snap.avg.capRate : 0, {isPercent:true});
+  dualDisplay('cashOnCash', snap.cashOnCash, snap.avg ? snap.avg.cashOnCash : 0, {isPercent:true, showSum:false});
+  dualDisplay('capRate', snap.capRate, snap.avg ? snap.avg.capRate : 0, {isPercent:true, showSum:false});
 
   /* Tax Detail Tiles */
   dualDisplay('depreciation', snap.depreciation, snap.avg ? snap.avg.depreciation : 0);
@@ -723,10 +888,37 @@ function calculateAll(){
   dualDisplay('taxShield', snap.taxShield, snap.avg ? snap.avg.taxShield : 0);
   dualDisplay('taxLiability', snap.taxes, snap.avg ? snap.avg.taxes : 0);
 
-  // update snapshot tiles & hold summary tiles
+  // update reference tiles
   $('monthlyPayment').textContent = '$' + money2(monthlyPayment || 0);
-  $('onePercentRule').textContent = onePercentRule.toFixed(2) + '%';
   $('payback').textContent = (paybackYears === Infinity) ? '—' : paybackYears.toFixed(1);
+
+  // --- Quick Deal Screen (gut check) ---
+  $('onePercentRule').textContent = onePercentRule.toFixed(2) + '%';
+  $('gcCapRate').textContent = capRate.toFixed(2) + '%';
+  $('gcCashOnCash').textContent = cashOnCash.toFixed(2) + '%';
+  $('gcDscr').textContent = dscrDisplay;
+  $('gcGrm').textContent = grmDisplay;
+  $('gcNetMonthly').textContent = '$' + money2(netMonthly);
+
+  const gutStatuses = {
+    onePercentRule: scoreThreshold(onePercentRule, 1, 0.8),
+    capRate: scoreThreshold(capRate, 8, 5),
+    cashOnCash: scoreThreshold(cashOnCash, 10, 5),
+    dscr: dscrStatus,
+    grm: grmStatus,
+    netMonthly: scoreThreshold(netMonthlyPerUnit, 100, 0)
+  };
+  setTileStatus('tile-onePercentRule', gutStatuses.onePercentRule);
+  setTileStatus('tile-capRate', gutStatuses.capRate);
+  setTileStatus('tile-cashOnCash', gutStatuses.cashOnCash);
+  setTileStatus('tile-dscr', gutStatuses.dscr);
+  setTileStatus('tile-grm', gutStatuses.grm);
+  setTileStatus('tile-netMonthly', gutStatuses.netMonthly);
+
+  const verdict = computeVerdict(Object.values(gutStatuses));
+  const badge = $('verdictBadge');
+  badge.className = 'verdict ' + verdict.cls;
+  badge.textContent = verdict.text;
 
   //update hold period tiles & label
   $('totalCashFlow').textContent = '$' + money2(cumulativeCashFlow || 0);
@@ -737,24 +929,27 @@ function calculateAll(){
   $('annualROI').textContent = (annualizedROI || 0).toFixed(1) + '%';
   $('holdYearsLabel').textContent = `${I.holdYears} yrs`;
 
-  //VISUALS - CHARTS & TABLE (unchanged)
-  const labels = detail.map(d => 'Y' + d.year);
-  const valueSeries = detail.map(d => Number(d.salePrice.toFixed(2)));
-  const equitySeries = detail.map(d => Number((d.salePrice - d.loanBalance).toFixed(2)));
-  const cashflowSeries = detail.map(d => Number(d.cumulativeCashFlow.toFixed(2)));
-  ensureLineChart('projChart', labels, [
-    { label:'Sale Price (proj)', data: valueSeries, borderColor:'#2563eb', fill:false, tension:0.2 },
-    { label:'Equity', data: equitySeries, borderColor:'#16a34a', fill:false, tension:0.2 },
-    { label:'Cumulative Cashflow', data: cashflowSeries, borderColor:'#f59e0b', fill:false, tension:0.2 }
-  ]);
+  //VISUALS - CHARTS
+  // The rent doughnut follows the year slider: show the selected year, or sum every
+  // year's slices when the slider is on "Total".
+  let rentSplit, rentTitle;
+  if (sel === years + 1) {
+    rentSplit = detail.reduce((acc, d) => {
+      for (const k in d.rentSplit) acc[k] = (acc[k] || 0) + d.rentSplit[k];
+      return acc;
+    }, {});
+    rentTitle = `Where Your Rent Goes (Total, ${years} yrs)`;
+  } else {
+    rentSplit = (detail[sel - 1] || {}).rentSplit || {};
+    rentTitle = `Where Your Rent Goes (Year ${sel})`;
+  }
 
-  // --- Hold-Period Investment Performance (Bar Chart) ---
-  const ctxPerf = $('cashflowChart').getContext('2d');
-  if (cashflowChart) cashflowChart.destroy();
-  cashflowChart = new Chart(ctxPerf, {
-    type: 'bar',
-    data: {labels: ['Cap Rate', 'Cash-on-Cash ROI', 'IRR (Annualized ROI)'],datasets: [{label: 'Performance (%)',data: [capRate, cashOnCash, annualizedROI],backgroundColor: ['#2563eb', '#16a34a', '#f59e0b']}]},
-    options: {responsive: true,plugins: { legend: { display: false }, title: { display: true, text: 'Investment Performance (Hold Period)' } },scales: {y: {ticks: { callback: v => v + '%' },beginAtZero: true}}}
+  renderCharts(detail, {
+    rentSplit,
+    rentTitle,
+    annualDebtService,
+    loanAmount,
+    baseVal: I.appraisedValue || I.purchasePrice
   });
 
   /* render detail table */
@@ -850,6 +1045,14 @@ function calculateAll(){
 
     // Apply default scenario (triggers calculateAll internally)
     applyScenario('avg');
+
+    // Charts render at 0-width while <details> is closed; resize once it's opened
+    const advancedDetails = $('advancedDetails');
+    advancedDetails.addEventListener('toggle', () => {
+      if (advancedDetails.open) {
+        Object.values(charts).forEach(c => c && c.resize());
+      }
+    });
   })();
 
   /* Export button - uses lastDetail */
