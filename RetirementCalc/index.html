@@ -4,13 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Retirement Simulator – Will My Money Last? (Free)</title>
-  <meta name="description" content="Free retirement calculator. Compare two retirement plans side by side — retire early vs later — and see whether your savings last, with Social Security, taxes, inflation, and market-risk (Monte Carlo) confidence." />
+  <meta name="description" content="Free retirement calculator. Compare two retirement plans side by side — retire early vs later — with per-account contributions, withdrawal ages, RMDs, Social Security, taxes, inflation, and Monte Carlo confidence." />
   <link rel="canonical" href="https://arkhive.us/RetirementCalc/" />
   <meta name="robots" content="index,follow" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232563eb'/%3E%3Cpath d='M22 74 L22 46 L50 24 L78 46 L78 74 Z' fill='none' stroke='white' stroke-width='7' stroke-linejoin='round'/%3E%3Cpath d='M34 74 L34 56 L50 56 M66 74 L66 52' fill='none' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Retirement Simulator — Will My Money Last?" />
-  <meta property="og:description" content="Compare retire-early vs retire-later side by side. See if your savings last, with Social Security, taxes, inflation, and Monte Carlo confidence." />
+  <meta property="og:description" content="Compare retire-early vs retire-later side by side. Per-account contributions, RMDs, Social Security, taxes, inflation, and Monte Carlo confidence." />
   <meta property="og:url" content="https://arkhive.us/RetirementCalc/" />
   <meta name="twitter:card" content="summary" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -31,11 +31,11 @@
     .logo svg{width:30px;height:30px}
     h1{font-size:21px;margin:0}
     .subtitle{color:var(--muted);font-size:13px;margin-top:2px}
-    .layout{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:18px;align-items:start}
+    .layout{display:grid;grid-template-columns:minmax(0,410px) minmax(0,1fr);gap:18px;align-items:start}
     .layout>div{min-width:0}
     @media (max-width:900px){.layout{grid-template-columns:1fr}}
     .card{background:var(--bg-1);border-radius:var(--radius);margin-bottom:14px;padding:14px 15px;box-shadow:var(--card-shadow);border:1px solid var(--line-strong)}
-    .card h2{font-size:13px;margin:0 0 10px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
+    .card h2{font-size:13px;margin:0 0 10px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center}
     .card .hint{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.45}
     label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
     input[type=number],input[type=text],select{width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;font-size:13.5px}
@@ -44,23 +44,31 @@
     input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
     .field{margin-bottom:10px}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
     .btn{background:var(--accent);border:none;padding:8px 12px;border-radius:9px;color:#fff;cursor:pointer;font-weight:600;font-size:13px}
     .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line-strong)}
     .btn.sm{padding:6px 9px;font-size:12px}
+    /* account cards */
+    .acct{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:9px;background:linear-gradient(180deg,rgba(37,99,235,.02),transparent)}
+    .acctTop{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    .acctTop .a-label{font-weight:600}
     .del{width:26px;height:26px;flex:0 0 auto;border:none;border-radius:6px;background:#fee2e2;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1}
-    .assetHead,.assetRow,.otherHead,.otherRow{display:grid;gap:6px;align-items:center}
-    .assetHead,.assetRow{grid-template-columns:1.2fr 0.95fr 1.45fr 0.6fr 24px}
-    .otherHead,.otherRow{grid-template-columns:1.4fr 1fr 0.8fr 0.8fr 24px}
-    .assetHead,.otherHead{font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:5px}
-    .assetRow,.otherRow{margin-bottom:6px}
-    .assetRow input,.assetRow select,.otherRow input{padding:6px 5px;font-size:12.5px;min-width:0}
-    .assetRow select{font-size:11.5px;padding:6px 2px 6px 5px;text-overflow:ellipsis}
+    .acctGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+    .acctGrid .mini label{font-size:10px;margin-bottom:2px;line-height:1.2;min-height:22px}
+    .acctGrid input,.acctGrid select{padding:6px 5px;font-size:12.5px;min-width:0}
+    .acctGrid select{font-size:11.5px;padding:6px 2px 6px 5px}
+    .saveSummary{font-size:12px;color:var(--ink);background:#eef4ff;border:1px solid rgba(37,99,235,.18);border-radius:8px;padding:8px 10px;margin-top:8px;line-height:1.5}
+    .saveSummary b{color:var(--accent)}
     .scenHead{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;font-size:13px}
     .dot{width:11px;height:11px;border-radius:50%}
     details.adv summary{cursor:pointer;font-size:12px;color:var(--accent);list-style:none;margin-top:4px}
     details.adv summary::-webkit-details-marker{display:none}
     details.adv[open] summary{margin-bottom:10px}
+    /* tooltip */
+    .tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:#c7d2fe;color:#1e3a8a;font-size:10px;font-weight:700;font-style:normal;cursor:help;margin-left:5px;position:relative;vertical-align:middle;flex:0 0 auto}
+    .tip:hover .tipbox,.tip:focus .tipbox,.tip:focus-within .tipbox{display:block}
+    .tipbox{display:none;position:absolute;bottom:145%;left:50%;transform:translateX(-50%);width:225px;max-width:70vw;background:#0f172a;color:#fff;font-weight:400;font-size:11.5px;line-height:1.5;padding:9px 11px;border-radius:8px;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.28);text-align:left;letter-spacing:0}
+    .tipbox::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#0f172a}
+    .tipbox b{color:#93c5fd}
     /* verdict cards */
     .verdicts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
     @media (max-width:560px){.verdicts{grid-template-columns:1fr}}
@@ -75,7 +83,6 @@
     .verdict.warn .headline{color:#b45309}
     .verdict.bad{border-color:rgba(220,38,38,.45);background:linear-gradient(180deg,rgba(220,38,38,.08),transparent)}
     .verdict.bad .headline{color:#b91c1c}
-    .pill{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px}
     .chartCard{background:var(--bg-1);border-radius:var(--radius);padding:14px 15px;box-shadow:var(--card-shadow);border:1px solid var(--line-strong);margin-bottom:14px}
     .chartCard .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
     .chartTitle{font-weight:700;font-size:14px}
@@ -112,40 +119,35 @@
             <div class="field"><label>Plan to age</label><input id="planAge" type="number" value="95"></div>
           </div>
           <div class="grid2">
-            <div class="field"><label>Investment return %/yr</label><input id="expReturn" type="number" step="0.1" value="6"></div>
-            <div class="field"><label>Inflation %/yr</label><input id="inflation" type="number" step="0.1" value="2.5"></div>
+            <div class="field"><label>Investment return %/yr <span class="tip" tabindex="0">i<span class="tipbox"><b>Average growth of your investments</b>, before inflation. Historically US stocks ≈ 10%/yr, a 60/40 stock&#47;bond mix ≈ 7–8%. A cautious planning number is <b>5–7%</b>.</span></span></label><input id="expReturn" type="number" step="0.1" value="6"></div>
+            <div class="field"><label>Inflation %/yr <span class="tip" tabindex="0">i<span class="tipbox">How fast prices rise. Long-run US average ≈ <b>2.5–3%</b>; the Fed targets 2%. Everything here is shown in today's dollars using this rate.</span></span></label><input id="inflation" type="number" step="0.1" value="2.5"></div>
           </div>
           <details class="adv">
             <summary>Advanced assumptions</summary>
             <div class="grid2">
-              <div class="field"><label>Market volatility %</label><input id="vol" type="number" step="0.5" value="12"></div>
-              <div class="field"><label>Retirement tax rate %</label><input id="ordRate" type="number" step="0.5" value="18"></div>
+              <div class="field"><label>Market volatility % <span class="tip" tabindex="0">i<span class="tipbox">How much returns swing year to year (standard deviation). All-stock ≈ <b>15–18%</b>, balanced ≈ 9–12%, conservative ≈ 6–8%. Bigger = wider Monte Carlo range.</span></span></label><input id="vol" type="number" step="0.5" value="12"></div>
+              <div class="field"><label>Retirement tax rate % <span class="tip" tabindex="0">i<span class="tipbox">Your effective (blended) tax on withdrawals from <b>401(k)/IRA</b> accounts in retirement. Many retirees land around <b>12–22%</b>.</span></span></label><input id="ordRate" type="number" step="0.5" value="18"></div>
             </div>
             <div class="grid2">
-              <div class="field"><label>Cap-gains rate %</label><input id="ltcgRate" type="number" step="0.5" value="15"></div>
-              <div class="field"><label>Taxable gain portion %</label><input id="gainFrac" type="number" step="5" value="50"></div>
+              <div class="field"><label>Cap-gains rate % <span class="tip" tabindex="0">i<span class="tipbox">Long-term capital-gains tax on <b>taxable-account</b> gains: federally 0%, 15%, or 20% by income. <b>15%</b> is typical.</span></span></label><input id="ltcgRate" type="number" step="0.5" value="15"></div>
+              <div class="field"><label>Taxable gain portion % <span class="tip" tabindex="0">i<span class="tipbox">Of a taxable-account withdrawal, how much is <b>gain</b> (taxed) vs. your original after-tax money (not taxed). <b>50%</b> is a reasonable middle estimate.</span></span></label><input id="gainFrac" type="number" step="5" value="50"></div>
             </div>
-            <div class="hint">Volatility drives the Monte Carlo range. Tax rate applies to withdrawals from tax‑deferred (401k/IRA) accounts; cap‑gains rate applies to the "gain portion" of taxable accounts. Roth &amp; cash are untaxed.</div>
+            <div class="field"><label>RMD start age <span class="tip" tabindex="0">i<span class="tipbox"><b>Required Minimum Distributions:</b> the IRS forces you to withdraw a slice of 401(k)/IRA money each year starting at age <b>73</b> (75 from 2033), taxed as income. Any part you don't spend is reinvested in a taxable account.</span></span></label><input id="rmdAge" type="number" value="73"></div>
           </details>
         </div>
 
         <div class="card">
-          <h2>Saving &amp; Spending</h2>
-          <div class="grid2">
-            <div class="field"><label>Saving now $/mo</label><input id="contribMonthly" type="number" value="2000"></div>
-            <div class="field"><label>Spending in retirement $/mo</label><input id="desiredMonthly" type="number" value="6000"></div>
-          </div>
-          <div class="hint">In today's dollars. Both grow with inflation automatically. Contributions stop at each plan's retirement age; spending starts then.</div>
+          <h2>Spending in retirement</h2>
+          <div class="field"><label>Desired income $/mo (after tax, today's dollars)</label><input id="desiredMonthly" type="number" value="6000"></div>
+          <div class="hint">What you want to spend each month once retired. It grows with inflation automatically. Your accounts below fill the gap after Social Security &amp; other income.</div>
         </div>
 
         <div class="card">
-          <h2>Assets today</h2>
-          <div class="assetHead">
-            <div>Account</div><div>Value $</div><div>Type</div><div>Ret %</div><div></div>
-          </div>
+          <h2>Accounts &amp; contributions</h2>
           <div id="assetList"></div>
-          <button id="addAsset" class="btn ghost sm" style="margin-top:4px">+ Add account</button>
-          <div class="hint">Return % blank = use your global return. Type sets how withdrawals are taxed.</div>
+          <button id="addAsset" class="btn ghost sm">+ Add account</button>
+          <div id="saveSummary" class="saveSummary"></div>
+          <div class="hint">For each account set what it holds today, how much you add per month, when you stop adding, and the age you'll start drawing from it. <b>Draw from</b> lets you build an early-retirement bridge (e.g. spend the brokerage first, leave the 401k and Roth to grow).</div>
         </div>
 
         <div class="card">
@@ -154,17 +156,17 @@
             <div class="field"><label>Benefit at full age $/mo</label><input id="ssFRA" type="number" value="2400"></div>
             <div class="field"><label>Full retirement age</label><input id="fraAge" type="number" value="67"></div>
           </div>
-          <div class="hint">Enter your estimated benefit at full retirement age (see <a href="https://www.ssa.gov/myaccount/" target="_blank" rel="noopener">ssa.gov</a>). Each plan below picks its own claim age; claiming earlier/later adjusts the amount.</div>
+          <div class="hint">Your estimated benefit at full retirement age (see <a href="https://www.ssa.gov/myaccount/" target="_blank" rel="noopener">ssa.gov</a>). Each plan below picks its own claim age; claiming earlier/later adjusts the amount.</div>
         </div>
 
         <div class="card">
           <h2>Other income</h2>
-          <div class="otherHead">
+          <div class="acctGrid" style="grid-template-columns:1.4fr 1fr 0.8fr 0.8fr 24px;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:.03em;margin-bottom:5px">
             <div>Source</div><div>$/mo</div><div>Start</div><div>End</div><div></div>
           </div>
           <div id="otherList"></div>
           <button id="addOther" class="btn ghost sm" style="margin-top:4px">+ Add income</button>
-          <div class="hint">Pensions, rentals, annuities, part‑time work. Today's dollars, grows with inflation.</div>
+          <div class="hint">Pensions, rentals, annuities, part-time work. Today's dollars, grows with inflation.</div>
         </div>
 
         <div class="card">
@@ -179,6 +181,7 @@
             <div class="field"><label>Retire at age</label><input id="B_retire" type="number" value="62"></div>
             <div class="field"><label>Claim SS at age</label><input id="B_claim" type="number" value="67"></div>
           </div>
+          <div class="hint">Retiring is when you stop contributing and start spending. Try changing just the retire age to see the trade-off.</div>
           <a class="xlink" href="index2.html">🤔 Not sure which claim age is best? Compare 62 vs 67 vs 70 in the Break‑Even Calculator <span class="arrow">→</span></a>
           <div class="switchRow" style="margin-top:8px">
             <button id="loadDemo" class="btn ghost sm">Reset to example</button>
@@ -211,13 +214,13 @@
             </div>
           </div>
           <canvas id="incomeChart" height="190"></canvas>
-          <div class="foot">Stacked bars are your income sources each year vs. the dashed line you want to spend. When the stack falls below the line, that year is underfunded.</div>
+          <div class="foot">Stacked bars are your income sources each year vs. the dashed line you want to spend. When the stack falls below the line, that year is underfunded. Withdrawals include any required minimum distributions (RMDs).</div>
         </div>
 
         <div class="card">
           <h2>Reading this</h2>
           <div class="foot" style="font-size:12px">
-            This is a planning model, not financial advice. Everything is in today's dollars (inflation‑adjusted). Social Security and other income are treated as after‑tax; portfolio withdrawals are taxed by account type. Monte Carlo re‑runs the plan across many random return sequences to estimate how often you don't run out — real markets can do worse than any model. Verify your Social Security estimate at ssa.gov.
+            Planning model, not financial advice. Everything is in today's dollars (inflation-adjusted). Contributions stop when you retire; withdrawals are taxed by account type; RMDs are forced from 401(k)/IRA at your RMD age and reinvested if unspent. Social Security and other income are treated as after-tax. Monte Carlo re-runs the plan across many random return sequences to estimate how often you don't run out — real markets can do worse than any model. The 10% early-withdrawal penalty before 59½ isn't modeled, so set realistic "draw from" ages. Verify your Social Security estimate at ssa.gov.
           </div>
         </div>
       </div>
@@ -227,20 +230,20 @@
 <script>
 /* ============================================================
    Retirement Simulator — single-file engine
+   Per-account contributions + draw ages + RMDs, real (today's) dollars.
    ============================================================ */
 const $ = id => document.getElementById(id);
 const A_COLOR = '#2563eb', B_COLOR = '#ea580c';
 const MC_RUNS = 300;
-let focus = 'A';               // which scenario the income chart + MC band follows
+let focus = 'A';
 const TYPES = ['401(k) / IRA','Roth','Taxable','Cash'];  // 401(k)/IRA = tax-deferred
 
-/* ---------- number helpers ---------- */
 const money = n => (n<0?'-':'') + '$' + Math.abs(Math.round(n)).toLocaleString();
 const moneyK = n => { const a=Math.abs(n); const s=n<0?'-':'';
   if(a>=1e6) return s+'$'+(a/1e6).toFixed(a>=1e7?0:1)+'M';
   if(a>=1e3) return s+'$'+Math.round(a/1e3)+'k'; return s+'$'+Math.round(a); };
 
-/* ---------- currency inputs: show thousands separators while typing ---------- */
+/* ---------- currency inputs: thousands separators while typing ---------- */
 const parseNum = v => { const n=parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; };
 function formatCurrency(input){
   const focused = document.activeElement===input;
@@ -264,7 +267,7 @@ function attachCurrency(input){
 }
 
 /* ---------- read inputs ---------- */
-function num(id,d=0){ const v=parseNum($(id).value); return $(id).value.trim()===''?d:v; }
+function num(id,d=0){ return $(id).value.trim()==='' ? d : parseNum($(id).value); }
 function readGlobals(){
   return {
     currentAge:Math.round(num('currentAge',45)),
@@ -275,20 +278,25 @@ function readGlobals(){
     ordRate:num('ordRate',18)/100,
     ltcgRate:num('ltcgRate',15)/100,
     gainFrac:num('gainFrac',50)/100,
-    contribMonthly:num('contribMonthly',0),
     desiredMonthly:num('desiredMonthly',0),
     ssFRA:num('ssFRA',0),
     fraAge:num('fraAge',67),
+    rmdAge:Math.round(num('rmdAge',73)),
   };
 }
-function readAssets(g){
-  return Array.from($('assetList').children).map(row=>{
-    const r = parseFloat(row.querySelector('.a-ret').value);
+function readAccounts(g){
+  return Array.from($('assetList').children).map(el=>{
+    const r=parseFloat(el.querySelector('.a-ret').value);
+    const cu=parseFloat(el.querySelector('.a-until').value);
+    const dr=parseFloat(el.querySelector('.a-draw').value);
     return {
-      label: row.querySelector('.a-label').value || 'Account',
-      value: parseNum(row.querySelector('.a-value').value),
-      type: row.querySelector('.a-type').value,
-      ret: isNaN(r) ? g.expReturn : r/100
+      label: el.querySelector('.a-label').value || 'Account',
+      value: parseNum(el.querySelector('.a-value').value),
+      type: el.querySelector('.a-type').value,
+      ret: isNaN(r) ? g.expReturn : r/100,
+      contribMo: parseNum(el.querySelector('.a-contrib').value),
+      contribUntil: isNaN(cu) ? Infinity : cu,   // capped by retire age in engine
+      draw: isNaN(dr) ? null : dr                 // null => available at retirement
     };
   });
 }
@@ -308,63 +316,82 @@ function readScenario(key){
 function adjustSS(benefitFRA, claimAge, fraAge){
   const m = Math.round((claimAge - fraAge)*12);
   if(m===0) return benefitFRA;
-  if(m<0){ // early: 5/9% per mo first 36, 5/12% beyond
-    const e=Math.abs(m); const first=Math.min(36,e);
+  if(m<0){ const e=Math.abs(m); const first=Math.min(36,e);
     let red = first*(5/9)/100 + Math.max(0,e-36)*(5/12)/100;
-    return benefitFRA*(1-red);
-  }
-  // delayed: 2/3% per mo, cap at age 70
+    return benefitFRA*(1-red); }
   const cap=Math.min(m, Math.round((70-fraAge)*12));
   return benefitFRA*(1+cap*(2/3)/100);
 }
 
 /* ---------- tax gross-up (401(k)/IRA = tax-deferred, ordinary rate) ---------- */
 function netFrom(type, gross, g){
-  if(type.startsWith('401'))     return gross*(1-g.ordRate);
-  if(type==='Taxable')           return gross*(1 - g.gainFrac*g.ltcgRate);
+  if(type.startsWith('401'))  return gross*(1-g.ordRate);
+  if(type==='Taxable')        return gross*(1 - g.gainFrac*g.ltcgRate);
   return gross; // Roth, Cash
 }
 function grossForNet(type, net, g){
-  if(type.startsWith('401'))     return net/(1-g.ordRate);
-  if(type==='Taxable')           return net/(1 - g.gainFrac*g.ltcgRate);
+  if(type.startsWith('401'))  return net/(1-g.ordRate);
+  if(type==='Taxable')        return net/(1 - g.gainFrac*g.ltcgRate);
   return net;
 }
-// spend order: cash first, then taxable, tax-deferred, Roth last
-const WD_RANK = {'Cash':0, 'Taxable':1, '401(k) / IRA':2, 'Roth':3};
+const WD_RANK = {'Cash':0,'Taxable':1,'401(k) / IRA':2,'Roth':3};
 function orderKey(type){ return WD_RANK[type] ?? 2; }
 
-/* ---------- core deterministic / stochastic engine ----------
-   returns[] : one draw of annual returns per year (length = years). If null => deterministic. */
-function simulate(g, assets, other, scen, returns){
-  // Everything runs in REAL (today's) dollars: real return = (1+nominal)/(1+inflation)-1,
-  // and income/spending are held constant in today's dollars (no inflation multiplier).
+/* ---------- IRS Uniform Lifetime Table (2022+) divisors ---------- */
+const RMD_DIV = {73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,78:22.0,79:21.1,80:20.2,81:19.4,82:18.5,
+  83:17.7,84:16.8,85:16.0,86:15.2,87:14.4,88:13.7,89:12.9,90:12.2,91:11.5,92:10.8,93:10.1,94:9.5,
+  95:8.9,96:8.4,97:7.8,98:7.3,99:6.8,100:6.4,101:6.0,102:5.6,103:5.2,104:4.9,105:4.6};
+function rmdDivisor(age){ return RMD_DIV[age] || Math.max(2.0, 4.6 - (age-105)*0.3); }
+
+/* ---------- engine (returns[] = annual real-return shocks, or null=deterministic) ---------- */
+function simulate(g, accounts, other, scen, returns){
   const realRet = r => (1+r)/(1+g.inflation) - 1;
   const ss0 = adjustSS(g.ssFRA, scen.claim, g.fraAge);
-  const bal = assets.map(a=>({...a, rreal:realRet(a.ret)}));   // clone + precompute real return
-  // stable withdrawal order
-  const order = bal.map((a,i)=>i).sort((i,j)=>orderKey(bal[i].type)-orderKey(bal[j].type));
+  const bal = accounts.map(a=>({...a, rreal:realRet(a.ret)}));
+  const dOrder = bal.map((a,i)=>i).sort((i,j)=>orderKey(bal[i].type)-orderKey(bal[j].type));
+  // where RMD surplus gets reinvested: first taxable, else first cash
+  let reinvestIdx = bal.findIndex(a=>a.type==='Taxable');
+  if(reinvestIdx<0) reinvestIdx = bal.findIndex(a=>a.type==='Cash');
   const years=[]; let ranOut=null;
-  const contribAnnual = g.contribMonthly*12;
   const desired = g.desiredMonthly*12;
 
   for(let age=g.currentAge; age<=g.planAge; age++){
     const t = age-g.currentAge;
     const retired = age>=scen.retire;
-    let shortfall=0, wdNet=0, ssY=0, otherY=0;
+    let wdNet=0, ssY=0, otherY=0, shortfall=0;
 
+    // contributions while still working: until retirement OR the account's own stop age
     if(!retired){
-      // accumulation: add contributions (constant in today's $), proportional to balances
-      const tot = bal.reduce((s,a)=>s+Math.max(a.value,0),0);
-      bal.forEach(a=>{ a.value += tot>0 ? contribAnnual*(Math.max(a.value,0)/tot) : contribAnnual/bal.length; });
+      bal.forEach(a=>{ if(a.contribMo>0 && age < Math.min(scen.retire, a.contribUntil)) a.value += a.contribMo*12; });
     } else {
       ssY = (age>=scen.claim ? ss0 : 0)*12;
       otherY = other.reduce((s,o)=> s + ((age>=o.startAge && age<=o.endAge)? o.monthly*12 : 0), 0);
-      let need = Math.max(0, desired - ssY - otherY);   // net still needed from portfolio
-      for(const idx of order){
+      let need = Math.max(0, desired - ssY - otherY);
+
+      // 1) Required Minimum Distributions (mandatory) from 401(k)/IRA
+      if(age>=g.rmdAge){
+        const div = rmdDivisor(age);
+        bal.forEach(a=>{
+          if(a.type.startsWith('401') && a.value>0){
+            const rmd = a.value/div;
+            a.value -= rmd;
+            const netR = rmd*(1-g.ordRate);
+            const useNow = Math.min(need, netR);
+            need -= useNow; wdNet += useNow;
+            const surplus = netR - useNow;
+            if(surplus>0 && reinvestIdx>=0) bal[reinvestIdx].value += surplus;  // reinvest unspent
+          }
+        });
+      }
+
+      // 2) discretionary withdrawals from AVAILABLE accounts (age >= draw age), tax-efficient order
+      for(const idx of dOrder){
         if(need<=1e-6) break;
         const a=bal[idx]; if(a.value<=0) continue;
-        const grossNeeded = grossForNet(a.type, need, g);
-        const take = Math.min(a.value, grossNeeded);
+        const drawAge = (a.draw==null) ? scen.retire : a.draw;
+        if(age < drawAge) continue;
+        const gross = grossForNet(a.type, need, g);
+        const take = Math.min(a.value, gross);
         a.value -= take;
         const got = netFrom(a.type, take, g);
         wdNet += got; need -= got;
@@ -373,7 +400,7 @@ function simulate(g, assets, other, scen, returns){
       if(shortfall>1 && ranOut===null) ranOut=age;
     }
 
-    // apply real growth for the year (shared zero-mean market shock in stochastic mode)
+    // real growth for the year (shared zero-mean market shock in stochastic mode; cash muted)
     bal.forEach(a=>{
       const r = returns && a.type!=='Cash' ? a.rreal + returns[t] : a.rreal;
       a.value = Math.max(0, a.value*(1+r));
@@ -382,21 +409,19 @@ function simulate(g, assets, other, scen, returns){
     const total = bal.reduce((s,a)=>s+a.value,0);
     years.push({age, total, ss:ssY, other:otherY, wd:wdNet, desired, retired, shortfall});
   }
-  const ending = years[years.length-1].total;
-  return {years, ranOut, ending};
+  return {years, ranOut, ending: years[years.length-1].total};
 }
 
 /* ---------- Monte Carlo ---------- */
 function randn(){ let u=0,v=0; while(!u)u=Math.random(); while(!v)v=Math.random();
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
-function monteCarlo(g, assets, other, scen, runs){
+function monteCarlo(g, accounts, other, scen, runs){
   const yrs = g.planAge-g.currentAge+1;
   const totalsByYear = Array.from({length:yrs},()=>[]);
   let success=0; const endings=[];
   for(let r=0;r<runs;r++){
-    // zero-mean annual market shock; each asset's own return is added inside simulate()
-    const rets = Array.from({length:yrs},()=> g.vol*randn());
-    const sim = simulate(g,assets,other,scen,rets);
+    const rets = Array.from({length:yrs},()=> g.vol*randn());   // zero-mean shocks
+    const sim = simulate(g,accounts,other,scen,rets);
     if(sim.ranOut===null) success++;
     endings.push(sim.ending);
     sim.years.forEach((y,i)=> totalsByYear[i].push(y.total));
@@ -408,19 +433,12 @@ function monteCarlo(g, assets, other, scen, runs){
   return { successPct: Math.round(100*success/runs), medianEnding: endings[Math.floor(endings.length/2)], p10,p50,p90 };
 }
 
-/* ---------- verdict card ---------- */
+/* ---------- verdict ---------- */
 function classify(det, mc, g){
-  // Headline = expected (deterministic) path; confidence = Monte Carlo.
-  // Keep icon/severity consistent with the headline so they never contradict.
   const s = mc.successPct;
   let cls, headline;
-  if(det.ranOut===null){
-    headline = 'Money lasts to '+g.planAge+'+';
-    cls = s>=85 ? 'good' : 'warn';          // surviving path is never "bad", only risky
-  } else {
-    headline = 'Runs out at age '+det.ranOut;
-    cls = s>=65 ? 'warn' : 'bad';           // failing path is never "good"
-  }
+  if(det.ranOut===null){ headline='Money lasts to '+g.planAge+'+'; cls = s>=85?'good':'warn'; }
+  else { headline='Runs out at age '+det.ranOut; cls = s>=65?'warn':'bad'; }
   return {cls, headline, successPct:s, ending: mc.medianEnding, ranOut:det.ranOut};
 }
 function renderVerdict(el, name, color, v){
@@ -462,18 +480,17 @@ function renderPortfolio(labels, detA, detB, mc, showBand){
 }
 
 function renderIncome(sim){
-  const labels=sim.years.filter(y=>y.retired).map(y=>y.age);
-  const pick=k=>sim.years.filter(y=>y.retired).map(y=>Math.round(y[k]/12));
-  const ss=pick('ss'), other=pick('other'), wd=pick('wd');
-  const desired=sim.years.filter(y=>y.retired).map(y=>Math.round(y.desired/12));
+  const rows=sim.years.filter(y=>y.retired);
+  const labels=rows.map(y=>y.age);
+  const pick=k=>rows.map(y=>Math.round(y[k]/12));
   if(incomeChart) incomeChart.destroy();
   incomeChart = new Chart($('incomeChart').getContext('2d'),{
     type:'bar',
     data:{labels, datasets:[
-      {type:'line',label:'Desired spending',data:desired,borderColor:'#334155',borderDash:[6,4],borderWidth:2,pointRadius:0,tension:.2,order:0},
-      {label:'Social Security',data:ss,backgroundColor:'#16a34a',stack:'s',order:1},
-      {label:'Other income',data:other,backgroundColor:'#7c3aed',stack:'s',order:1},
-      {label:'Portfolio withdrawals',data:wd,backgroundColor:hexA(focus==='A'?A_COLOR:B_COLOR,.85),stack:'s',order:1},
+      {type:'line',label:'Desired spending',data:pick('desired'),borderColor:'#334155',borderDash:[6,4],borderWidth:2,pointRadius:0,tension:.2,order:0},
+      {label:'Social Security',data:pick('ss'),backgroundColor:'#16a34a',stack:'s',order:1},
+      {label:'Other income',data:pick('other'),backgroundColor:'#7c3aed',stack:'s',order:1},
+      {label:'Portfolio withdrawals',data:pick('wd'),backgroundColor:hexA(focus==='A'?A_COLOR:B_COLOR,.85),stack:'s',order:1},
     ]},
     options:{responsive:true, animation:false, interaction:{mode:'index',intersect:false},
       plugins:{legend:{labels:{usePointStyle:true,boxWidth:8,font:{size:12}}},
@@ -484,41 +501,58 @@ function renderIncome(sim){
 }
 
 /* ---------- master recompute ---------- */
-let raf=null;
+let deb=null;
 function recompute(){
-  if(raf) clearTimeout(raf);
-  raf=setTimeout(()=>{
-    const g=readGlobals(); const assets=readAssets(g); const other=readOther(g);
+  if(deb) clearTimeout(deb);
+  deb=setTimeout(()=>{
+    const g=readGlobals(); const accounts=readAccounts(g); const other=readOther(g);
     if(g.planAge<=g.currentAge) return;
     const sA=readScenario('A'), sB=readScenario('B');
-    const detA=simulate(g,assets,other,sA), detB=simulate(g,assets,other,sB);
-    const mcA=monteCarlo(g,assets,other,sA,MC_RUNS), mcB=monteCarlo(g,assets,other,sB,MC_RUNS);
+    const detA=simulate(g,accounts,other,sA), detB=simulate(g,accounts,other,sB);
+    const mcA=monteCarlo(g,accounts,other,sA,MC_RUNS), mcB=monteCarlo(g,accounts,other,sB,MC_RUNS);
     renderVerdict($('verdictA'),'A',A_COLOR,classify(detA,mcA,g));
     renderVerdict($('verdictB'),'B',B_COLOR,classify(detB,mcB,g));
     const labels=detA.years.map(y=>y.age);
     const showBand=$('mcToggle').checked;
     renderPortfolio(labels, detA.years.map(y=>y.total), detB.years.map(y=>y.total), showBand?(focus==='A'?mcA:mcB):null, showBand);
     renderIncome(focus==='A'?detA:detB);
+    renderSaveSummary(accounts);
     $('mcRunsLabel').textContent=MC_RUNS;
-  },120);
+  },130);
 }
 
-/* ---------- dynamic rows ---------- */
-function assetRow(label='',value='',type=TYPES[0],ret=''){
-  const row=document.createElement('div'); row.className='assetRow';
-  row.innerHTML=`
-    <input class="a-label" type="text" value="${label}" placeholder="401(k)">
-    <input class="a-value" type="number" value="${value}" placeholder="0">
-    <select class="a-type">${TYPES.map(t=>`<option${t===type?' selected':''}>${t}</option>`).join('')}</select>
-    <input class="a-ret" type="number" value="${ret}" placeholder="—">
-    <button class="del" title="Remove">×</button>`;
-  row.querySelector('.del').onclick=()=>{row.remove();recompute();};
-  row.querySelectorAll('input,select').forEach(i=>i.addEventListener('input',recompute));
-  $('assetList').appendChild(row);
-  attachCurrency(row.querySelector('.a-value'));
+function renderSaveSummary(accounts){
+  const savers=accounts.filter(a=>a.contribMo>0);
+  const total=savers.reduce((s,a)=>s+a.contribMo,0);
+  if(total<=0){ $('saveSummary').innerHTML='<b>Not saving yet.</b> Add a monthly contribution to an account above to build toward retirement.'; return; }
+  const parts=savers.map(a=>`${a.label} ${money(a.contribMo)}`).join(' · ');
+  $('saveSummary').innerHTML=`Saving <b>${money(total)}/mo</b> → ${parts}`;
+}
+
+/* ---------- dynamic account cards ---------- */
+function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until='',draw=''}={}){
+  const el=document.createElement('div'); el.className='acct';
+  el.innerHTML=`
+    <div class="acctTop">
+      <input class="a-label" type="text" value="${label}" placeholder="Account name" style="flex:1">
+      <button class="del" title="Remove">×</button>
+    </div>
+    <div class="acctGrid">
+      <div class="mini"><label>Value $</label><input class="a-value" type="number" value="${value}" placeholder="0"></div>
+      <div class="mini"><label>Type</label><select class="a-type">${TYPES.map(t=>`<option${t===type?' selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="mini"><label>Return %</label><input class="a-ret" type="number" value="${ret}" placeholder="—"></div>
+      <div class="mini"><label>Add $/mo</label><input class="a-contrib" type="number" value="${contrib}" placeholder="0"></div>
+      <div class="mini"><label>Contribute until age</label><input class="a-until" type="number" value="${until}" placeholder="retire"></div>
+      <div class="mini"><label>Draw from age</label><input class="a-draw" type="number" value="${draw}" placeholder="retire"></div>
+    </div>`;
+  el.querySelector('.del').onclick=()=>{el.remove();recompute();};
+  el.querySelectorAll('input,select').forEach(i=>i.addEventListener('input',recompute));
+  $('assetList').appendChild(el);
+  attachCurrency(el.querySelector('.a-value'));
+  attachCurrency(el.querySelector('.a-contrib'));
 }
 function otherRow(label='',monthly='',start='',end=''){
-  const row=document.createElement('div'); row.className='otherRow';
+  const row=document.createElement('div'); row.className='acctGrid'; row.style.cssText='grid-template-columns:1.4fr 1fr 0.8fr 0.8fr 24px;margin-bottom:6px';
   row.innerHTML=`
     <input class="o-label" type="text" value="${label}" placeholder="Pension">
     <input class="o-monthly" type="number" value="${monthly}" placeholder="0">
@@ -536,22 +570,22 @@ function loadDemo(){
   $('assetList').innerHTML=''; $('otherList').innerHTML='';
   $('currentAge').value=45; $('planAge').value=95;
   $('expReturn').value=6; $('inflation').value=2.5;
-  $('vol').value=12; $('ordRate').value=18; $('ltcgRate').value=15; $('gainFrac').value=50;
-  $('contribMonthly').value=2000; $('desiredMonthly').value=6000;
+  $('vol').value=12; $('ordRate').value=18; $('ltcgRate').value=15; $('gainFrac').value=50; $('rmdAge').value=73;
+  $('desiredMonthly').value=6000;
   $('ssFRA').value=2400; $('fraAge').value=67;
   $('A_retire').value=55; $('A_claim').value=62;
   $('B_retire').value=62; $('B_claim').value=67;
-  assetRow('401(k)',450000,TYPES[0]);
-  assetRow('Roth IRA',120000,'Roth');
-  assetRow('Brokerage',180000,'Taxable');
-  assetRow('Cash',40000,'Cash','2');
+  accountCard({label:'401(k)',   value:450000, type:'401(k) / IRA', contrib:1500, draw:60});
+  accountCard({label:'Roth IRA', value:120000, type:'Roth',         contrib:500,  draw:72});
+  accountCard({label:'Brokerage',value:180000, type:'Taxable',      contrib:500,  draw:55});
+  accountCard({label:'Cash',     value:40000,  type:'Cash', ret:'2',contrib:0,    draw:55});
   otherRow('Pension',0,65,95);
-  ['contribMonthly','desiredMonthly','ssFRA'].forEach(id=>formatCurrency($(id)));
+  ['desiredMonthly','ssFRA'].forEach(id=>formatCurrency($(id)));
   recompute();
 }
 
 /* ---------- wire up ---------- */
-$('addAsset').onclick=()=>{assetRow();recompute();};
+$('addAsset').onclick=()=>{accountCard();recompute();};
 $('addOther').onclick=()=>{otherRow();recompute();};
 $('loadDemo').onclick=loadDemo;
 $('mcToggle').addEventListener('change',recompute);
@@ -560,11 +594,11 @@ document.querySelectorAll('#focusSeg button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#focusSeg button').forEach(x=>x.classList.toggle('on',x===b));
   recompute();
 });
-['currentAge','planAge','expReturn','inflation','vol','ordRate','ltcgRate','gainFrac',
- 'contribMonthly','desiredMonthly','ssFRA','fraAge','A_retire','A_claim','B_retire','B_claim']
+['currentAge','planAge','expReturn','inflation','vol','ordRate','ltcgRate','gainFrac','rmdAge',
+ 'desiredMonthly','ssFRA','fraAge','A_retire','A_claim','B_retire','B_claim']
  .forEach(id=>$(id).addEventListener('input',recompute));
 
-['contribMonthly','desiredMonthly','ssFRA'].forEach(id=>attachCurrency($(id)));
+['desiredMonthly','ssFRA'].forEach(id=>attachCurrency($(id)));
 
 loadDemo();
 </script>
