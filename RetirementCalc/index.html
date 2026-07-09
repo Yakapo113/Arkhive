@@ -50,11 +50,12 @@
     .btn.sm{padding:6px 9px;font-size:12px}
     .del{width:26px;height:26px;flex:0 0 auto;border:none;border-radius:6px;background:#fee2e2;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1}
     .assetHead,.assetRow,.otherHead,.otherRow{display:grid;gap:6px;align-items:center}
-    .assetHead,.assetRow{grid-template-columns:1.4fr 1fr 1.1fr 0.9fr 26px}
-    .otherHead,.otherRow{grid-template-columns:1.4fr 1fr 0.8fr 0.8fr 26px}
+    .assetHead,.assetRow{grid-template-columns:1.2fr 0.95fr 1.45fr 0.6fr 24px}
+    .otherHead,.otherRow{grid-template-columns:1.4fr 1fr 0.8fr 0.8fr 24px}
     .assetHead,.otherHead{font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:5px}
     .assetRow,.otherRow{margin-bottom:6px}
-    .assetRow input,.assetRow select,.otherRow input{padding:6px;font-size:12.5px}
+    .assetRow input,.assetRow select,.otherRow input{padding:6px 5px;font-size:12.5px;min-width:0}
+    .assetRow select{font-size:11.5px;padding:6px 2px 6px 5px;text-overflow:ellipsis}
     .scenHead{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;font-size:13px}
     .dot{width:11px;height:11px;border-radius:50%}
     details.adv summary{cursor:pointer;font-size:12px;color:var(--accent);list-style:none;margin-top:4px}
@@ -231,7 +232,7 @@ const $ = id => document.getElementById(id);
 const A_COLOR = '#2563eb', B_COLOR = '#ea580c';
 const MC_RUNS = 300;
 let focus = 'A';               // which scenario the income chart + MC band follows
-const TYPES = ['Tax-deferred (401k/IRA)','Roth','Taxable brokerage','Cash'];
+const TYPES = ['401(k) / IRA','Roth','Taxable','Cash'];  // 401(k)/IRA = tax-deferred
 
 /* ---------- number helpers ---------- */
 const money = n => (n<0?'-':'') + '$' + Math.abs(Math.round(n)).toLocaleString();
@@ -239,8 +240,31 @@ const moneyK = n => { const a=Math.abs(n); const s=n<0?'-':'';
   if(a>=1e6) return s+'$'+(a/1e6).toFixed(a>=1e7?0:1)+'M';
   if(a>=1e3) return s+'$'+Math.round(a/1e3)+'k'; return s+'$'+Math.round(a); };
 
+/* ---------- currency inputs: show thousands separators while typing ---------- */
+const parseNum = v => { const n=parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; };
+function formatCurrency(input){
+  const focused = document.activeElement===input;
+  const raw = input.value;
+  const caret = focused ? input.selectionStart : 0;
+  const digitsBeforeCaret = focused ? raw.slice(0,caret).replace(/[^0-9]/g,'').length : 0;
+  let cleaned = raw.replace(/[^0-9.]/g,'');
+  const firstDot = cleaned.indexOf('.');
+  if(firstDot!==-1) cleaned = cleaned.slice(0,firstDot+1)+cleaned.slice(firstDot+1).replace(/\./g,'');
+  let [intPart,decPart] = cleaned.split('.');
+  intPart = (intPart||'').replace(/^0+(?=\d)/,'');
+  const withCommas = intPart.replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const formatted = decPart!==undefined ? withCommas+'.'+decPart : withCommas;
+  input.value = formatted;
+  if(focused){ let pos=0,seen=0; while(pos<formatted.length && seen<digitsBeforeCaret){ if(/[0-9]/.test(formatted[pos]))seen++; pos++; } input.setSelectionRange(pos,pos); }
+}
+function attachCurrency(input){
+  input.type='text'; input.setAttribute('inputmode','decimal');
+  input.addEventListener('input',()=>formatCurrency(input));
+  if(input.value!=='') formatCurrency(input);
+}
+
 /* ---------- read inputs ---------- */
-function num(id,d=0){ const v=parseFloat($(id).value); return isNaN(v)?d:v; }
+function num(id,d=0){ const v=parseNum($(id).value); return $(id).value.trim()===''?d:v; }
 function readGlobals(){
   return {
     currentAge:Math.round(num('currentAge',45)),
@@ -262,7 +286,7 @@ function readAssets(g){
     const r = parseFloat(row.querySelector('.a-ret').value);
     return {
       label: row.querySelector('.a-label').value || 'Account',
-      value: parseFloat(row.querySelector('.a-value').value)||0,
+      value: parseNum(row.querySelector('.a-value').value),
       type: row.querySelector('.a-type').value,
       ret: isNaN(r) ? g.expReturn : r/100
     };
@@ -271,7 +295,7 @@ function readAssets(g){
 function readOther(g){
   return Array.from($('otherList').children).map(row=>({
     label: row.querySelector('.o-label').value||'Income',
-    monthly: parseFloat(row.querySelector('.o-monthly').value)||0,
+    monthly: parseNum(row.querySelector('.o-monthly').value),
     startAge: parseFloat(row.querySelector('.o-start').value)||g.currentAge,
     endAge: parseFloat(row.querySelector('.o-end').value)||g.planAge
   }));
@@ -294,19 +318,20 @@ function adjustSS(benefitFRA, claimAge, fraAge){
   return benefitFRA*(1+cap*(2/3)/100);
 }
 
-/* ---------- tax gross-up ---------- */
+/* ---------- tax gross-up (401(k)/IRA = tax-deferred, ordinary rate) ---------- */
 function netFrom(type, gross, g){
-  if(type.startsWith('Tax-deferred')) return gross*(1-g.ordRate);
-  if(type.startsWith('Taxable'))      return gross*(1 - g.gainFrac*g.ltcgRate);
+  if(type.startsWith('401'))     return gross*(1-g.ordRate);
+  if(type==='Taxable')           return gross*(1 - g.gainFrac*g.ltcgRate);
   return gross; // Roth, Cash
 }
 function grossForNet(type, net, g){
-  if(type.startsWith('Tax-deferred')) return net/(1-g.ordRate);
-  if(type.startsWith('Taxable'))      return net/(1 - g.gainFrac*g.ltcgRate);
+  if(type.startsWith('401'))     return net/(1-g.ordRate);
+  if(type==='Taxable')           return net/(1 - g.gainFrac*g.ltcgRate);
   return net;
 }
-const WD_ORDER = ['Cash','Taxable','Tax-deferred','Roth'];
-function orderKey(type){ return WD_ORDER.findIndex(k=>type.startsWith(k.split(' ')[0])); }
+// spend order: cash first, then taxable, tax-deferred, Roth last
+const WD_RANK = {'Cash':0, 'Taxable':1, '401(k) / IRA':2, 'Roth':3};
+function orderKey(type){ return WD_RANK[type] ?? 2; }
 
 /* ---------- core deterministic / stochastic engine ----------
    returns[] : one draw of annual returns per year (length = years). If null => deterministic. */
@@ -490,6 +515,7 @@ function assetRow(label='',value='',type=TYPES[0],ret=''){
   row.querySelector('.del').onclick=()=>{row.remove();recompute();};
   row.querySelectorAll('input,select').forEach(i=>i.addEventListener('input',recompute));
   $('assetList').appendChild(row);
+  attachCurrency(row.querySelector('.a-value'));
 }
 function otherRow(label='',monthly='',start='',end=''){
   const row=document.createElement('div'); row.className='otherRow';
@@ -502,6 +528,7 @@ function otherRow(label='',monthly='',start='',end=''){
   row.querySelector('.del').onclick=()=>{row.remove();recompute();};
   row.querySelectorAll('input').forEach(i=>i.addEventListener('input',recompute));
   $('otherList').appendChild(row);
+  attachCurrency(row.querySelector('.o-monthly'));
 }
 
 /* ---------- demo ---------- */
@@ -516,9 +543,10 @@ function loadDemo(){
   $('B_retire').value=62; $('B_claim').value=67;
   assetRow('401(k)',450000,TYPES[0]);
   assetRow('Roth IRA',120000,'Roth');
-  assetRow('Brokerage',180000,'Taxable brokerage');
+  assetRow('Brokerage',180000,'Taxable');
   assetRow('Cash',40000,'Cash','2');
   otherRow('Pension',0,65,95);
+  ['contribMonthly','desiredMonthly','ssFRA'].forEach(id=>formatCurrency($(id)));
   recompute();
 }
 
@@ -535,6 +563,8 @@ document.querySelectorAll('#focusSeg button').forEach(b=>b.onclick=()=>{
 ['currentAge','planAge','expReturn','inflation','vol','ordRate','ltcgRate','gainFrac',
  'contribMonthly','desiredMonthly','ssFRA','fraAge','A_retire','A_claim','B_retire','B_claim']
  .forEach(id=>$(id).addEventListener('input',recompute));
+
+['contribMonthly','desiredMonthly','ssFRA'].forEach(id=>attachCurrency($(id)));
 
 loadDemo();
 </script>

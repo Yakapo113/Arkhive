@@ -183,7 +183,29 @@ const money = n => (n<0?'-':'') + '$' + Math.abs(Math.round(n)).toLocaleString()
 const moneyK = n => { const a=Math.abs(n),s=n<0?'-':'';
   if(a>=1e6) return s+'$'+(a/1e6).toFixed(a>=1e7?0:1)+'M';
   if(a>=1e3) return s+'$'+Math.round(a/1e3)+'k'; return s+'$'+Math.round(a); };
-function num(id,d=0){ const v=parseFloat($(id).value); return isNaN(v)?d:v; }
+const parseNum = v => { const n=parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; };
+function num(id,d=0){ return $(id).value.trim()==='' ? d : parseNum($(id).value); }
+/* currency inputs: thousands separators while typing (matches RealEstateCalc) */
+function formatCurrency(input){
+  const focused = document.activeElement===input;
+  const raw = input.value;
+  const caret = focused ? input.selectionStart : 0;
+  const digitsBeforeCaret = focused ? raw.slice(0,caret).replace(/[^0-9]/g,'').length : 0;
+  let cleaned = raw.replace(/[^0-9.]/g,'');
+  const firstDot = cleaned.indexOf('.');
+  if(firstDot!==-1) cleaned = cleaned.slice(0,firstDot+1)+cleaned.slice(firstDot+1).replace(/\./g,'');
+  let [intPart,decPart] = cleaned.split('.');
+  intPart = (intPart||'').replace(/^0+(?=\d)/,'');
+  const withCommas = intPart.replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const formatted = decPart!==undefined ? withCommas+'.'+decPart : withCommas;
+  input.value = formatted;
+  if(focused){ let pos=0,seen=0; while(pos<formatted.length && seen<digitsBeforeCaret){ if(/[0-9]/.test(formatted[pos]))seen++; pos++; } input.setSelectionRange(pos,pos); }
+}
+function attachCurrency(input){
+  input.type='text'; input.setAttribute('inputmode','decimal');
+  input.addEventListener('input',()=>formatCurrency(input));
+  if(input.value!=='') formatCurrency(input);
+}
 
 /* SSA claim-age adjustment from the full-retirement-age benefit */
 function adjustSS(benefitFRA, claimAge, fraAge){
@@ -355,6 +377,7 @@ function autofill(){
   $('A_amt').value=Math.round(adjustSS(fra,Math.round(num('A_age',62)),fa));
   $('B_amt').value=Math.round(adjustSS(fra,Math.round(num('B_age',67)),fa));
   $('C_amt').value=Math.round(adjustSS(fra,Math.round(num('C_age',70)),fa));
+  ['A_amt','B_amt','C_amt'].forEach(id=>formatCurrency($(id)));
   recompute();
 }
 
@@ -367,6 +390,8 @@ document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{
 });
 ['fraBenefit','fraAge','planAge','ret','cola','tax','A_age','A_amt','B_age','B_amt','C_age','C_amt']
   .forEach(id=>$(id).addEventListener('input',recompute));
+
+['fraBenefit','A_amt','B_amt','C_amt'].forEach(id=>attachCurrency($(id)));
 
 recompute();
 </script>
