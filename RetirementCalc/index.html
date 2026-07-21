@@ -141,7 +141,10 @@
               <div class="field"><label>Cap-gains rate % <span class="tip" tabindex="0">i<span class="tipbox">Long-term capital-gains tax on <b>taxable / real-estate / business</b> gains: federally 0%, 15%, or 20% by income. <b>15%</b> is typical.</span></span></label><input id="ltcgRate" type="number" step="0.5" value="15"></div>
               <div class="field"><label>Taxable gain portion % <span class="tip" tabindex="0">i<span class="tipbox">Of a taxable / real-estate / business sale, how much is <b>gain</b> (taxed) vs. your original cost (not taxed). Low basis (e.g. a founded business) → set high.</span></span></label><input id="gainFrac" type="number" step="5" value="50"></div>
             </div>
-            <div class="field"><label>RMD start age <span class="tip" tabindex="0">i<span class="tipbox"><b>Required Minimum Distributions:</b> the IRS forces you to withdraw a slice of 401(k)/IRA money each year starting at age <b>73</b> (75 from 2033), taxed as income. Any part you don't spend is reinvested in a taxable account.</span></span></label><input id="rmdAge" type="number" value="73"></div>
+            <div class="grid2">
+              <div class="field"><label>RMD start age <span class="tip" tabindex="0">i<span class="tipbox"><b>Required Minimum Distributions:</b> the IRS forces you to withdraw a slice of 401(k)/IRA money each year starting at age <b>73</b> (75 from 2033), taxed as income. Any part you don't spend is reinvested in a taxable account.</span></span></label><input id="rmdAge" type="number" value="73"></div>
+              <div class="field"><label>Stocks % for history test <span class="tip" tabindex="0">i<span class="tipbox">Used only by the <b>History</b> risk band: your stock/bond split when replaying real markets since 1928. <b>75</b> = 75% stocks / 25% bonds. More stocks = higher average but wilder history.</span></span></label><input id="histStock" type="number" value="75"></div>
+            </div>
           </details>
         </div>
 
@@ -206,10 +209,17 @@
         <div class="chartCard">
           <div class="top">
             <div class="chartTitle">Portfolio balance over time</div>
-            <label class="toggleRow" style="font-size:12px;color:var(--muted)"><input type="checkbox" id="mcToggle" checked> Show market‑risk range</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="foot" style="margin:0">Risk band:</span>
+              <div class="seg" id="rangeSeg">
+                <button data-r="hist" class="on">History</button>
+                <button data-r="mc">Monte Carlo</button>
+                <button data-r="off">Off</button>
+              </div>
+            </div>
           </div>
           <canvas id="portfolioChart" height="200"></canvas>
-          <div class="foot">Solid line = expected path (total net worth, including property/business until it's sold). Shaded band = the middle 80% of <span id="mcRunsLabel">300</span> random‑market outcomes for the focused plan.</div>
+          <div class="foot">Solid line = expected path (total net worth). Shaded band = middle 80% of outcomes — either real market history (<span id="histInfo">—</span>) or <span id="mcRunsLabel">300</span> random Monte-Carlo futures.</div>
         </div>
 
         <div class="chartCard">
@@ -241,7 +251,7 @@
         <div class="card">
           <h2>Reading this</h2>
           <div class="foot" style="font-size:12px">
-            Planning model, not financial advice. Everything is in today's dollars (inflation-adjusted). Contributions stop when you retire; withdrawals are taxed by account type; RMDs are forced from 401(k)/IRA at your RMD age and reinvested if unspent. Real-estate &amp; business assets grow and are liquidated at their sell age (after cap-gains tax), with proceeds reinvested. Social Security and other income are treated as after-tax. Withdrawals from 401(k)/IRA/Roth before age 59½ include the 10% IRS early-withdrawal penalty — so an early retiree really does need a taxable/cash bridge. Monte Carlo re-runs the plan across many random return sequences. Verify your Social Security estimate at ssa.gov.
+            Planning model, not financial advice. Everything is in today's dollars (inflation-adjusted). Contributions stop when you retire; withdrawals are taxed by account type; RMDs are forced from 401(k)/IRA at your RMD age and reinvested if unspent. Real-estate &amp; business assets grow and are liquidated at their sell age (after cap-gains tax), with proceeds reinvested. Social Security and other income are treated as after-tax. Withdrawals from 401(k)/IRA/Roth before age 59½ include the 10% IRS early-withdrawal penalty — so an early retiree really does need a taxable/cash bridge. Two risk engines: <b>History</b> replays every real market sequence since 1928 (S&P 500 + Treasuries + CPI, Damodaran data) using your stock/bond split; <b>Monte Carlo</b> draws random returns from your return &amp; volatility. Real estate/business use their own growth rate, not the market series. Verify your Social Security estimate at ssa.gov.
           </div>
         </div>
       </div>
@@ -259,6 +269,7 @@ const A_COLOR = '#2563eb', B_COLOR = '#ea580c';
 const MC_RUNS = 300;
 let focus = 'A';
 let pieAge = 70;
+let rangeMode = 'hist';   // 'off' | 'mc' | 'hist' — which uncertainty band shows on the chart
 let lastPieSim = null, lastG = null;
 const TYPES = ['401(k) / IRA','Roth','Taxable','Cash','Real estate','Business'];
 const LIQUID = new Set(['401(k) / IRA','Roth','Taxable','Cash']);
@@ -309,6 +320,7 @@ function readGlobals(){
     birthYear:(new Date().getFullYear() - Math.round(num('currentAge',45))),
     get fraAge(){ return fraFromBirthYear(this.birthYear); },
     rmdAge:Math.round(num('rmdAge',73)),
+    histStock:num('histStock',75),
   };
 }
 function readAccounts(g){
@@ -389,8 +401,10 @@ const RMD_DIV = {73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,78:22.0,79:21.1,80:20.2
   95:8.9,96:8.4,97:7.8,98:7.3,99:6.8,100:6.4,101:6.0,102:5.6,103:5.2,104:4.9,105:4.6};
 function rmdDivisor(age){ return RMD_DIV[age] || Math.max(2.0, 4.6 - (age-105)*0.3); }
 
-/* ---------- engine ---------- */
-function simulate(g, accounts, other, scen, returns){
+/* ---------- engine ----------
+   returns = per-year zero-mean MC shocks (or null); histSeq = per-year real
+   portfolio returns from history (or null). histSeq drives market accounts. */
+function simulate(g, accounts, other, scen, returns=null, histSeq=null){
   const realRet = r => (1+r)/(1+g.inflation) - 1;
   const ss0 = adjustSS(g.ssFRA, scen.claim, g.fraAge);
   const bal = accounts.map(a=>({...a, rreal:realRet(a.ret)}));
@@ -457,9 +471,14 @@ function simulate(g, accounts, other, scen, returns){
       if(shortfall>1 && ranOut===null) ranOut=age;
     }
 
-    // real growth
+    // real growth. Market accounts (not cash / real-estate / business) follow the
+    // historical portfolio return in backtest mode, or their own mean +/- MC shock.
     bal.forEach(a=>{
-      const r = returns && a.type!=='Cash' ? a.rreal + returns[t] : a.rreal;
+      const market = a.type!=='Cash' && a.type!=='Real estate' && a.type!=='Business';
+      let r;
+      if(histSeq && market) r = histSeq[t];
+      else if(returns && a.type!=='Cash') r = a.rreal + returns[t];
+      else r = a.rreal;
       a.value = Math.max(0, a.value*(1+r));
     });
 
@@ -477,7 +496,7 @@ function monteCarlo(g, accounts, other, scen, runs){
   let success=0; const endings=[];
   for(let r=0;r<runs;r++){
     const rets = Array.from({length:yrs},()=> g.vol*randn());
-    const sim = simulate(g,accounts,other,scen,rets);
+    const sim = simulate(g,accounts,other,scen,rets,null);
     if(sim.ranOut===null) success++;
     endings.push(sim.ending);
     sim.years.forEach((y,i)=> totalsByYear[i].push(y.total));
@@ -489,25 +508,60 @@ function monteCarlo(g, accounts, other, scen, runs){
   return { successPct: Math.round(100*success/runs), medianEnding: endings[Math.floor(endings.length/2)], p10,p50,p90 };
 }
 
-/* ---------- verdict ---------- */
-const MC_TIP = `<span class="tip" tabindex="0">i<span class="tipbox">We re-run your plan <b>${MC_RUNS} times</b> with random yearly market returns (using your return % and volatility). This is the share of runs where your money lasts to your plan age — a rough risk gauge, not a guarantee.</span></span>`;
-function classify(det, mc, g){
-  const s = mc.successPct;
-  let cls, headline;
-  if(det.ranOut===null){ headline='Money lasts to '+g.planAge+'+'; cls = s>=85?'good':'warn'; }
-  else { headline='Runs out at age '+det.ranOut; cls = s>=65?'warn':'bad'; }
-  return {cls, headline, successPct:s, ending: mc.medianEnding, ranOut:det.ranOut};
+/* ---------- Historical backtest (real US market history, 1928–2025) ----------
+   Damodaran S&P 500 total return + 10-yr Treasury return; CPI annual inflation.
+   Instead of random returns, replay every real market sequence in history — this
+   captures the Depression, 1970s stagflation, 2008, and sequence-of-returns risk. */
+const H_STOCK = "43.81,-8.30,-25.12,-43.84,-8.64,49.98,-1.19,46.74,31.94,-35.34,29.28,-1.10,-10.67,-12.77,19.17,25.06,19.03,35.82,-8.43,5.20,5.70,18.30,30.81,23.68,18.15,-1.21,52.56,32.60,7.44,-10.46,43.72,12.06,0.34,26.64,-8.81,22.61,16.42,12.40,-9.97,23.80,10.81,-8.24,3.56,14.22,18.76,-14.31,-25.90,37.00,23.83,-6.98,6.51,18.52,31.74,-4.70,20.42,22.34,6.15,31.24,18.49,5.81,16.54,31.48,-3.06,30.23,7.49,9.97,1.33,37.20,22.68,33.10,28.34,20.89,-9.03,-11.85,-21.97,28.36,10.74,4.83,15.61,5.48,-36.55,25.94,14.82,2.10,15.89,32.15,13.52,1.38,11.77,21.61,-4.23,31.21,18.02,28.47,-18.04,26.06,24.88,17.78".split(',').map(Number);
+const H_BOND = "0.84,4.20,4.54,-2.56,8.79,1.86,7.96,4.47,5.02,1.38,4.21,4.41,5.40,-2.02,2.29,2.49,2.58,3.80,3.13,0.92,1.95,4.66,0.43,-0.30,2.27,4.14,3.29,-1.34,-2.26,6.80,-2.10,-2.65,11.64,2.06,5.69,1.68,3.73,0.72,2.91,-1.58,3.27,-5.01,16.75,9.79,2.82,3.66,1.99,3.61,15.98,1.29,-0.78,0.67,-2.99,8.20,32.81,3.20,13.73,25.71,24.28,-4.96,8.22,17.69,6.24,15.00,9.36,14.21,-8.04,23.48,1.43,9.94,14.92,-8.25,16.66,5.57,15.12,0.38,4.49,2.87,1.96,10.21,20.10,-11.12,8.46,16.04,2.97,-9.10,10.75,1.28,0.69,2.80,-0.02,9.64,11.33,-4.42,-17.83,3.88,-1.64,7.80".split(',').map(Number);
+const H_INFL = "-1.7,0.0,-2.3,-9.0,-9.9,-5.1,3.1,2.2,1.5,3.6,-2.1,-1.4,0.7,5.0,10.9,6.1,1.7,2.3,8.3,14.4,8.1,-1.2,1.3,7.9,1.9,0.8,0.7,-0.4,1.5,3.3,2.8,0.7,1.7,1.0,1.0,1.3,1.3,1.6,2.9,3.1,4.2,5.5,5.7,4.4,3.2,6.2,11.0,9.1,5.8,6.5,7.6,11.3,13.5,10.3,6.2,3.2,4.3,3.6,1.9,3.6,4.1,4.8,5.4,4.2,3.0,3.0,2.6,2.8,3.0,2.3,1.6,2.2,3.4,2.8,1.6,2.3,2.7,3.4,3.2,2.8,3.8,-0.4,1.6,3.2,2.1,1.5,1.6,0.1,1.3,2.1,2.4,1.8,1.2,4.7,8.0,4.1,2.9,2.6".split(',').map(Number);
+const H_START = 1928;
+function histRealSeries(stockPct){
+  const w = Math.min(1, Math.max(0, stockPct/100));
+  return H_STOCK.map((s,i)=>{ const nom = w*s/100 + (1-w)*H_BOND[i]/100; return (1+nom)/(1+H_INFL[i]/100) - 1; });
 }
-function renderVerdict(el, name, color, v, single){
+function backtest(g, accounts, other, scen){
+  const series = histRealSeries(g.histStock);
+  const H = series.length, horizon = g.planAge-g.currentAge+1;
+  const maxStart = H - horizon;
+  const starts=[];
+  if(maxStart>=0){ for(let s=0;s<=maxStart;s++) starts.push(s); } else starts.push(0); // wrap fallback if horizon>data
+  const totalsByYear = Array.from({length:horizon},()=>[]);
+  let success=0; const endings=[];
+  starts.forEach(s=>{
+    const seq = Array.from({length:horizon},(_,t)=> series[(s+t)%H]);
+    const sim = simulate(g,accounts,other,scen,null,seq);
+    if(sim.ranOut===null) success++;
+    endings.push(sim.ending);
+    sim.years.forEach((y,i)=> totalsByYear[i].push(y.total));
+  });
+  const pct=(arr,p)=>{ const a=[...arr].sort((x,y)=>x-y); return a[Math.min(a.length-1,Math.floor(p*a.length))]; };
+  const p10=[],p50=[],p90=[];
+  totalsByYear.forEach(a=>{ p10.push(pct(a,0.10)); p50.push(pct(a,0.50)); p90.push(pct(a,0.90)); });
+  endings.sort((a,b)=>a-b);
+  return { successPct: Math.round(100*success/starts.length), n:starts.length,
+    firstStart:H_START, lastStart:H_START+(starts[starts.length-1]||0),
+    medianEnding: endings[Math.floor(endings.length/2)], p10,p50,p90 };
+}
+
+/* ---------- verdict ---------- */
+const pctColor = p => p>=85?'var(--good)':p>=65?'var(--warn)':'var(--bad)';
+function classify(det, primaryPct, ending, g){
+  let cls, headline;
+  if(det.ranOut===null){ headline='Money lasts to '+g.planAge+'+'; cls = primaryPct>=85?'good':'warn'; }
+  else { headline='Runs out at age '+det.ranOut; cls = primaryPct>=65?'warn':'bad'; }
+  return {cls, headline, ending, ranOut:det.ranOut};
+}
+function renderVerdict(el, name, color, v, single, mcPct, hist){
   el.style.display='';
   el.className = 'verdict '+v.cls;
   const icon = v.cls==='good'?'✓':v.cls==='warn'?'!':'✕';
-  const sColor = v.successPct>=85?'var(--good)':v.successPct>=65?'var(--warn)':'var(--bad)';
   const tag = single ? 'Your plan' : 'Plan '+name;
+  const tip = `<span class="tip" tabindex="0">i<span class="tipbox"><b>History</b> replays your plan through every real market period since ${hist.firstStart} (${hist.n} periods) — the Depression, 1970s stagflation, 2008 — and counts how often your money lasted. <b>Monte Carlo</b> runs ${MC_RUNS} random-return futures from your return &amp; volatility. Neither is a guarantee.</span></span>`;
   el.innerHTML = `
     <div class="tag"><span class="dot" style="background:${color}"></span>${tag}</div>
     <div class="headline">${icon} ${v.headline}</div>
-    <div class="sub">Market‑risk confidence: <b style="color:${sColor};margin:0 3px">${v.successPct}%</b> of scenarios last ${MC_TIP}</div>
+    <div class="sub">Chance it lasts: <b style="color:${pctColor(hist.successPct)};margin:0 4px">History ${hist.successPct}%</b> · <b style="color:${pctColor(mcPct)};margin-left:4px">Monte Carlo ${mcPct}%</b> ${tip}</div>
     <div class="sub">Typical money left at end: <b style="margin-left:3px">${v.ending>0?money(v.ending):'$0'}</b></div>`;
 }
 
@@ -515,12 +569,12 @@ function renderVerdict(el, name, color, v, single){
 let portfolioChart=null, incomeChart=null, pieChart=null;
 const hexA=(hex,a)=>{const n=parseInt(hex.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;};
 
-function renderPortfolio(labels, detA, detB, mc, showBand){
+function renderPortfolio(labels, detA, detB, band){
   const ds=[];
-  if(showBand && mc){
-    const band = focus==='A'?A_COLOR:B_COLOR;
-    ds.push({label:'90th pct', data:mc.p90, borderWidth:0, pointRadius:0, backgroundColor:hexA(band,.12), fill:'+1', tension:.25, order:5});
-    ds.push({label:'10th pct', data:mc.p10, borderWidth:0, pointRadius:0, fill:false, tension:.25, order:5});
+  if(band){
+    const bc = focus==='A'?A_COLOR:B_COLOR;
+    ds.push({label:'90th pct', data:band.p90, borderWidth:0, pointRadius:0, backgroundColor:hexA(bc,.12), fill:'+1', tension:.25, order:5});
+    ds.push({label:'10th pct', data:band.p10, borderWidth:0, pointRadius:0, fill:false, tension:.25, order:5});
   }
   ds.push({label: detB?'Plan A':'Your plan', data:detA, borderColor:A_COLOR, borderWidth:2.5, pointRadius:0, tension:.25, fill:false, order:1});
   if(detB) ds.push({label:'Plan B', data:detB, borderColor:B_COLOR, borderWidth:2.5, pointRadius:0, tension:.25, fill:false, order:1});
@@ -606,27 +660,31 @@ function recompute(){
 
     $('verdicts').classList.toggle('single', !compare);
     $('focusSeg').style.display = compare ? '' : 'none';
-    const showBand=$('mcToggle').checked;
+    const histA=backtest(g,accounts,other,sA);
+    // primary success (drives color) = the worse of history / Monte Carlo (conservative)
+    const bandOf = (mc,hist)=> rangeMode==='mc'?mc : rangeMode==='hist'?hist : null;
 
     if(compare){
       const sB=readScenario('B');
       const detB=simulate(g,accounts,other,sB);
       const mcB=monteCarlo(g,accounts,other,sB,MC_RUNS);
-      renderVerdict($('verdictA'),'A',A_COLOR,classify(detA,mcA,g),false);
-      renderVerdict($('verdictB'),'B',B_COLOR,classify(detB,mcB,g),false);
+      const histB=backtest(g,accounts,other,sB);
+      renderVerdict($('verdictA'),'A',A_COLOR,classify(detA,Math.min(histA.successPct,mcA.successPct),detA.ending,g),false,mcA.successPct,histA);
+      renderVerdict($('verdictB'),'B',B_COLOR,classify(detB,Math.min(histB.successPct,mcB.successPct),detB.ending,g),false,mcB.successPct,histB);
       const labels=detA.years.map(y=>y.age);
-      renderPortfolio(labels, detA.years.map(y=>y.total), detB.years.map(y=>y.total), showBand?(focus==='A'?mcA:mcB):null, showBand);
+      renderPortfolio(labels, detA.years.map(y=>y.total), detB.years.map(y=>y.total), focus==='A'?bandOf(mcA,histA):bandOf(mcB,histB));
       const fsim = focus==='A'?detA:detB;
       renderIncome(fsim); renderPie(fsim,g); lastPieSim=fsim;
     } else {
       focus='A';
       $('verdictB').style.display='none';
-      renderVerdict($('verdictA'),'A',A_COLOR,classify(detA,mcA,g),true);
+      renderVerdict($('verdictA'),'A',A_COLOR,classify(detA,Math.min(histA.successPct,mcA.successPct),detA.ending,g),true,mcA.successPct,histA);
       const labels=detA.years.map(y=>y.age);
-      renderPortfolio(labels, detA.years.map(y=>y.total), null, showBand?mcA:null, showBand);
+      renderPortfolio(labels, detA.years.map(y=>y.total), null, bandOf(mcA,histA));
       renderIncome(detA); renderPie(detA,g); lastPieSim=detA;
     }
     renderSaveSummary(accounts);
+    $('histInfo').textContent = `${histA.n} periods, ${histA.firstStart}–${histA.lastStart} start years`;
     $('mcRunsLabel').textContent=MC_RUNS;
   },130);
 }
@@ -685,7 +743,7 @@ function loadDemo(){
   $('assetList').innerHTML=''; $('otherList').innerHTML='';
   $('currentAge').value=45; $('planAge').value=95;
   $('expReturn').value=6; $('inflation').value=2.5;
-  $('vol').value=12; $('ordRate').value=18; $('ltcgRate').value=15; $('gainFrac').value=50; $('rmdAge').value=73;
+  $('vol').value=12; $('ordRate').value=18; $('ltcgRate').value=15; $('gainFrac').value=50; $('rmdAge').value=73; $('histStock').value=75;
   $('desiredMonthly').value=6000; $('ssFRA').value=2400;
   $('compareToggle').checked=false; $('planBBlock').style.display='none';
   $('A_retire').value=62; $('A_claim').value=67;
@@ -707,7 +765,11 @@ fillSelect('A_claim',62,70,67);  fillSelect('B_claim',62,70,62);
 $('addAsset').onclick=()=>{accountCard();recompute();};
 $('addOther').onclick=()=>{otherRow();recompute();};
 $('loadDemo').onclick=loadDemo;
-$('mcToggle').addEventListener('change',recompute);
+document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{
+  rangeMode=b.dataset.r;
+  document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.toggle('on',x===b));
+  recompute();
+});
 $('compareToggle').addEventListener('change',()=>{ $('planBBlock').style.display=$('compareToggle').checked?'':'none'; recompute(); });
 $('pieAge').addEventListener('input',()=>{ pieAge=Math.round(num('pieAge',70)); $('pieAgeLabel').textContent=pieAge; if(lastPieSim&&lastG) renderPie(lastPieSim,lastG); });
 document.querySelectorAll('#focusSeg button').forEach(b=>b.onclick=()=>{
@@ -715,7 +777,7 @@ document.querySelectorAll('#focusSeg button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#focusSeg button').forEach(x=>x.classList.toggle('on',x===b));
   recompute();
 });
-['currentAge','planAge','expReturn','inflation','vol','ordRate','ltcgRate','gainFrac','rmdAge',
+['currentAge','planAge','expReturn','inflation','vol','ordRate','ltcgRate','gainFrac','rmdAge','histStock',
  'desiredMonthly','ssFRA','A_retire','A_claim','B_retire','B_claim']
  .forEach(id=>$(id).addEventListener('input',recompute));
 
