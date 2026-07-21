@@ -241,7 +241,7 @@
         <div class="card">
           <h2>Reading this</h2>
           <div class="foot" style="font-size:12px">
-            Planning model, not financial advice. Everything is in today's dollars (inflation-adjusted). Contributions stop when you retire; withdrawals are taxed by account type; RMDs are forced from 401(k)/IRA at your RMD age and reinvested if unspent. Real-estate &amp; business assets grow and are liquidated at their sell age (after cap-gains tax), with proceeds reinvested. Social Security and other income are treated as after-tax. Monte Carlo re-runs the plan across many random return sequences. The 10% early-withdrawal penalty before 59½ isn't modeled. Verify your Social Security estimate at ssa.gov.
+            Planning model, not financial advice. Everything is in today's dollars (inflation-adjusted). Contributions stop when you retire; withdrawals are taxed by account type; RMDs are forced from 401(k)/IRA at your RMD age and reinvested if unspent. Real-estate &amp; business assets grow and are liquidated at their sell age (after cap-gains tax), with proceeds reinvested. Social Security and other income are treated as after-tax. Withdrawals from 401(k)/IRA/Roth before age 59½ include the 10% IRS early-withdrawal penalty — so an early retiree really does need a taxable/cash bridge. Monte Carlo re-runs the plan across many random return sequences. Verify your Social Security estimate at ssa.gov.
           </div>
         </div>
       </div>
@@ -362,17 +362,24 @@ function adjustSS(benefitFRA, claimAge, fraAge){
   return benefitFRA*(1+cap*(2/3)/100);
 }
 
-/* ---------- taxes ---------- */
-function netFrom(type, gross, g){
-  if(type.startsWith('401'))  return gross*(1-g.ordRate);
-  if(type==='Taxable'||type==='Real estate'||type==='Business') return gross*(1 - g.gainFrac*g.ltcgRate);
-  return gross; // Roth, Cash
+/* ---------- taxes + 59½ early-withdrawal penalty ----------
+   Money in 401(k)/IRA and Roth can't be tapped before age 59½ without a 10%
+   IRS penalty (on top of income tax). Taxable/cash/real-estate/business are free
+   to access at any age. This is what most calculators (incl. FIRECalc) ignore. */
+const PENALTY_AGE = 59.5, PENALTY_RATE = 0.10;
+function earlyPenalty(type, age){
+  if(age >= PENALTY_AGE) return 0;
+  return (type.startsWith('401') || type==='Roth') ? PENALTY_RATE : 0;
 }
-function grossForNet(type, net, g){
-  if(type.startsWith('401'))  return net/(1-g.ordRate);
-  if(type==='Taxable')        return net/(1 - g.gainFrac*g.ltcgRate);
-  return net;
+// fraction of a gross withdrawal you keep, after tax and any early penalty
+function netFactor(type, g, age){
+  let f = 1;
+  if(type.startsWith('401')) f = 1 - g.ordRate;
+  else if(type==='Taxable'||type==='Real estate'||type==='Business') f = 1 - g.gainFrac*g.ltcgRate;
+  return Math.max(0.01, f - earlyPenalty(type, age));
 }
+function netFrom(type, gross, g, age=99){ return gross*netFactor(type,g,age); }
+function grossForNet(type, net, g, age=99){ return net/netFactor(type,g,age); }
 const WD_RANK = {'Cash':0,'Taxable':1,'401(k) / IRA':2,'Roth':3};
 function orderKey(type){ return WD_RANK[type] ?? 2; }
 
@@ -439,9 +446,9 @@ function simulate(g, accounts, other, scen, returns){
           const a=bal[idx]; if(a.value<=0) continue;
           const drawAge = (a.draw==null) ? scen.retire : a.draw;
           if(pass===1 && age < drawAge) continue;
-          const gross = grossForNet(a.type, need, g);
+          const gross = grossForNet(a.type, need, g, age);
           const take = Math.min(a.value, gross); a.value -= take;
-          const got = netFrom(a.type, take, g); wdNet += got; need -= got;
+          const got = netFrom(a.type, take, g, age); wdNet += got; need -= got;
           wdBy[a.label]=(wdBy[a.label]||0)+got;
         }
         if(need<=1e-6) break;
