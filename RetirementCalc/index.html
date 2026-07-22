@@ -178,7 +178,7 @@
           <div id="assetList"></div>
           <button id="addAsset" class="btn ghost sm">+ Add account / asset</button>
           <div id="saveSummary" class="saveSummary"></div>
-          <div class="hint">Set what each holds today, monthly contributions (and when they stop), and the age you start drawing. <b>Real estate</b> &amp; <b>business</b> show a <b>loan owed</b> — net worth counts only your <b>equity</b> (value − loan), and selling pays off the remaining loan. They grow on their own and aren't drawn piecemeal; give them a <b>Sell at age</b> and the net proceeds drop into your portfolio then. <b>Draw from</b> builds an early-retirement bridge (spend brokerage first, let the 401k &amp; Roth grow).</div>
+          <div class="hint">Set what each holds today, monthly contributions (and when they stop), and the age you start drawing. <b>Real estate</b> &amp; <b>business</b> show a <b>loan owed</b> (net worth counts only your <b>equity</b> = value − loan; selling pays off the remaining loan), a <b>net income $/mo</b> they pay you while you own them, and a <b>Sell at age</b> whose net proceeds drop into your portfolio. <b>Draw from</b> builds an early-retirement bridge (spend brokerage first, let the 401k &amp; Roth grow).</div>
         </div>
 
         <div class="card">
@@ -349,7 +349,8 @@ function readAccounts(g){
       draw: isNaN(dr) ? null : dr,
       sell: isNaN(se) ? null : se,
       loan: parseNum(el.querySelector('.a-loan').value),
-      loanPayoff: isNaN(lp) ? null : lp
+      loanPayoff: isNaN(lp) ? null : lp,
+      income: parseNum(el.querySelector('.a-income').value)
     };
   });
 }
@@ -431,7 +432,7 @@ function simulate(g, accounts, other, scen, returns=null, histSeq=null){
   for(let age=g.currentAge; age<=g.planAge; age++){
     const t = age-g.currentAge;
     const retired = age>=scen.retire;
-    let wdNet=0, ssY=0, otherY=0, shortfall=0, saleY=0; const wdBy={};
+    let wdNet=0, ssY=0, otherY=0, shortfall=0, saleY=0, propIncY=0; const wdBy={};
 
     // contributions while working
     if(!retired){
@@ -447,7 +448,9 @@ function simulate(g, accounts, other, scen, returns=null, histSeq=null){
     if(retired){
       ssY = (age>=scen.claim ? ss0 : 0)*12;
       otherY = other.reduce((s,o)=> s + ((age>=o.startAge && age<=o.endAge)? o.monthly*12 : 0), 0);
-      let need = Math.max(0, desired - ssY - otherY);
+      // net rental / business income while you still own the asset (stops at sale)
+      bal.forEach(a=>{ if(isProperty(a.type) && a.income>0 && a.value>0 && (a.sell==null || age < a.sell)) propIncY += a.income*12; });
+      let need = Math.max(0, desired - ssY - otherY - propIncY);
 
       // 1) Required Minimum Distributions
       if(age>=g.rmdAge){
@@ -496,7 +499,7 @@ function simulate(g, accounts, other, scen, returns=null, histSeq=null){
 
     // net worth counts property EQUITY (market value − remaining loan), not gross value
     const netWorth = bal.reduce((s,a)=> s + (isProperty(a.type) ? Math.max(0, a.value - loanAt(a,age,g.currentAge)) : a.value), 0);
-    years.push({age, total:netWorth, ss:ssY, other:otherY, wd:wdNet, wdBy, sale:saleY, desired, retired, shortfall});
+    years.push({age, total:netWorth, ss:ssY, other:otherY, propInc:propIncY, wd:wdNet, wdBy, sale:saleY, desired, retired, shortfall});
   }
   return {years, ranOut, ending: years[years.length-1].total};
 }
@@ -616,6 +619,7 @@ function renderIncome(sim){
       {type:'line',label:'Desired spending',data:pick('desired'),borderColor:'#334155',borderDash:[6,4],borderWidth:2,pointRadius:0,tension:.2,order:0},
       {label:'Social Security',data:pick('ss'),backgroundColor:'#16a34a',stack:'s',order:1},
       {label:'Other income',data:pick('other'),backgroundColor:'#7c3aed',stack:'s',order:1},
+      {label:'Property/business income',data:pick('propInc'),backgroundColor:'#0d9488',stack:'s',order:1},
       {label:'Portfolio withdrawals',data:pick('wd'),backgroundColor:hexA(focus==='A'?A_COLOR:B_COLOR,.85),stack:'s',order:1},
     ]},
     options:{responsive:true, animation:false, interaction:{mode:'index',intersect:false},
@@ -632,10 +636,11 @@ function renderPie(sim, g){
   const slices=[];
   if(y.ss>0)    slices.push({l:'Social Security', v:M(y.ss), c:'#16a34a'});
   if(y.other>0) slices.push({l:'Other income', v:M(y.other), c:'#7c3aed'});
+  if(y.propInc>0) slices.push({l:'Property/business income', v:M(y.propInc), c:'#0d9488'});
   const pal=['#2563eb','#ea580c','#0891b2','#ca8a04','#0ea5e9','#d946ef','#64748b'];
   let pi=0;
   Object.entries(y.wdBy||{}).forEach(([lbl,v])=>{ if(v>0.5) slices.push({l:lbl, v:M(v), c:pal[pi++%pal.length]}); });
-  const totalM=M(y.ss+y.other+y.wd), desiredM=M(y.desired);
+  const totalM=M(y.ss+y.other+y.propInc+y.wd), desiredM=M(y.desired);
   let capClass, capText;
   if(!y.retired){ capClass='good'; capText=`Age ${pieAge}: still working (retirement not started)`; }
   else if(totalM < desiredM-1){ slices.push({l:'Shortfall (unfunded)', v:desiredM-totalM, c:'#dc2626'}); capClass='bad'; capText=`Short ${money(desiredM-totalM)}/mo of your ${money(desiredM)} goal`; }
@@ -721,7 +726,7 @@ function updateCardType(el){
   el.querySelectorAll('.f-prop').forEach(f=> f.style.display = prop?'':'none');
   el.querySelector('.lbl-value').textContent = prop?'Market value $':'Value $';
 }
-function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until='',draw='',sell='',loan='',loanpay=''}={}){
+function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until='',draw='',sell='',loan='',loanpay='',income=''}={}){
   const el=document.createElement('div'); el.className='acct';
   el.innerHTML=`
     <div class="acctTop">
@@ -737,6 +742,7 @@ function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until=''
       <div class="mini f-fin"><label>Draw from age</label><input class="a-draw" type="number" value="${draw}" placeholder="retire"></div>
       <div class="mini f-prop"><label>Loan owed $</label><input class="a-loan" type="number" value="${loan}" placeholder="0"></div>
       <div class="mini f-prop"><label>Loan paid off by age</label><input class="a-loanpay" type="number" value="${loanpay}" placeholder="—"></div>
+      <div class="mini f-prop"><label>Net income $/mo</label><input class="a-income" type="number" value="${income}" placeholder="0"></div>
       <div class="mini f-prop"><label>Sell at age</label><input class="a-sell" type="number" value="${sell}" placeholder="—"></div>
     </div>`;
   el.querySelector('.del').onclick=()=>{el.remove();recompute();};
@@ -746,6 +752,7 @@ function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until=''
   attachCurrency(el.querySelector('.a-value'));
   attachCurrency(el.querySelector('.a-contrib'));
   attachCurrency(el.querySelector('.a-loan'));
+  attachCurrency(el.querySelector('.a-income'));
   updateCardType(el);
 }
 function otherRow(label='',monthly='',start='',end=''){
@@ -777,7 +784,7 @@ function loadDemo(){
   accountCard({label:'Roth IRA',      value:120000, type:'Roth',         contrib:500,  draw:72});
   accountCard({label:'Brokerage',     value:180000, type:'Taxable',      contrib:500,  draw:62});
   accountCard({label:'Cash',          value:40000,  type:'Cash', ret:'2',contrib:0,    draw:62});
-  accountCard({label:'Rental property',value:250000, type:'Real estate', ret:'4', loan:150000, loanpay:68, sell:70});
+  accountCard({label:'Rental property',value:250000, type:'Real estate', ret:'4', loan:150000, loanpay:68, income:800, sell:70});
   otherRow('Pension',0,65,95);
   ['desiredMonthly','ssFRA'].forEach(id=>formatCurrency($(id)));
   pieAge=70;
