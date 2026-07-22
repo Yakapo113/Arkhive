@@ -316,18 +316,23 @@ function readAccounts(g){
     const dr=parseFloat(el.querySelector('.a-draw').value);
     const se=parseFloat(el.querySelector('.a-sell').value);
     const lp=parseFloat(el.querySelector('.a-loanpay').value);
+    const type = el.querySelector('.a-type').value;
+    const prop = isProperty(type);
+    // Only read the fields that apply to this type — hidden fields can hold stale
+    // values (e.g. a contribution typed before switching to Real estate) and must
+    // NOT leak into the model.
     return {
       label: el.querySelector('.a-label').value || 'Account',
       value: parseNum(el.querySelector('.a-value').value),
-      type: el.querySelector('.a-type').value,
+      type,
       ret: isNaN(r) ? g.expReturn : r/100,
-      contribMo: parseNum(el.querySelector('.a-contrib').value),
-      contribUntil: isNaN(cu) ? Infinity : cu,
-      draw: isNaN(dr) ? null : dr,
-      sell: isNaN(se) ? null : se,
-      loan: parseNum(el.querySelector('.a-loan').value),
-      loanPayoff: isNaN(lp) ? null : lp,
-      income: parseNum(el.querySelector('.a-income').value)
+      contribMo:   prop ? 0        : parseNum(el.querySelector('.a-contrib').value),
+      contribUntil:prop ? Infinity : (isNaN(cu) ? Infinity : cu),
+      draw:        prop ? null     : (isNaN(dr) ? null : dr),
+      loan:        prop ? parseNum(el.querySelector('.a-loan').value) : 0,
+      loanPayoff:  prop ? (isNaN(lp) ? null : lp) : null,
+      income:      prop ? parseNum(el.querySelector('.a-income').value) : 0,
+      sell:        prop ? (isNaN(se) ? null : se) : null
     };
   });
 }
@@ -668,12 +673,15 @@ function recompute(){
 function renderSaveSummary(accounts){
   const savers=accounts.filter(a=>a.contribMo>0);
   const total=savers.reduce((s,a)=>s+a.contribMo,0);
+  const earners=accounts.filter(a=>isProperty(a.type) && a.income>0);
+  const incTotal=earners.reduce((s,a)=>s+a.income,0);
   const sales=accounts.filter(a=>a.sell!=null && a.value>0);
-  let html;
-  if(total<=0){ html='<b>Not saving yet.</b> Add a monthly contribution to an account above.'; }
-  else html=`Saving <b>${money(total)}/mo</b> → ${savers.map(a=>`${a.label} ${money(a.contribMo)}`).join(' · ')}`;
-  if(sales.length) html += `<br>Selling: ${sales.map(a=>`${a.label} at ${Math.round(a.sell)}`).join(' · ')}`;
-  $('saveSummary').innerHTML=html;
+  const lines=[];
+  if(total>0) lines.push(`Saving <b>${money(total)}/mo</b> → ${savers.map(a=>`${a.label} ${money(a.contribMo)}`).join(' · ')}`);
+  else lines.push('<b>Not saving yet.</b> Add a monthly contribution to an account above.');
+  if(earners.length) lines.push(`Property/business income <b>${money(incTotal)}/mo</b> → ${earners.map(a=>`${a.label} ${money(a.income)}`).join(' · ')}`);
+  if(sales.length) lines.push(`Selling: ${sales.map(a=>`${a.label} at ${Math.round(a.sell)}`).join(' · ')}`);
+  $('saveSummary').innerHTML=lines.join('<br>');
 }
 
 /* ---------- dynamic rows ---------- */
