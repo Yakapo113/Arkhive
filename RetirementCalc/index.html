@@ -178,7 +178,7 @@
           <div id="assetList"></div>
           <button id="addAsset" class="btn ghost sm">+ Add account / asset</button>
           <div id="saveSummary" class="saveSummary"></div>
-          <div class="hint">Set what each holds today, monthly contributions (and when they stop), and the age you start drawing. <b>Real estate</b> &amp; <b>business</b> grow on their own and aren't drawn piecemeal — give them a <b>Sell at age</b> and the after-tax proceeds drop into your portfolio then. <b>Draw from</b> builds an early-retirement bridge (spend brokerage first, let the 401k &amp; Roth grow).</div>
+          <div class="hint">Set what each holds today, monthly contributions (and when they stop), and the age you start drawing. <b>Real estate</b> &amp; <b>business</b> show a <b>loan owed</b> — net worth counts only your <b>equity</b> (value − loan), and selling pays off the remaining loan. They grow on their own and aren't drawn piecemeal; give them a <b>Sell at age</b> and the net proceeds drop into your portfolio then. <b>Draw from</b> builds an early-retirement bridge (spend brokerage first, let the 401k &amp; Roth grow).</div>
         </div>
 
         <div class="card">
@@ -274,6 +274,15 @@ let lastPieSim = null, lastG = null;
 const TYPES = ['401(k) / IRA','Roth','Taxable','Cash','Real estate','Business'];
 const LIQUID = new Set(['401(k) / IRA','Roth','Taxable','Cash']);
 const isLiquid = t => LIQUID.has(t);
+const isProperty = t => t==='Real estate' || t==='Business';
+// remaining mortgage/loan on a property at a given age (linear paydown to the payoff age)
+function loanAt(a, age, currentAge){
+  const L = a.loan||0; if(L<=0) return 0;
+  if(a.loanPayoff==null) return L;                      // no payoff schedule → constant
+  const span = a.loanPayoff - currentAge;
+  if(span<=0) return age>=a.loanPayoff ? 0 : L;
+  return L * Math.max(0, Math.min(1, (a.loanPayoff - age)/span));
+}
 
 const money = n => (n<0?'-':'') + '$' + Math.abs(Math.round(n)).toLocaleString();
 const moneyK = n => { const a=Math.abs(n); const s=n<0?'-':'';
@@ -329,6 +338,7 @@ function readAccounts(g){
     const cu=parseFloat(el.querySelector('.a-until').value);
     const dr=parseFloat(el.querySelector('.a-draw').value);
     const se=parseFloat(el.querySelector('.a-sell').value);
+    const lp=parseFloat(el.querySelector('.a-loanpay').value);
     return {
       label: el.querySelector('.a-label').value || 'Account',
       value: parseNum(el.querySelector('.a-value').value),
@@ -337,7 +347,9 @@ function readAccounts(g){
       contribMo: parseNum(el.querySelector('.a-contrib').value),
       contribUntil: isNaN(cu) ? Infinity : cu,
       draw: isNaN(dr) ? null : dr,
-      sell: isNaN(se) ? null : se
+      sell: isNaN(se) ? null : se,
+      loan: parseNum(el.querySelector('.a-loan').value),
+      loanPayoff: isNaN(lp) ? null : lp
     };
   });
 }
@@ -426,10 +438,10 @@ function simulate(g, accounts, other, scen, returns=null, histSeq=null){
       bal.forEach(a=>{ if(a.contribMo>0 && age < Math.min(scen.retire, a.contribUntil)) a.value += a.contribMo*12; });
     }
 
-    // asset sales at this age -> after-tax proceeds reinvested into liquid pool
+    // asset sales at this age -> proceeds = value − cap-gains tax − remaining loan payoff
     bal.forEach(a=>{ if(a.sell!=null && Math.round(a.sell)===age && a.value>0){
-      const net = netFrom(a.type, a.value, g);
-      a.value = 0; bal[reinvestIdx].value += net; saleY += net;
+      const net = Math.max(0, netFrom(a.type, a.value, g) - loanAt(a, age, g.currentAge));
+      a.value = 0; a.loan = 0; bal[reinvestIdx].value += net; saleY += net;
     }});
 
     if(retired){
@@ -482,7 +494,9 @@ function simulate(g, accounts, other, scen, returns=null, histSeq=null){
       a.value = Math.max(0, a.value*(1+r));
     });
 
-    years.push({age, total:bal.reduce((s,a)=>s+a.value,0), ss:ssY, other:otherY, wd:wdNet, wdBy, sale:saleY, desired, retired, shortfall});
+    // net worth counts property EQUITY (market value − remaining loan), not gross value
+    const netWorth = bal.reduce((s,a)=> s + (isProperty(a.type) ? Math.max(0, a.value - loanAt(a,age,g.currentAge)) : a.value), 0);
+    years.push({age, total:netWorth, ss:ssY, other:otherY, wd:wdNet, wdBy, sale:saleY, desired, retired, shortfall});
   }
   return {years, ranOut, ending: years[years.length-1].total};
 }
@@ -701,7 +715,13 @@ function renderSaveSummary(accounts){
 }
 
 /* ---------- dynamic rows ---------- */
-function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until='',draw='',sell=''}={}){
+function updateCardType(el){
+  const prop = isProperty(el.querySelector('.a-type').value);
+  el.querySelectorAll('.f-fin').forEach(f=> f.style.display = prop?'none':'');
+  el.querySelectorAll('.f-prop').forEach(f=> f.style.display = prop?'':'none');
+  el.querySelector('.lbl-value').textContent = prop?'Market value $':'Value $';
+}
+function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until='',draw='',sell='',loan='',loanpay=''}={}){
   const el=document.createElement('div'); el.className='acct';
   el.innerHTML=`
     <div class="acctTop">
@@ -709,19 +729,24 @@ function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until=''
       <button class="del" title="Remove">×</button>
     </div>
     <div class="acctGrid">
-      <div class="mini"><label>Value $</label><input class="a-value" type="number" value="${value}" placeholder="0"></div>
+      <div class="mini"><label class="lbl-value">Value $</label><input class="a-value" type="number" value="${value}" placeholder="0"></div>
       <div class="mini"><label>Type</label><select class="a-type">${TYPES.map(t=>`<option${t===type?' selected':''}>${t}</option>`).join('')}</select></div>
       <div class="mini"><label>Return %</label><input class="a-ret" type="number" value="${ret}" placeholder="—"></div>
-      <div class="mini"><label>Add $/mo</label><input class="a-contrib" type="number" value="${contrib}" placeholder="0"></div>
-      <div class="mini"><label>Contribute until</label><input class="a-until" type="number" value="${until}" placeholder="retire"></div>
-      <div class="mini"><label>Draw from age</label><input class="a-draw" type="number" value="${draw}" placeholder="retire"></div>
-      <div class="mini"><label>Sell at age</label><input class="a-sell" type="number" value="${sell}" placeholder="—"></div>
+      <div class="mini f-fin"><label>Add $/mo</label><input class="a-contrib" type="number" value="${contrib}" placeholder="0"></div>
+      <div class="mini f-fin"><label>Contribute until</label><input class="a-until" type="number" value="${until}" placeholder="retire"></div>
+      <div class="mini f-fin"><label>Draw from age</label><input class="a-draw" type="number" value="${draw}" placeholder="retire"></div>
+      <div class="mini f-prop"><label>Loan owed $</label><input class="a-loan" type="number" value="${loan}" placeholder="0"></div>
+      <div class="mini f-prop"><label>Loan paid off by age</label><input class="a-loanpay" type="number" value="${loanpay}" placeholder="—"></div>
+      <div class="mini f-prop"><label>Sell at age</label><input class="a-sell" type="number" value="${sell}" placeholder="—"></div>
     </div>`;
   el.querySelector('.del').onclick=()=>{el.remove();recompute();};
   el.querySelectorAll('input,select').forEach(i=>i.addEventListener('input',recompute));
+  el.querySelector('.a-type').addEventListener('change',()=>updateCardType(el));
   $('assetList').appendChild(el);
   attachCurrency(el.querySelector('.a-value'));
   attachCurrency(el.querySelector('.a-contrib'));
+  attachCurrency(el.querySelector('.a-loan'));
+  updateCardType(el);
 }
 function otherRow(label='',monthly='',start='',end=''){
   const row=document.createElement('div'); row.className='acctGrid'; row.style.cssText='grid-template-columns:1.4fr 1fr 0.8fr 0.8fr 24px;margin-bottom:6px';
@@ -752,7 +777,7 @@ function loadDemo(){
   accountCard({label:'Roth IRA',      value:120000, type:'Roth',         contrib:500,  draw:72});
   accountCard({label:'Brokerage',     value:180000, type:'Taxable',      contrib:500,  draw:62});
   accountCard({label:'Cash',          value:40000,  type:'Cash', ret:'2',contrib:0,    draw:62});
-  accountCard({label:'Rental property',value:250000, type:'Real estate', ret:'4',      sell:70});
+  accountCard({label:'Rental property',value:250000, type:'Real estate', ret:'4', loan:150000, loanpay:68, sell:70});
   otherRow('Pension',0,65,95);
   ['desiredMonthly','ssFRA'].forEach(id=>formatCurrency($(id)));
   pieAge=70;
