@@ -138,6 +138,7 @@
               <div class="field"><label>RMD start age <span class="tip" tabindex="0">i<span class="tipbox"><b>Required Minimum Distributions:</b> the IRS forces you to withdraw a slice of 401(k)/IRA money each year starting at age <b>73</b> (75 from 2033), taxed as income. Any part you don't spend is reinvested in a taxable account.</span></span></label><input id="rmdAge" type="number" value="73"></div>
               <div class="field"><label>Stocks % for history test <span class="tip" tabindex="0">i<span class="tipbox">Used only by the <b>History</b> risk band: your stock/bond split when replaying real markets since 1928. <b>75</b> = 75% stocks / 25% bonds. More stocks = higher average but wilder history.</span></span></label><input id="histStock" type="number" value="75"></div>
             </div>
+            <div class="field"><label>Capital-loss carryforward $ <span class="tip" tabindex="0">i<span class="tipbox">A prior capital <b>loss</b> you're carrying forward. It offsets capital gains from property/business sales dollar-for-dollar before cap-gains tax, and is used up by the earliest sales first.</span></span></label><input id="capLossCarry" type="number" value="0"></div>
           </details>
         </div>
 
@@ -230,7 +231,7 @@
         <div class="card">
           <h2>Reading this</h2>
           <div class="foot" style="font-size:12px">
-            Planning model, not financial advice. Everything is in today's dollars (inflation-adjusted). Contributions stop when you retire; withdrawals are taxed by account type; RMDs are forced from 401(k)/IRA at your RMD age and reinvested if unspent. Real-estate &amp; business assets grow and are liquidated at their sell age (after cap-gains tax), with proceeds reinvested. Social Security and other income are treated as after-tax. Withdrawals from 401(k)/IRA/Roth before age 59½ include the 10% IRS early-withdrawal penalty — so an early retiree really does need a taxable/cash bridge. Two risk engines: <b>History</b> replays every real market sequence since 1928 (S&P 500 + Treasuries + CPI, Damodaran data) using your stock/bond split; <b>Monte Carlo</b> draws random returns from your return &amp; volatility. Real estate/business use their own growth rate, not the market series. Verify your Social Security estimate at ssa.gov.
+            Planning model, not financial advice. Everything is in today's dollars (inflation-adjusted). Contributions stop when you retire; withdrawals are taxed by account type; RMDs are forced from 401(k)/IRA at your RMD age and reinvested if unspent. Real-estate &amp; business assets grow and are liquidated at their sell age; sale gain = price − cost basis (or the gain-portion estimate if no basis), taxed at the cap-gains rate after any capital-loss carryforward, then net of the remaining loan. Depreciation recapture isn't modeled — nudge the cap-gains rate up if that matters. Social Security and other income are treated as after-tax. Withdrawals from 401(k)/IRA/Roth before age 59½ include the 10% IRS early-withdrawal penalty — so an early retiree really does need a taxable/cash bridge. Two risk engines: <b>History</b> replays every real market sequence since 1928 (S&P 500 + Treasuries + CPI, Damodaran data) using your stock/bond split; <b>Monte Carlo</b> draws random returns from your return &amp; volatility. Real estate/business use their own growth rate, not the market series. Verify your Social Security estimate at ssa.gov.
           </div>
         </div>
       </div>
@@ -307,6 +308,7 @@ function readGlobals(){
     get fraAge(){ return fraFromBirthYear(this.birthYear); },
     rmdAge:Math.round(num('rmdAge',73)),
     histStock:num('histStock',75),
+    capLossCarry:num('capLossCarry',0),
   };
 }
 function readAccounts(g){
@@ -316,6 +318,7 @@ function readAccounts(g){
     const dr=parseFloat(el.querySelector('.a-draw').value);
     const se=parseFloat(el.querySelector('.a-sell').value);
     const lp=parseFloat(el.querySelector('.a-loanpay').value);
+    const rawBasis = el.querySelector('.a-basis').value.trim();
     const type = el.querySelector('.a-type').value;
     const prop = isProperty(type);
     // Only read the fields that apply to this type — hidden fields can hold stale
@@ -332,6 +335,7 @@ function readAccounts(g){
       loan:        prop ? parseNum(el.querySelector('.a-loan').value) : 0,
       loanPayoff:  prop ? (isNaN(lp) ? null : lp) : null,
       income:      prop ? parseNum(el.querySelector('.a-income').value) : 0,
+      basis:       prop && rawBasis!=='' ? parseNum(rawBasis) : null,   // null → fall back to gain-portion estimate
       sell:        prop ? (isNaN(se) ? null : se) : null
     };
   });
@@ -409,6 +413,7 @@ function simulate(g, accounts, other, scen, returns=null, histSeq=null){
   if(reinvestIdx<0){ bal.push({label:'Cash',type:'Cash',value:0,ret:g.expReturn,contribMo:0,contribUntil:Infinity,draw:null,sell:null,rreal:realRet(g.expReturn)}); reinvestIdx=bal.length-1; }
   const dOrder = bal.map((a,i)=>i).filter(i=>isLiquid(bal[i].type)).sort((i,j)=>orderKey(bal[i].type)-orderKey(bal[j].type));
   const years=[]; let ranOut=null;
+  let capLoss = g.capLossCarry || 0;   // capital-loss carryforward, consumed by sales
   const desired = g.desiredMonthly*12;
 
   for(let age=g.currentAge; age<=g.planAge; age++){
@@ -421,9 +426,14 @@ function simulate(g, accounts, other, scen, returns=null, histSeq=null){
       bal.forEach(a=>{ if(a.contribMo>0 && age < Math.min(scen.retire, a.contribUntil)) a.value += a.contribMo*12; });
     }
 
-    // asset sales at this age -> proceeds = value − cap-gains tax − remaining loan payoff
+    // asset sales at this age -> proceeds = value − cap-gains tax − remaining loan payoff.
+    // Gain = value − cost basis (if given, else the global gain-portion estimate); a
+    // capital-loss carryforward offsets the gain before tax, earliest sales first.
     bal.forEach(a=>{ if(a.sell!=null && Math.round(a.sell)===age && a.value>0){
-      const net = Math.max(0, netFrom(a.type, a.value, g) - loanAt(a, age, g.currentAge));
+      let gain = a.basis!=null ? Math.max(0, a.value - a.basis) : a.value*g.gainFrac;
+      const offset = Math.min(gain, capLoss); gain -= offset; capLoss -= offset;
+      const tax = gain*g.ltcgRate;
+      const net = Math.max(0, a.value - tax - loanAt(a, age, g.currentAge));
       a.value = 0; a.loan = 0; bal[reinvestIdx].value += net; saleY += net;
     }});
 
@@ -691,7 +701,7 @@ function updateCardType(el){
   el.querySelectorAll('.f-prop').forEach(f=> f.style.display = prop?'':'none');
   el.querySelector('.lbl-value').textContent = prop?'Market value $':'Value $';
 }
-function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until='',draw='',sell='',loan='',loanpay='',income=''}={}){
+function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until='',draw='',sell='',loan='',loanpay='',income='',basis=''}={}){
   const el=document.createElement('div'); el.className='acct';
   el.innerHTML=`
     <div class="acctTop">
@@ -708,6 +718,7 @@ function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until=''
       <div class="mini f-prop"><label>Loan owed $</label><input class="a-loan" type="number" value="${loan}" placeholder="0"></div>
       <div class="mini f-prop"><label>Loan paid off by age</label><input class="a-loanpay" type="number" value="${loanpay}" placeholder="—"></div>
       <div class="mini f-prop"><label>Net income $/mo</label><input class="a-income" type="number" value="${income}" placeholder="0"></div>
+      <div class="mini f-prop"><label>Cost basis $</label><input class="a-basis" type="number" value="${basis}" placeholder="—"></div>
       <div class="mini f-prop"><label>Sell at age</label><input class="a-sell" type="number" value="${sell}" placeholder="—"></div>
     </div>`;
   el.querySelector('.del').onclick=()=>{el.remove();recompute();};
@@ -718,6 +729,7 @@ function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until=''
   attachCurrency(el.querySelector('.a-contrib'));
   attachCurrency(el.querySelector('.a-loan'));
   attachCurrency(el.querySelector('.a-income'));
+  attachCurrency(el.querySelector('.a-basis'));
   updateCardType(el);
 }
 function otherRow(label='',monthly='',start='',end=''){
@@ -739,7 +751,7 @@ function loadDemo(){
   $('assetList').innerHTML=''; $('otherList').innerHTML='';
   $('currentAge').value=45; $('planAge').value=95;
   $('expReturn').value=6; $('inflation').value=2.5;
-  $('vol').value=12; $('ordRate').value=18; $('ltcgRate').value=15; $('gainFrac').value=50; $('rmdAge').value=73; $('histStock').value=75;
+  $('vol').value=12; $('ordRate').value=18; $('ltcgRate').value=15; $('gainFrac').value=50; $('rmdAge').value=73; $('histStock').value=75; $('capLossCarry').value=0;
   $('desiredMonthly').value=6000; $('ssFRA').value=2400;
   $('compareToggle').checked=false; $('planBBlock').style.display='none';
   $('A_retire').value=62; $('A_claim').value=67;
@@ -748,9 +760,9 @@ function loadDemo(){
   accountCard({label:'Roth IRA',      value:120000, type:'Roth',         contrib:500,  draw:72});
   accountCard({label:'Brokerage',     value:180000, type:'Taxable',      contrib:500,  draw:62});
   accountCard({label:'Cash',          value:40000,  type:'Cash', ret:'2',contrib:0,    draw:62});
-  accountCard({label:'Rental property',value:250000, type:'Real estate', ret:'4', loan:150000, loanpay:68, income:800, sell:70});
+  accountCard({label:'Rental property',value:250000, type:'Real estate', ret:'4', loan:150000, loanpay:68, income:800, basis:150000, sell:70});
   otherRow('Pension',0,65,95);
-  ['desiredMonthly','ssFRA'].forEach(id=>formatCurrency($(id)));
+  ['desiredMonthly','ssFRA','capLossCarry'].forEach(id=>formatCurrency($(id)));
   recompute();
 }
 
@@ -771,11 +783,11 @@ document.querySelectorAll('#focusSeg button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#focusSeg button').forEach(x=>x.classList.toggle('on',x===b));
   recompute();
 });
-['currentAge','planAge','expReturn','inflation','vol','ordRate','ltcgRate','gainFrac','rmdAge','histStock',
+['currentAge','planAge','expReturn','inflation','vol','ordRate','ltcgRate','gainFrac','rmdAge','histStock','capLossCarry',
  'desiredMonthly','ssFRA','A_retire','A_claim','B_retire','B_claim']
  .forEach(id=>$(id).addEventListener('input',recompute));
 
-['desiredMonthly','ssFRA'].forEach(id=>attachCurrency($(id)));
+['desiredMonthly','ssFRA','capLossCarry'].forEach(id=>attachCurrency($(id)));
 
 loadDemo();
 </script>
