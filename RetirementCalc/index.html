@@ -99,13 +99,6 @@
     .xlink{display:block;margin-top:10px;padding:10px 12px;border-radius:9px;background:#eef4ff;border:1px solid rgba(37,99,235,.25);color:#1d4ed8;font-size:12.5px;text-decoration:none;font-weight:600;line-height:1.4}
     .xlink:hover{background:#e2ecff}
     .xlink .arrow{float:right}
-    .pieWrap{display:grid;grid-template-columns:1fr;gap:6px}
-    .pieCap{font-size:13px;font-weight:600;text-align:center;padding:6px;border-radius:8px}
-    .pieCap.good{color:#15803d;background:rgba(22,163,74,.08)}
-    .pieCap.bad{color:#b91c1c;background:rgba(220,38,38,.08)}
-    .rangeRow{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-    .rangeRow input[type=range]{flex:1}
-    .rangeRow .val{font-weight:700;min-width:80px;text-align:right}
   </style>
 </head>
 <body>
@@ -152,15 +145,15 @@
           <h2>Retirement plan</h2>
           <div class="scenHead"><span class="dot" style="background:var(--A)"></span>Plan A</div>
           <div class="grid2">
-            <div class="field"><label>Retire at age</label><select id="A_retire"></select></div>
-            <div class="field"><label>Claim Social Security at</label><select id="A_claim"></select></div>
+            <div class="field"><label>Retire at age</label><input id="A_retire" type="number" value="62"></div>
+            <div class="field"><label>Claim Social Security at</label><input id="A_claim" type="number" value="67"></div>
           </div>
           <label class="toggleRow" style="margin-top:4px"><input type="checkbox" id="compareToggle"> Compare a second plan (e.g. retire earlier vs later)</label>
           <div id="planBBlock" style="display:none">
             <div class="scenHead" style="margin-top:10px"><span class="dot" style="background:var(--B)"></span>Plan B</div>
             <div class="grid2">
-              <div class="field"><label>Retire at age</label><select id="B_retire"></select></div>
-              <div class="field"><label>Claim Social Security at</label><select id="B_claim"></select></div>
+              <div class="field"><label>Retire at age</label><input id="B_retire" type="number" value="55"></div>
+              <div class="field"><label>Claim Social Security at</label><input id="B_claim" type="number" value="62"></div>
             </div>
           </div>
           <a class="xlink" href="index2.html">🤔 Not sure which claim age is best? Compare 62 vs 67 vs 70 in the Break‑Even Calculator <span class="arrow">→</span></a>
@@ -224,28 +217,14 @@
 
         <div class="chartCard">
           <div class="top">
-            <div class="chartTitle">Income sources at a given age</div>
+            <div class="chartTitle">Is your spending covered each year?</div>
             <div class="seg" id="focusSeg" style="display:none">
               <button data-f="A" class="on">Plan A</button>
               <button data-f="B">Plan B</button>
             </div>
           </div>
-          <div class="rangeRow">
-            <span class="foot" style="margin:0">Age</span>
-            <input type="range" id="pieAge" min="55" max="95" value="70">
-            <span class="val" id="pieAgeLabel">70</span>
-          </div>
-          <div class="pieWrap">
-            <canvas id="pieChart" height="150"></canvas>
-            <div class="pieCap" id="pieCap"></div>
-          </div>
-          <div class="foot">Where your money comes from that year. If sources fall short of your desired spending you'll see a red “unfunded” slice; if guaranteed income (SS + pensions) exceeds it, you're covered with room to spare.</div>
-        </div>
-
-        <div class="chartCard">
-          <div class="top"><div class="chartTitle">Income sources across retirement</div></div>
           <canvas id="incomeChart" height="180"></canvas>
-          <div class="foot">Stacked bars are your income each year vs. the dashed spending line. Withdrawals include any required minimum distributions (RMDs).</div>
+          <div class="foot">Each bar stacks your income that year — Social Security, pensions, property income, and portfolio withdrawals — against the dashed line you want to spend. When a bar falls short of the line, that year is underfunded. (Different view from the balances above: this is income &amp; coverage, not account value.)</div>
         </div>
 
         <div class="card">
@@ -268,9 +247,7 @@ const $ = id => document.getElementById(id);
 const A_COLOR = '#2563eb', B_COLOR = '#ea580c';
 const MC_RUNS = 300;
 let focus = 'A';
-let pieAge = 70;
 let rangeMode = 'hist';   // 'off' | 'mc' | 'hist' — which uncertainty band shows on the chart
-let lastPieSim = null, lastG = null;
 const TYPES = ['401(k) / IRA','Roth','Taxable','Cash','Real estate','Business'];
 const LIQUID = new Set(['401(k) / IRA','Roth','Taxable','Cash']);
 const isLiquid = t => LIQUID.has(t);
@@ -497,9 +474,11 @@ function simulate(g, accounts, other, scen, returns=null, histSeq=null){
       a.value = Math.max(0, a.value*(1+r));
     });
 
-    // net worth counts property EQUITY (market value − remaining loan), not gross value
-    const netWorth = bal.reduce((s,a)=> s + (isProperty(a.type) ? Math.max(0, a.value - loanAt(a,age,g.currentAge)) : a.value), 0);
-    years.push({age, total:netWorth, ss:ssY, other:otherY, propInc:propIncY, wd:wdNet, wdBy, sale:saleY, desired, retired, shortfall});
+    // per-account balances (property shown as EQUITY = market value − remaining loan)
+    const bals={};
+    bal.forEach(a=>{ const eq = isProperty(a.type) ? Math.max(0, a.value - loanAt(a,age,g.currentAge)) : a.value; bals[a.label]=(bals[a.label]||0)+eq; });
+    const netWorth = Object.values(bals).reduce((s,v)=>s+v,0);
+    years.push({age, total:netWorth, bals, ss:ssY, other:otherY, propInc:propIncY, wd:wdNet, wdBy, sale:saleY, desired, retired, shortfall});
   }
   return {years, ranOut, ending: years[years.length-1].total};
 }
@@ -583,29 +562,43 @@ function renderVerdict(el, name, color, v, single, mcPct, hist){
 }
 
 /* ---------- charts ---------- */
-let portfolioChart=null, incomeChart=null, pieChart=null;
+let portfolioChart=null, incomeChart=null;
 const hexA=(hex,a)=>{const n=parseInt(hex.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;};
 
-function renderPortfolio(labels, detA, detB, band){
+const ACCT_PALETTE = ['#2563eb','#ea580c','#0d9488','#7c3aed','#ca8a04','#0891b2','#db2777','#64748b'];
+function renderPortfolio(labels, series, band){
   const ds=[];
   if(band){
     const bc = focus==='A'?A_COLOR:B_COLOR;
-    ds.push({label:'90th pct', data:band.p90, borderWidth:0, pointRadius:0, backgroundColor:hexA(bc,.12), fill:'+1', tension:.25, order:5});
-    ds.push({label:'10th pct', data:band.p10, borderWidth:0, pointRadius:0, fill:false, tension:.25, order:5});
+    ds.push({label:'90th pct', data:band.p90, borderWidth:0, pointRadius:0, backgroundColor:hexA(bc,.10), fill:'+1', tension:.2, order:9});
+    ds.push({label:'10th pct', data:band.p10, borderWidth:0, pointRadius:0, fill:false, tension:.2, order:9});
   }
-  ds.push({label: detB?'Plan A':'Your plan', data:detA, borderColor:A_COLOR, borderWidth:2.5, pointRadius:0, tension:.25, fill:false, order:1});
-  if(detB) ds.push({label:'Plan B', data:detB, borderColor:B_COLOR, borderWidth:2.5, pointRadius:0, tension:.25, fill:false, order:1});
+  series.forEach(s=> ds.push({label:s.label, data:s.data, borderColor:s.color,
+    borderWidth:s.total?3:1.75, pointRadius:0, tension:.2, fill:false,
+    borderDash:s.dash||[], order:s.total?1:2}));
   if(portfolioChart) portfolioChart.destroy();
   portfolioChart = new Chart($('portfolioChart').getContext('2d'),{
     type:'line', data:{labels, datasets:ds},
     options:{responsive:true, animation:false, interaction:{mode:'index',intersect:false},
-      plugins:{legend:{labels:{filter:i=>!i.text.includes('pct'),usePointStyle:true,boxWidth:8,font:{size:12}}},
-        tooltip:{callbacks:{title:i=>'Age '+i[0].label,
+      plugins:{legend:{labels:{filter:i=>!i.text.includes('pct'),usePointStyle:true,boxWidth:8,font:{size:11.5}}},
+        tooltip:{itemSort:(a,b)=>b.parsed.y-a.parsed.y, callbacks:{title:i=>'Age '+i[0].label,
           label:c=>c.dataset.label.includes('pct')?null:c.dataset.label+': '+money(c.parsed.y)},
           filter:i=>!i.dataset.label.includes('pct')}},
       scales:{x:{title:{display:true,text:'Age'},grid:{display:false}},
-        y:{title:{display:true,text:'Portfolio value'},ticks:{callback:v=>moneyK(v)},grid:{color:'rgba(9,30,66,.06)'}}}}
+        y:{title:{display:true,text:'Balance'},ticks:{callback:v=>moneyK(v)},grid:{color:'rgba(9,30,66,.06)'}}}}
   });
+}
+// build the per-account (single) or A-vs-B (compare) line series for the portfolio chart
+function portfolioSeries(detA, detB){
+  if(detB){
+    return [ {label:'Plan A total', data:detA.years.map(y=>y.total), color:A_COLOR, total:true},
+             {label:'Plan B total', data:detB.years.map(y=>y.total), color:B_COLOR, total:true} ];
+  }
+  const yrs=detA.years;
+  const labels=Object.keys(yrs[0].bals);
+  const series=labels.map((lbl,i)=>({ label:lbl, data:yrs.map(y=>y.bals[lbl]||0), color:ACCT_PALETTE[i%ACCT_PALETTE.length] }));
+  series.push({ label:'Total', data:yrs.map(y=>y.total), color:'#0b1220', total:true });
+  return series;
 }
 
 function renderIncome(sim){
@@ -630,33 +623,6 @@ function renderIncome(sim){
   });
 }
 
-function renderPie(sim, g){
-  const y = sim.years.find(x=>x.age===pieAge) || sim.years.filter(x=>x.retired)[0] || sim.years[sim.years.length-1];
-  const M=v=>v/12;
-  const slices=[];
-  if(y.ss>0)    slices.push({l:'Social Security', v:M(y.ss), c:'#16a34a'});
-  if(y.other>0) slices.push({l:'Other income', v:M(y.other), c:'#7c3aed'});
-  if(y.propInc>0) slices.push({l:'Property/business income', v:M(y.propInc), c:'#0d9488'});
-  const pal=['#2563eb','#ea580c','#0891b2','#ca8a04','#0ea5e9','#d946ef','#64748b'];
-  let pi=0;
-  Object.entries(y.wdBy||{}).forEach(([lbl,v])=>{ if(v>0.5) slices.push({l:lbl, v:M(v), c:pal[pi++%pal.length]}); });
-  const totalM=M(y.ss+y.other+y.propInc+y.wd), desiredM=M(y.desired);
-  let capClass, capText;
-  if(!y.retired){ capClass='good'; capText=`Age ${pieAge}: still working (retirement not started)`; }
-  else if(totalM < desiredM-1){ slices.push({l:'Shortfall (unfunded)', v:desiredM-totalM, c:'#dc2626'}); capClass='bad'; capText=`Short ${money(desiredM-totalM)}/mo of your ${money(desiredM)} goal`; }
-  else if(totalM > desiredM+1){ capClass='good'; capText=`Funded — ${money(totalM-desiredM)}/mo extra income above your ${money(desiredM)} goal`; }
-  else { capClass='good'; capText=`Fully funded: ${money(desiredM)}/mo`; }
-  if(pieChart) pieChart.destroy();
-  pieChart = new Chart($('pieChart').getContext('2d'),{
-    type:'doughnut',
-    data:{labels:slices.map(s=>s.l), datasets:[{data:slices.map(s=>Math.round(s.v)), backgroundColor:slices.map(s=>s.c), borderColor:'#fff', borderWidth:2}]},
-    options:{responsive:true, animation:false, cutout:'58%',
-      plugins:{legend:{position:'right', labels:{boxWidth:10,font:{size:11.5},padding:8}},
-        tooltip:{callbacks:{label:c=>c.label+': '+money(c.parsed)+'/mo'}}}}
-  });
-  $('pieCap').className='pieCap '+capClass; $('pieCap').textContent=capText;
-}
-
 /* ---------- master recompute ---------- */
 let deb=null;
 function recompute(){
@@ -671,17 +637,11 @@ function recompute(){
     const detA=simulate(g,accounts,other,sA);
     const mcA=monteCarlo(g,accounts,other,sA,MC_RUNS);
 
-    // pie age slider bounds
-    const loAge = compare ? Math.min(sA.retire, readScenario('B').retire) : sA.retire;
-    const sl=$('pieAge'); sl.min=loAge; sl.max=g.planAge;
-    if(pieAge<loAge) pieAge=loAge; if(pieAge>g.planAge) pieAge=g.planAge;
-    sl.value=pieAge; $('pieAgeLabel').textContent=pieAge;
-
     $('verdicts').classList.toggle('single', !compare);
     $('focusSeg').style.display = compare ? '' : 'none';
     const histA=backtest(g,accounts,other,sA);
-    // primary success (drives color) = the worse of history / Monte Carlo (conservative)
     const bandOf = (mc,hist)=> rangeMode==='mc'?mc : rangeMode==='hist'?hist : null;
+    const labels=detA.years.map(y=>y.age);
 
     if(compare){
       const sB=readScenario('B');
@@ -690,17 +650,14 @@ function recompute(){
       const histB=backtest(g,accounts,other,sB);
       renderVerdict($('verdictA'),'A',A_COLOR,classify(detA,Math.min(histA.successPct,mcA.successPct),detA.ending,g),false,mcA.successPct,histA);
       renderVerdict($('verdictB'),'B',B_COLOR,classify(detB,Math.min(histB.successPct,mcB.successPct),detB.ending,g),false,mcB.successPct,histB);
-      const labels=detA.years.map(y=>y.age);
-      renderPortfolio(labels, detA.years.map(y=>y.total), detB.years.map(y=>y.total), focus==='A'?bandOf(mcA,histA):bandOf(mcB,histB));
-      const fsim = focus==='A'?detA:detB;
-      renderIncome(fsim); renderPie(fsim,g); lastPieSim=fsim;
+      renderPortfolio(labels, portfolioSeries(detA, detB), focus==='A'?bandOf(mcA,histA):bandOf(mcB,histB));
+      renderIncome(focus==='A'?detA:detB);
     } else {
       focus='A';
       $('verdictB').style.display='none';
       renderVerdict($('verdictA'),'A',A_COLOR,classify(detA,Math.min(histA.successPct,mcA.successPct),detA.ending,g),true,mcA.successPct,histA);
-      const labels=detA.years.map(y=>y.age);
-      renderPortfolio(labels, detA.years.map(y=>y.total), null, bandOf(mcA,histA));
-      renderIncome(detA); renderPie(detA,g); lastPieSim=detA;
+      renderPortfolio(labels, portfolioSeries(detA, null), bandOf(mcA,histA));
+      renderIncome(detA);
     }
     renderSaveSummary(accounts);
     $('histInfo').textContent = `${histA.n} periods, ${histA.firstStart}–${histA.lastStart} start years`;
@@ -769,8 +726,7 @@ function otherRow(label='',monthly='',start='',end=''){
   attachCurrency(row.querySelector('.o-monthly'));
 }
 
-/* ---------- selects & demo ---------- */
-function fillSelect(id,lo,hi,val){ const s=$(id); s.innerHTML=''; for(let a=lo;a<=hi;a++){ const o=document.createElement('option'); o.value=a; o.textContent=a; if(a===val)o.selected=true; s.appendChild(o); } }
+/* ---------- demo ---------- */
 function loadDemo(){
   $('assetList').innerHTML=''; $('otherList').innerHTML='';
   $('currentAge').value=45; $('planAge').value=95;
@@ -787,13 +743,12 @@ function loadDemo(){
   accountCard({label:'Rental property',value:250000, type:'Real estate', ret:'4', loan:150000, loanpay:68, income:800, sell:70});
   otherRow('Pension',0,65,95);
   ['desiredMonthly','ssFRA'].forEach(id=>formatCurrency($(id)));
-  pieAge=70;
   recompute();
 }
 
 /* ---------- wire up ---------- */
-fillSelect('A_retire',45,75,62); fillSelect('B_retire',45,75,55);
-fillSelect('A_claim',62,70,67);  fillSelect('B_claim',62,70,62);
+// SSA claim bounds (62–70) enforced when the user leaves the field
+['A_claim','B_claim'].forEach(id=>$(id).addEventListener('change',()=>{ $(id).value=clampClaim(num(id,67)); recompute(); }));
 $('addAsset').onclick=()=>{accountCard();recompute();};
 $('addOther').onclick=()=>{otherRow();recompute();};
 $('loadDemo').onclick=loadDemo;
@@ -803,7 +758,6 @@ document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{
   recompute();
 });
 $('compareToggle').addEventListener('change',()=>{ $('planBBlock').style.display=$('compareToggle').checked?'':'none'; recompute(); });
-$('pieAge').addEventListener('input',()=>{ pieAge=Math.round(num('pieAge',70)); $('pieAgeLabel').textContent=pieAge; if(lastPieSim&&lastG) renderPie(lastPieSim,lastG); });
 document.querySelectorAll('#focusSeg button').forEach(b=>b.onclick=()=>{
   focus=b.dataset.f;
   document.querySelectorAll('#focusSeg button').forEach(x=>x.classList.toggle('on',x===b));
