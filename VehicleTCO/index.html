@@ -93,6 +93,7 @@
   .tcard .nm{font-size:.9rem;font-weight:600;padding-left:8px}
   .tcard .big{font-size:1.7rem;font-weight:700;margin:6px 0 2px;padding-left:8px}
   .tcard .sub{color:var(--muted);font-size:.85rem;padding-left:8px}
+  .tcard .sub.pay{color:var(--ink);font-weight:600;margin-top:3px}
   .tcard.win{outline:2px solid var(--good)}
   .tcard .wintag{position:absolute;right:10px;top:10px;background:var(--good);color:#fff;font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.04em}
 
@@ -316,23 +317,40 @@ function getVar(name){return getComputedStyle(document.documentElement).getPrope
 const PROXY_BASE = ""; // set to a CORS proxy (e.g. Cloudflare Worker) to enable live API
 async function fetchVehicleData(){ /* reserved for future live enhancement */ return null; }
 
+const CURRENT_YEAR = 2026;   // reference year for MSRP / age
+const MAX_AGE = 10;          // allow model years this many years back
 const uniq = a => [...new Set(a)];
-function years(){ return uniq(DATASET.map(r=>r.year)).sort((a,b)=>b-a); }
-function makes(y){ return uniq(DATASET.filter(r=>r.year==y).map(r=>r.make)).sort(); }
-function models(y,mk){ return uniq(DATASET.filter(r=>r.year==y&&r.make==mk).map(r=>r.model)).sort(); }
-function configs(y,mk,md){ return DATASET.filter(r=>r.year==y&&r.make==mk&&r.model==md); }
+// Model years are independent of the catalog: pick any year, then any make/model.
+function yearOptions(){ const a=[]; for(let y=CURRENT_YEAR;y>=CURRENT_YEAR-MAX_AGE;y--) a.push(y); return a; }
+function allMakes(){ return uniq(DATASET.map(r=>r.make)).sort(); }
+function modelsOf(mk){ return uniq(DATASET.filter(r=>r.make==mk).map(r=>r.model)).sort(); }
+function configsOf(mk,md){ return DATASET.filter(r=>r.make==mk&&r.model==md); }
 function rowIndex(row){ return DATASET.indexOf(row); }
+function vehicleAge(v){ return Math.max(0, CURRENT_YEAR - (v.modelYear||CURRENT_YEAR)); }
+
+// Residual value fraction of a NEW car at a given age (0..1), floored at 5%.
+function residualFraction(age, deprYr1, deprAnnual){
+  if(age<=0) return 1;
+  const f = (1-deprYr1)*Math.pow(1-deprAnnual, age-1);
+  return Math.max(CONFIG.constants.deprFloor, f);
+}
 
 /* ============================================================================
    ESTIMATE ENGINE — build the pre-filled ("est.") field values for a row.
    Powertrain multipliers are folded into the concrete numbers so every
    resulting value is directly editable.
    ========================================================================== */
-function estimateFor(row){
+function estimateFor(row, age){
   const seg = CONFIG.segments[row.class];
   const pwr = CONFIG.powertrain[row.powertrain];
+  age = age||0;
+  const deprYr1 = seg.deprYr1, deprAnnual = seg.deprAnnual*pwr.deprAnnual;
+  // For an older model year, pre-fill the estimated used value at that age.
+  const price = Math.round(row.msrp * residualFraction(age, deprYr1, deprAnnual));
   return {
-    msrp: row.msrp,
+    age: age,
+    msrpNew: row.msrp,     // reference new-car price (drives the depreciation curve)
+    msrp: price,           // estimated purchase price (used value if older)
     powertrain: row.powertrain,
     mpg: row.mpg,
     kwhPerMile: row.kwhPerMile,
@@ -356,7 +374,7 @@ function fieldDefs(pt){
   else if(pt==="phev"){ energy.push(F("mpg","Gas economy","mpg",0), F("kwhPerMile","Energy use","kWh/mi",3), F("elecShare","Miles driven electric","share 0–1",2)); }
   else { energy.push(F("mpg","Fuel economy","mpg",0)); }
   return {
-    purchase: [ F("msrp","Price / MSRP","$",0) ],
+    purchase: [ F("msrp","Purchase price","$",0) ],
     energy,
     ownership: [
       F("insurance","Insurance","$/yr",0),
@@ -381,7 +399,9 @@ function computeVehicle(v, g){
   const Y = Math.max(1, Math.round(g.horizon));
   const M = num(g.milesPerYear);
   const taxRate = num(g.salesTax)/100;
-  const msrp = num(v.msrp);
+  const price = num(v.msrp);                    // actual purchase price
+  const msrpNew = num(v.msrpNew) || price;      // new-car reference for the curve
+  const age = Math.max(0, num(v.age));          // age of the car at purchase
 
   // --- Fuel / energy per year ---
   function fuelPerYear(){
@@ -396,13 +416,18 @@ function computeVehicle(v, g){
   const fuelYr = fuelPerYear();
 
   // --- Depreciation curve (floored at 5% residual) ---
+  // The new-car curve is anchored to msrpNew; for a used car we scale that
+  // curve so it passes through the actual purchase price at the current age,
+  // then continue depreciating from age -> age+t (no repeated year-1 cliff).
   const deprYr1 = num(v.deprYr1)/100, deprAnnual = num(v.deprAnnual)/100;
+  const frac = a => residualFraction(a, deprYr1, deprAnnual);
+  const fAge = frac(age);
+  const scale = (msrpNew*fAge>0) ? price/(msrpNew*fAge) : 1;
   function residual(t){
-    const floor = CONFIG.constants.deprFloor * msrp;
-    const val = msrp * (1-deprYr1) * Math.pow(1-deprAnnual, Math.max(0,t-1));
-    return Math.max(val, floor);
+    const floor = CONFIG.constants.deprFloor * price;
+    return Math.max(floor, scale * msrpNew * frac(age+t));
   }
-  const deprThrough = t => msrp - residual(t);
+  const deprThrough = t => price - residual(t);
 
   // --- Maintenance (rises with age; jumps out of warranty) ---
   const growth = num(v.maintGrowth)/100;
@@ -423,10 +448,10 @@ function computeVehicle(v, g){
   // --- Insurance / registration / sales tax ---
   const insYr = num(v.insurance);
   const regYr = num(g.registration) + num(v.regSurcharge);
-  const salesTax = msrp * taxRate;
+  const salesTax = price * taxRate;
 
   // --- Financing: interest only, via amortization (tax is financed) ---
-  const principal = Math.max(0, msrp + salesTax - num(g.downPayment));
+  const principal = Math.max(0, price + salesTax - num(g.downPayment));
   const r = num(g.apr)/100/12, n = Math.max(0, Math.round(num(g.loanTerm)));
   let payment = 0;
   if(r>0 && n>0) payment = principal*r / (1 - Math.pow(1+r,-n));
@@ -475,7 +500,8 @@ function computeVehicle(v, g){
     breakdown, incentives, total,
     perYear: total/Y,
     perMile: totalMiles>0 ? total/totalMiles : 0,
-    cumulative, horizon:Y
+    cumulative, horizon:Y,
+    monthlyPayment: payment, loanTermMonths: n, financedPrincipal: principal
   };
 }
 
@@ -492,13 +518,13 @@ let state = { globals:{...CONFIG.globals}, vehicles:[] };
 function defaultVehicles(){
   const gh = DATASET.findIndex(r=>r.model==="Grand Highlander Hybrid");
   const my = DATASET.findIndex(r=>r.model==="Model Y");
-  return [ {key: gh<0?0:gh, ov:{}}, {key: my<0?1:my, ov:{}} ];
+  return [ {key: gh<0?0:gh, modelYear:CURRENT_YEAR, ov:{}}, {key: my<0?1:my, modelYear:CURRENT_YEAR, ov:{}} ];
 }
 
 function rowFor(v){ return DATASET[v.key] || DATASET[0]; }
 // resolved field values = estimate merged with overrides
 function resolved(v){
-  const est = estimateFor(rowFor(v));
+  const est = estimateFor(rowFor(v), vehicleAge(v));
   return {...est, ...v.ov};
 }
 
@@ -535,32 +561,36 @@ function vehicleColumn(v,i){
   const col = el("div","vcol card");
   col.style.borderTop = "4px solid "+VEHICLE_COLORS[i];
 
-  // header
-  const h = el("h3",null,`<span>Vehicle ${i+1}</span>`);
+  // header — titled by the selected vehicle
+  const yr = v.modelYear||CURRENT_YEAR;
+  const age = vehicleAge(v);
+  const h = el("h3",null,`<span>${yr} ${row.make} ${row.model}</span>`);
   if(state.vehicles.length>2){
-    const rm = el("button","rm","✕"); rm.title="Remove vehicle"; rm.setAttribute("aria-label","Remove vehicle "+(i+1));
+    const rm = el("button","rm","✕"); rm.title="Remove vehicle"; rm.setAttribute("aria-label","Remove this vehicle");
     rm.onclick = ()=>{ state.vehicles.splice(i,1); commit(); };
     h.appendChild(rm);
   }
   col.appendChild(h);
-  col.appendChild(el("p","vname", `${row.make} ${row.model} — ${row.config} · ${CONFIG.segments[row.class].label}`));
+  col.appendChild(el("p","vname",
+    `${row.config} · ${CONFIG.segments[row.class].label}${age>0?` · ${age}-yr-old used`:""}`));
 
-  // cascading dropdowns
+  // cascading dropdowns (model year is independent of the catalog)
   const casc = el("div","cascade");
-  casc.appendChild(selectField("Year", years(), row.year, y=>{
-    const mk = makes(y)[0]; const md = models(y,mk)[0]; const cf = configs(y,mk,md)[0];
+  casc.appendChild(selectField("Model year", yearOptions(), yr, y=>{
+    v.modelYear = parseInt(y,10);
+    delete v.ov.msrp;   // refresh the used-price estimate for the new age
+    commit();
+  }));
+  casc.appendChild(selectField("Make", allMakes(), row.make, mk=>{
+    const md = modelsOf(mk)[0]; const cf = configsOf(mk,md)[0];
     v.key = rowIndex(cf); v.ov = {}; commit();
   }));
-  casc.appendChild(selectField("Make", makes(row.year), row.make, mk=>{
-    const md = models(row.year,mk)[0]; const cf = configs(row.year,mk,md)[0];
-    v.key = rowIndex(cf); v.ov = {}; commit();
-  }));
-  casc.appendChild(selectField("Model", models(row.year,row.make), row.model, md=>{
-    const cf = configs(row.year,row.make,md)[0];
+  casc.appendChild(selectField("Model", modelsOf(row.make), row.model, md=>{
+    const cf = configsOf(row.make,md)[0];
     v.key = rowIndex(cf); v.ov = {}; commit();
   }, true));
-  casc.appendChild(selectField("Config", configs(row.year,row.make,row.model).map(c=>c.config), row.config, cf=>{
-    const match = configs(row.year,row.make,row.model).find(c=>c.config===cf);
+  casc.appendChild(selectField("Config", configsOf(row.make,row.model).map(c=>c.config), row.config, cf=>{
+    const match = configsOf(row.make,row.model).find(c=>c.config===cf);
     v.key = rowIndex(match); v.ov = {}; commit();
   }, true));
   col.appendChild(casc);
@@ -594,7 +624,7 @@ function groupBlock(title, fields){
 }
 
 function powertrainField(v,r){
-  const est = estimateFor(rowFor(v)).powertrain;
+  const est = estimateFor(rowFor(v), vehicleAge(v)).powertrain;
   const edited = v.ov.powertrain!=null && v.ov.powertrain!==est;
   const wrap = el("div","efield"+(edited?" edited":""));
   const top = el("div","toprow");
@@ -624,7 +654,7 @@ function powertrainField(v,r){
 }
 
 function editField(v,r,d){
-  const estAll = estimateFor(rowFor(v));
+  const estAll = estimateFor(rowFor(v), vehicleAge(v));
   const estVal = estAll[d.key];
   const curVal = r[d.key];
   const edited = v.ov[d.key]!=null;
@@ -691,6 +721,11 @@ function renderTotals(data){
     c.appendChild(el("div","nm",`${d.row.make} ${d.row.model}`));
     c.appendChild(el("div","big",fmt$(d.res.total)));
     c.appendChild(el("div","sub",`${fmt$(d.res.perYear)}/yr · $${d.res.perMile.toFixed(2)}/mi · ${d.res.horizon} yr`));
+    const pay = d.res.monthlyPayment;
+    const payTxt = pay>0
+      ? `💳 ${fmt$(pay)}/mo × ${d.res.loanTermMonths} mo`
+      : `💳 No loan (paid cash)`;
+    c.appendChild(el("div","sub pay",payTxt));
     host.appendChild(c);
   });
 }
@@ -805,7 +840,7 @@ function commit(){ renderVehicles(); renderResults(); persist(); }
 function serializeState(){
   return {
     g: state.globals,
-    v: state.vehicles.map(x=>({k:x.key, o:x.ov}))
+    v: state.vehicles.map(x=>({k:x.key, y:x.modelYear||CURRENT_YEAR, o:x.ov}))
   };
 }
 function applyState(obj){
@@ -815,6 +850,7 @@ function applyState(obj){
     if(Array.isArray(obj.v) && obj.v.length){
       state.vehicles = obj.v.slice(0,4).map(x=>({
         key: (x.k>=0 && x.k<DATASET.length)?x.k:0,
+        modelYear: (x.y>=CURRENT_YEAR-MAX_AGE && x.y<=CURRENT_YEAR)?x.y:CURRENT_YEAR,
         ov: x.o && typeof x.o==="object" ? x.o : {}
       }));
     }
@@ -869,7 +905,7 @@ $("#addVehicle").addEventListener("click",()=>{
   if(state.vehicles.length>=4) return;
   const used = new Set(state.vehicles.map(v=>v.key));
   let k = DATASET.findIndex((_,i)=>!used.has(i)); if(k<0) k=0;
-  state.vehicles.push({key:k, ov:{}});
+  state.vehicles.push({key:k, modelYear:CURRENT_YEAR, ov:{}});
   commit();
 });
 $("#copyLink").addEventListener("click",()=>{
