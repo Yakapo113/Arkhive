@@ -53,7 +53,13 @@
   }
   .field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
 
-  .vehicles{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:22px;align-items:start}
+  .viewbar{display:flex;align-items:center;gap:12px;margin-top:24px;flex-wrap:wrap}
+  .seg{display:inline-flex;background:#eef2f7;border:1px solid var(--line);border-radius:10px;padding:3px}
+  .segbtn{border:none;background:none;padding:7px 16px;border-radius:8px;cursor:pointer;font-size:.88rem;font-weight:600;color:var(--muted)}
+  .segbtn.active{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .segbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .viewhint{color:var(--muted);font-size:.82rem}
+  .vehicles{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:14px;align-items:start}
   .vcol{padding:16px}
   .vcol h3{margin:0 0 2px;font-size:1rem;display:flex;align-items:center;justify-content:space-between;gap:8px}
   .vcol h3 .rm{border:none;background:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:2px 6px;border-radius:6px}
@@ -160,6 +166,14 @@
       </div>
     </div>
   </section>
+
+  <div class="viewbar">
+    <div class="seg" role="tablist" aria-label="Detail level">
+      <button class="segbtn" id="viewSimple" role="tab" aria-selected="true">Simplified</button>
+      <button class="segbtn" id="viewAdvanced" role="tab" aria-selected="false">Advanced</button>
+    </div>
+    <span class="viewhint" id="viewHint"></span>
+  </div>
 
   <section class="vehicles" id="vehicles"></section>
   <div class="addveh"><button class="btn" id="addVehicle">+ Add vehicle</button></div>
@@ -579,7 +593,7 @@ function clamp(x,lo,hi){ return Math.min(hi,Math.max(lo,x)); }
 /* ============================================================================
    STATE
    ========================================================================== */
-let state = { globals:{...CONFIG.globals}, vehicles:[] };
+let state = { globals:{...CONFIG.globals}, vehicles:[], viewMode:"simple" };
 
 function defaultVehicles(){
   const gh = DATASET.findIndex(r=>r.model==="Grand Highlander Hybrid");
@@ -663,12 +677,17 @@ function vehicleColumn(v,i){
 
   // editable groups
   const defs = fieldDefs(r.powertrain);
-  col.appendChild(groupBlock("Purchase", [
-    powertrainField(v,r),
-    ...defs.purchase.map(d=>editField(v,r,d))
-  ]));
-  col.appendChild(groupBlock("Energy", defs.energy.map(d=>editField(v,r,d))));
-  col.appendChild(groupBlock("Ownership", defs.ownership.map(d=>editField(v,r,d))));
+  if(state.viewMode==="advanced"){
+    col.appendChild(groupBlock("Purchase", [
+      powertrainField(v,r),
+      ...defs.purchase.map(d=>editField(v,r,d))
+    ]));
+    col.appendChild(groupBlock("Energy", defs.energy.map(d=>editField(v,r,d))));
+    col.appendChild(groupBlock("Ownership", defs.ownership.map(d=>editField(v,r,d))));
+  } else {
+    // simplified: purchase price only — everything else uses the estimates
+    col.appendChild(groupBlock("Purchase", defs.purchase.map(d=>editField(v,r,d))));
+  }
   return col;
 }
 
@@ -931,13 +950,15 @@ function commit(){ renderVehicles(); renderResults(); persist(); }
 function serializeState(){
   return {
     g: state.globals,
-    v: state.vehicles.map(x=>({k:x.key, y:x.modelYear||CURRENT_YEAR, o:x.ov}))
+    v: state.vehicles.map(x=>({k:x.key, y:x.modelYear||CURRENT_YEAR, o:x.ov})),
+    m: state.viewMode
   };
 }
 function applyState(obj){
   if(!obj) return false;
   try{
     if(obj.g) state.globals = {...CONFIG.globals, ...obj.g};
+    if(obj.m==="advanced"||obj.m==="simple") state.viewMode = obj.m;
     if(Array.isArray(obj.v) && obj.v.length){
       state.vehicles = obj.v.slice(0,4).map(x=>({
         key: (x.k>=0 && x.k<DATASET.length)?x.k:0,
@@ -1006,14 +1027,33 @@ $("#copyLink").addEventListener("click",()=>{
   else toast("URL is in the address bar");
 });
 $("#resetAll").addEventListener("click",()=>{
-  state = {globals:{...CONFIG.globals}, vehicles:defaultVehicles()};
+  state = {globals:{...CONFIG.globals}, vehicles:defaultVehicles(), viewMode:state.viewMode};
   try{ localStorage.removeItem("tcoState"); }catch(e){}
-  renderGlobals(); commit(); toast("Reset to defaults");
+  renderGlobals(); renderViewToggle(); commit(); toast("Reset to defaults");
 });
+
+/* View toggle: Simplified (purchase price only) vs Advanced (all fields) */
+function renderViewToggle(){
+  const adv = state.viewMode==="advanced";
+  const bs=$("#viewSimple"), ba=$("#viewAdvanced");
+  bs.classList.toggle("active",!adv); bs.setAttribute("aria-selected",String(!adv));
+  ba.classList.toggle("active",adv);  ba.setAttribute("aria-selected",String(adv));
+  $("#viewHint").textContent = adv
+    ? "Every cost driver is shown and editable."
+    : "Just pick a vehicle and price — all other costs are estimated. Switch to Advanced to fine-tune.";
+}
+function setView(mode){
+  if(state.viewMode===mode) return;
+  state.viewMode = mode;
+  renderViewToggle(); commit();
+}
+$("#viewSimple").addEventListener("click",()=>setView("simple"));
+$("#viewAdvanced").addEventListener("click",()=>setView("advanced"));
 
 function init(){
   loadState();
   renderGlobals();
+  renderViewToggle();
   bindGlobals();
   renderVehicles();
   renderResults();
