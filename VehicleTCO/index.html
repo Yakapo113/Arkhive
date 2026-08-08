@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vehicle Cost-of-Ownership Comparison — ArkHive</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1f2430; --muted:#6b7280;
+    --line:#e5e7eb; --line2:#d1d5db; --accent:#2563eb; --accent-ink:#fff;
+    --good:#16a34a; --edit:#b45309; --edit-bg:#fef3c7; --est:#4b5563; --est-bg:#eef2f7;
+    --radius:14px; --shadow:0 2px 6px rgba(20,25,40,.06),0 8px 24px rgba(20,25,40,.05);
+    /* category colors */
+    --c-depreciation:#4e79a7; --c-interest:#f28e2b; --c-fuel:#59a14f;
+    --c-insurance:#e15759; --c-maintenance:#b07aa1; --c-tires:#76b7b2;
+    --c-tax:#edc948; --c-registration:#9c755f;
+  }
+  *{box-sizing:border-box}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    margin:0; background:var(--bg); color:var(--ink); line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent)}
+  .wrap{max-width:1200px; margin:0 auto; padding:0 16px 64px}
+  header.site{
+    background:linear-gradient(180deg,#111827,#1f2937); color:#fff;
+    padding:28px 16px; text-align:center;
+  }
+  header.site .inner{max-width:1200px;margin:0 auto;position:relative}
+  header.site h1{margin:0;font-size:1.7rem;letter-spacing:.2px}
+  header.site p{margin:6px 0 0;color:#c7cdd6;font-size:.98rem}
+  .back{position:absolute;left:0;top:4px;color:#c7cdd6;text-decoration:none;font-size:.9rem}
+  .back:hover{color:#fff}
+  @media(max-width:640px){.back{position:static;display:inline-block;margin-bottom:10px}}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  section.assumptions{margin-top:22px;padding:0}
+  .assump-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;cursor:pointer;user-select:none}
+  .assump-head h2{margin:0;font-size:1.05rem}
+  .assump-head .hint{color:var(--muted);font-size:.85rem;font-weight:400}
+  .assump-body{padding:4px 18px 20px;border-top:1px solid var(--line)}
+  .assump-body[hidden]{display:none}
+  .horizon{padding:14px 0 6px}
+  .horizon label{display:flex;align-items:baseline;justify-content:space-between;font-weight:600}
+  .horizon .val{font-size:1.3rem;color:var(--accent)}
+  .horizon input[type=range]{width:100%;margin-top:8px;accent-color:var(--accent)}
+  .grid-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px 16px;margin-top:12px}
+  .field label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:4px}
+  .field input,.field select{
+    width:100%;padding:8px 10px;border:1px solid var(--line2);border-radius:9px;
+    font-size:.95rem;background:#fff;color:var(--ink)
+  }
+  .field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+
+  .vehicles{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:22px;align-items:start}
+  .vcol{padding:16px}
+  .vcol h3{margin:0 0 2px;font-size:1rem;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .vcol h3 .rm{border:none;background:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:2px 6px;border-radius:6px}
+  .vcol h3 .rm:hover{background:#f3f4f6;color:var(--edit)}
+  .vname{color:var(--muted);font-size:.82rem;margin:0 0 12px;min-height:1em}
+  .cascade{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .cascade .field.full{grid-column:1/-1}
+  .group{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+  .group h4{margin:0 0 8px;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .efield{margin-bottom:9px}
+  .efield .toprow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
+  .efield .lbl{font-size:.8rem;color:var(--ink)}
+  .efield .badge{font-size:.62rem;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:20px;text-transform:uppercase}
+  .badge.est{background:var(--est-bg);color:var(--est)}
+  .badge.edited{background:var(--edit-bg);color:var(--edit)}
+  .efield .inrow{display:flex;gap:6px;align-items:center}
+  .efield input,.efield select{flex:1;padding:7px 9px;border:1px solid var(--line2);border-radius:8px;font-size:.9rem;background:#fff;color:var(--ink)}
+  .efield.edited input,.efield.edited select{border-color:var(--edit)}
+  .efield input:focus,.efield select:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .reset{border:1px solid var(--line2);background:#fff;color:var(--muted);border-radius:8px;cursor:pointer;padding:0 9px;font-size:.95rem;line-height:1}
+  .reset:hover{color:var(--accent);border-color:var(--accent)}
+  .reset[hidden]{display:none}
+  .suffix{color:var(--muted);font-size:.78rem;white-space:nowrap}
+
+  .addveh{display:flex;justify-content:center;margin-top:16px}
+  .btn{border:1px solid var(--line2);background:#fff;color:var(--ink);padding:10px 18px;border-radius:10px;cursor:pointer;font-size:.92rem;font-weight:600}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn.primary:hover{filter:brightness(1.05);color:#fff}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  section.results{margin-top:30px}
+  .results h2{font-size:1.15rem;margin:0 0 14px}
+  .totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .tcard{padding:16px;position:relative;overflow:hidden}
+  .tcard .cbar{position:absolute;left:0;top:0;bottom:0;width:5px}
+  .tcard .nm{font-size:.9rem;font-weight:600;padding-left:8px}
+  .tcard .big{font-size:1.7rem;font-weight:700;margin:6px 0 2px;padding-left:8px}
+  .tcard .sub{color:var(--muted);font-size:.85rem;padding-left:8px}
+  .tcard.win{outline:2px solid var(--good)}
+  .tcard .wintag{position:absolute;right:10px;top:10px;background:var(--good);color:#fff;font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.04em}
+
+  .chartcard{padding:18px;margin-top:18px}
+  .chartcard h3{margin:0 0 4px;font-size:1rem}
+  .chartcard .csub{color:var(--muted);font-size:.82rem;margin:0 0 12px}
+  .legend{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:12px;font-size:.8rem}
+  .legend .item{display:flex;align-items:center;gap:6px}
+  .legend .sw{width:12px;height:12px;border-radius:3px;flex:none}
+  .chartscroll{overflow-x:auto}
+  svg{max-width:100%;height:auto;display:block}
+  svg text{fill:var(--ink)}
+  .axis{stroke:var(--line2);stroke-width:1}
+  .gridline{stroke:var(--line);stroke-width:1}
+  .tick{fill:var(--muted);font-size:11px}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-top:18px}
+  .disclaimer{margin-top:26px;color:var(--muted);font-size:.82rem;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:10px 18px;border-radius:10px;font-size:.88rem;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="site">
+  <div class="inner">
+    <a class="back" href="../index.html">← All calculators</a>
+    <h1>Vehicle Cost-of-Ownership Comparison</h1>
+    <p>Compare the true cost of owning 2–4 vehicles — depreciation, fuel, insurance, maintenance & more.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="assumptions card">
+    <div class="assump-head" id="assumpHead" role="button" tabindex="0" aria-expanded="true" aria-controls="assumpBody">
+      <h2>Shared assumptions</h2>
+      <span class="hint" id="assumpToggle">▼ collapse</span>
+    </div>
+    <div class="assump-body" id="assumpBody">
+      <div class="horizon">
+        <label for="g_horizon">Ownership horizon <span class="val"><span id="horizonVal">5</span> yr</span></label>
+        <input type="range" id="g_horizon" min="1" max="30" step="1" value="5" aria-describedby="horizonVal">
+      </div>
+      <div class="grid-inputs">
+        <div class="field"><label for="g_miles">Miles driven / year</label><input type="number" id="g_miles" min="0" step="500"></div>
+        <div class="field"><label for="g_gas">Gas price ($/gal)</label><input type="number" id="g_gas" min="0" step="0.05"></div>
+        <div class="field"><label for="g_elec">Electricity ($/kWh)</label><input type="number" id="g_elec" min="0" step="0.01"></div>
+        <div class="field"><label for="g_down">Down payment ($)</label><input type="number" id="g_down" min="0" step="500"></div>
+        <div class="field"><label for="g_apr">Loan APR (%)</label><input type="number" id="g_apr" min="0" step="0.1"></div>
+        <div class="field"><label for="g_term">Loan term (months)</label><input type="number" id="g_term" min="0" step="6"></div>
+        <div class="field"><label for="g_tax">Sales tax (%)</label><input type="number" id="g_tax" min="0" step="0.05"></div>
+        <div class="field"><label for="g_reg">Registration ($/yr)</label><input type="number" id="g_reg" min="0" step="10"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="vehicles" id="vehicles"></section>
+  <div class="addveh"><button class="btn" id="addVehicle">+ Add vehicle</button></div>
+
+  <section class="results">
+    <h2>Results</h2>
+    <div class="totals" id="totals"></div>
+
+    <div class="chartcard card">
+      <h3>Cost breakdown</h3>
+      <p class="csub">Total cost of ownership over the horizon, split by category.</p>
+      <div class="chartscroll" id="barChart"></div>
+      <div class="legend" id="barLegend"></div>
+    </div>
+
+    <div class="chartcard card">
+      <h3>Cumulative cost over time</h3>
+      <p class="csub">Watch for crossover points — a pricier vehicle can pull ahead as years add up.</p>
+      <div class="chartscroll" id="lineChart"></div>
+      <div class="legend" id="lineLegend"></div>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <button class="btn" id="copyLink">🔗 Copy shareable link</button>
+    <button class="btn" id="resetAll">Reset everything</button>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Heads up:</strong> Every number here is a formula-based estimate, not a per-VIN quote. Prices, insurance,
+    fuel economy, depreciation and incentives vary widely by trim, region, driver and market conditions. Use these as a
+    starting point and edit any field to match real quotes. EV federal tax credit rules change frequently — leave
+    incentives at $0 unless you've confirmed current eligibility.
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================================
+   CONFIG — every constant and default lives here so it's trivial to tune.
+   ========================================================================== */
+const CONFIG = {
+  globals: {
+    horizon: 5,          // years
+    milesPerYear: 15000,
+    gasPrice: 3.30,      // $/gal
+    elecPrice: 0.13,     // $/kWh
+    downPayment: 10000,
+    apr: 5.5,            // %
+    loanTerm: 48,        // months
+    salesTax: 7.35,      // %
+    registration: 150    // $/yr
+  },
+  // Segment defaults: annual insurance $, maintenance base $/yr, tire set $,
+  // tire life mi, first-year depreciation, subsequent annual depreciation.
+  segments: {
+    compact_car:  {insurance:1200, maintBase:600,  tireSet:550,  tireLife:50000, deprYr1:0.20, deprAnnual:0.11, label:"Compact car"},
+    midsize_car:  {insurance:1300, maintBase:650,  tireSet:650,  tireLife:50000, deprYr1:0.20, deprAnnual:0.12, label:"Midsize car"},
+    luxury_car:   {insurance:1800, maintBase:1100, tireSet:1000, tireLife:40000, deprYr1:0.24, deprAnnual:0.14, label:"Luxury car"},
+    compact_suv:  {insurance:1300, maintBase:700,  tireSet:750,  tireLife:50000, deprYr1:0.19, deprAnnual:0.11, label:"Compact SUV"},
+    midsize_suv:  {insurance:1400, maintBase:800,  tireSet:900,  tireLife:50000, deprYr1:0.19, deprAnnual:0.11, label:"Midsize SUV"},
+    fullsize_suv: {insurance:1600, maintBase:950,  tireSet:1100, tireLife:45000, deprYr1:0.20, deprAnnual:0.12, label:"Full-size SUV"},
+    pickup:       {insurance:1500, maintBase:850,  tireSet:1200, tireLife:50000, deprYr1:0.18, deprAnnual:0.10, label:"Pickup"},
+    minivan:      {insurance:1300, maintBase:750,  tireSet:800,  tireLife:50000, deprYr1:0.20, deprAnnual:0.12, label:"Minivan"},
+    sports:       {insurance:2200, maintBase:1400, tireSet:1400, tireLife:25000, deprYr1:0.22, deprAnnual:0.13, label:"Sports car"}
+  },
+  // Powertrain modifiers multiply the segment base.
+  powertrain: {
+    gas:   {maint:1.00, tireLife:1.00, insurance:1.00, deprAnnual:1.00, label:"Gas"},
+    hybrid:{maint:0.95, tireLife:1.00, insurance:1.00, deprAnnual:1.00, label:"Hybrid"},
+    phev:  {maint:0.90, tireLife:0.95, insurance:1.05, deprAnnual:1.05, label:"Plug-in Hybrid"},
+    ev:    {maint:0.45, tireLife:0.75, insurance:1.15, deprAnnual:1.10, label:"Electric"}
+  },
+  constants: {
+    maintGrowth: 0.15,      // annual maintenance growth
+    warrantyYears: 5,       // years covered by warranty
+    postWarrantyMult: 1.25, // out-of-warranty year multiplier
+    deprFloor: 0.05,        // residual floor (% of MSRP)
+    phevElecShare: 0.55     // default share of PHEV miles driven electric
+  }
+};
+
+/* Bundled dataset — works with zero network calls. ~58 popular configs. */
+const DATASET = [
+  {year:2026,make:"Toyota",model:"Grand Highlander Hybrid",config:"Limited AWD",class:"midsize_suv",powertrain:"hybrid",mpg:35,kwhPerMile:null,msrp:56250},
+  {year:2026,make:"Toyota",model:"Highlander Hybrid",config:"XLE AWD",class:"midsize_suv",powertrain:"hybrid",mpg:35,kwhPerMile:null,msrp:45000},
+  {year:2026,make:"Toyota",model:"Highlander",config:"XLE AWD",class:"midsize_suv",powertrain:"gas",mpg:24,kwhPerMile:null,msrp:42000},
+  {year:2026,make:"Toyota",model:"RAV4",config:"XLE AWD",class:"compact_suv",powertrain:"gas",mpg:30,kwhPerMile:null,msrp:33000},
+  {year:2026,make:"Toyota",model:"RAV4 Hybrid",config:"XLE AWD",class:"compact_suv",powertrain:"hybrid",mpg:39,kwhPerMile:null,msrp:36000},
+  {year:2026,make:"Toyota",model:"Camry",config:"LE",class:"midsize_car",powertrain:"hybrid",mpg:47,kwhPerMile:null,msrp:29000},
+  {year:2026,make:"Toyota",model:"Corolla",config:"LE",class:"compact_car",powertrain:"gas",mpg:34,kwhPerMile:null,msrp:23000},
+  {year:2026,make:"Toyota",model:"Tacoma",config:"SR5 4WD",class:"pickup",powertrain:"gas",mpg:21,kwhPerMile:null,msrp:38000},
+  {year:2026,make:"Toyota",model:"Sienna",config:"XLE",class:"minivan",powertrain:"hybrid",mpg:36,kwhPerMile:null,msrp:42000},
+  {year:2026,make:"Hyundai",model:"Palisade",config:"SEL AWD",class:"midsize_suv",powertrain:"gas",mpg:21,kwhPerMile:null,msrp:40000},
+  {year:2026,make:"Hyundai",model:"Tucson",config:"SEL AWD",class:"compact_suv",powertrain:"gas",mpg:26,kwhPerMile:null,msrp:31000},
+  {year:2026,make:"Hyundai",model:"Elantra",config:"SEL",class:"compact_car",powertrain:"gas",mpg:35,kwhPerMile:null,msrp:23000},
+  {year:2026,make:"Hyundai",model:"Ioniq 5",config:"SE AWD",class:"compact_suv",powertrain:"ev",mpg:null,kwhPerMile:0.29,msrp:46000},
+  {year:2026,make:"Kia",model:"Telluride",config:"EX AWD",class:"midsize_suv",powertrain:"gas",mpg:21,kwhPerMile:null,msrp:42000},
+  {year:2026,make:"Kia",model:"Sportage",config:"LX AWD",class:"compact_suv",powertrain:"gas",mpg:25,kwhPerMile:null,msrp:30000},
+  {year:2026,make:"Kia",model:"EV6",config:"Wind AWD",class:"compact_suv",powertrain:"ev",mpg:null,kwhPerMile:0.29,msrp:49000},
+  {year:2026,make:"Honda",model:"Accord",config:"EX",class:"midsize_car",powertrain:"gas",mpg:32,kwhPerMile:null,msrp:30000},
+  {year:2026,make:"Honda",model:"Accord Hybrid",config:"Sport",class:"midsize_car",powertrain:"hybrid",mpg:44,kwhPerMile:null,msrp:34000},
+  {year:2026,make:"Honda",model:"Civic",config:"EX",class:"compact_car",powertrain:"gas",mpg:36,kwhPerMile:null,msrp:26000},
+  {year:2026,make:"Honda",model:"CR-V",config:"EX AWD",class:"compact_suv",powertrain:"gas",mpg:30,kwhPerMile:null,msrp:34000},
+  {year:2026,make:"Honda",model:"Pilot",config:"EX-L AWD",class:"midsize_suv",powertrain:"gas",mpg:22,kwhPerMile:null,msrp:44000},
+  {year:2026,make:"Honda",model:"Odyssey",config:"EX-L",class:"minivan",powertrain:"gas",mpg:22,kwhPerMile:null,msrp:42000},
+  {year:2026,make:"Ford",model:"Explorer",config:"XLT AWD",class:"midsize_suv",powertrain:"gas",mpg:23,kwhPerMile:null,msrp:42000},
+  {year:2026,make:"Ford",model:"F-150",config:"XLT 4WD",class:"pickup",powertrain:"gas",mpg:20,kwhPerMile:null,msrp:45000},
+  {year:2026,make:"Ford",model:"F-150 Lightning",config:"XLT",class:"pickup",powertrain:"ev",mpg:null,kwhPerMile:0.48,msrp:55000},
+  {year:2026,make:"Ford",model:"Mustang Mach-E",config:"Select",class:"compact_suv",powertrain:"ev",mpg:null,kwhPerMile:0.30,msrp:43000},
+  {year:2026,make:"Ford",model:"Escape",config:"SE AWD",class:"compact_suv",powertrain:"gas",mpg:27,kwhPerMile:null,msrp:31000},
+  {year:2026,make:"Ford",model:"Bronco",config:"Big Bend 4WD",class:"midsize_suv",powertrain:"gas",mpg:20,kwhPerMile:null,msrp:40000},
+  {year:2026,make:"Chevrolet",model:"Silverado 1500",config:"LT 4WD",class:"pickup",powertrain:"gas",mpg:19,kwhPerMile:null,msrp:46000},
+  {year:2026,make:"Chevrolet",model:"Equinox",config:"LT AWD",class:"compact_suv",powertrain:"gas",mpg:26,kwhPerMile:null,msrp:30000},
+  {year:2026,make:"Chevrolet",model:"Equinox EV",config:"LT",class:"compact_suv",powertrain:"ev",mpg:null,kwhPerMile:0.30,msrp:35000},
+  {year:2026,make:"Chevrolet",model:"Tahoe",config:"LS 4WD",class:"fullsize_suv",powertrain:"gas",mpg:16,kwhPerMile:null,msrp:58000},
+  {year:2026,make:"Chevrolet",model:"Corvette",config:"Stingray",class:"sports",powertrain:"gas",mpg:19,kwhPerMile:null,msrp:69000},
+  {year:2026,make:"GMC",model:"Acadia",config:"SLE AWD",class:"midsize_suv",powertrain:"gas",mpg:21,kwhPerMile:null,msrp:43000},
+  {year:2026,make:"GMC",model:"Sierra 1500",config:"SLE 4WD",class:"pickup",powertrain:"gas",mpg:19,kwhPerMile:null,msrp:47000},
+  {year:2026,make:"Cadillac",model:"CT5",config:"Luxury AWD",class:"luxury_car",powertrain:"gas",mpg:23,kwhPerMile:null,msrp:42000},
+  {year:2026,make:"Cadillac",model:"Escalade",config:"Luxury 4WD",class:"fullsize_suv",powertrain:"gas",mpg:16,kwhPerMile:null,msrp:88000},
+  {year:2026,make:"Cadillac",model:"Lyriq",config:"Tech AWD",class:"midsize_suv",powertrain:"ev",mpg:null,kwhPerMile:0.34,msrp:61000},
+  {year:2026,make:"Chrysler",model:"Pacifica",config:"Touring L",class:"minivan",powertrain:"gas",mpg:22,kwhPerMile:null,msrp:42000},
+  {year:2026,make:"Chrysler",model:"Pacifica Hybrid",config:"Select",class:"minivan",powertrain:"phev",mpg:30,kwhPerMile:0.37,msrp:51000},
+  {year:2026,make:"Tesla",model:"Model Y",config:"Long Range AWD",class:"compact_suv",powertrain:"ev",mpg:null,kwhPerMile:0.28,msrp:47000},
+  {year:2026,make:"Tesla",model:"Model 3",config:"Long Range AWD",class:"midsize_car",powertrain:"ev",mpg:null,kwhPerMile:0.25,msrp:45000},
+  {year:2026,make:"Tesla",model:"Model S",config:"AWD",class:"luxury_car",powertrain:"ev",mpg:null,kwhPerMile:0.30,msrp:75000},
+  {year:2026,make:"Subaru",model:"Outback",config:"Premium AWD",class:"midsize_suv",powertrain:"gas",mpg:28,kwhPerMile:null,msrp:32000},
+  {year:2026,make:"Subaru",model:"Forester",config:"Premium AWD",class:"compact_suv",powertrain:"gas",mpg:29,kwhPerMile:null,msrp:31000},
+  {year:2026,make:"Subaru",model:"Crosstrek",config:"Premium AWD",class:"compact_suv",powertrain:"gas",mpg:30,kwhPerMile:null,msrp:28000},
+  {year:2026,make:"Mazda",model:"CX-5",config:"Select AWD",class:"compact_suv",powertrain:"gas",mpg:26,kwhPerMile:null,msrp:31000},
+  {year:2026,make:"Mazda",model:"Mazda3",config:"Select",class:"compact_car",powertrain:"gas",mpg:33,kwhPerMile:null,msrp:25000},
+  {year:2026,make:"Nissan",model:"Rogue",config:"SV AWD",class:"compact_suv",powertrain:"gas",mpg:30,kwhPerMile:null,msrp:31000},
+  {year:2026,make:"Nissan",model:"Altima",config:"SV",class:"midsize_car",powertrain:"gas",mpg:32,kwhPerMile:null,msrp:27000},
+  {year:2026,make:"Jeep",model:"Grand Cherokee",config:"Laredo 4WD",class:"midsize_suv",powertrain:"gas",mpg:22,kwhPerMile:null,msrp:40000},
+  {year:2026,make:"Jeep",model:"Wrangler",config:"Sport 4WD",class:"compact_suv",powertrain:"gas",mpg:22,kwhPerMile:null,msrp:35000},
+  {year:2026,make:"Jeep",model:"Wrangler 4xe",config:"Sahara",class:"compact_suv",powertrain:"phev",mpg:20,kwhPerMile:0.42,msrp:50000},
+  {year:2026,make:"BMW",model:"3 Series",config:"330i",class:"luxury_car",powertrain:"gas",mpg:30,kwhPerMile:null,msrp:46000},
+  {year:2026,make:"BMW",model:"X5",config:"xDrive40i",class:"fullsize_suv",powertrain:"gas",mpg:24,kwhPerMile:null,msrp:66000},
+  {year:2026,make:"Mercedes-Benz",model:"C-Class",config:"C300",class:"luxury_car",powertrain:"gas",mpg:28,kwhPerMile:null,msrp:47000},
+  {year:2026,make:"Rivian",model:"R1T",config:"Adventure",class:"pickup",powertrain:"ev",mpg:null,kwhPerMile:0.48,msrp:72000},
+  {year:2026,make:"Porsche",model:"911",config:"Carrera",class:"sports",powertrain:"gas",mpg:20,kwhPerMile:null,msrp:116000}
+];
+
+/* Category metadata (order + colors match CSS variables). */
+const CATEGORIES = [
+  {key:"depreciation", label:"Depreciation", color:getVar("--c-depreciation")},
+  {key:"interest",     label:"Loan interest", color:getVar("--c-interest")},
+  {key:"fuel",         label:"Fuel / energy", color:getVar("--c-fuel")},
+  {key:"insurance",    label:"Insurance", color:getVar("--c-insurance")},
+  {key:"maintenance",  label:"Maintenance", color:getVar("--c-maintenance")},
+  {key:"tires",        label:"Tires", color:getVar("--c-tires")},
+  {key:"tax",          label:"Sales tax", color:getVar("--c-tax")},
+  {key:"registration", label:"Registration", color:getVar("--c-registration")}
+];
+const VEHICLE_COLORS = ["#2563eb","#dc2626","#16a34a","#d97706"];
+
+function getVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+
+/* ============================================================================
+   DATA HELPERS — cascading dropdowns derive from the bundled dataset.
+   Fetch layer is isolated so a proxy/API can be swapped in later.
+   ========================================================================== */
+const PROXY_BASE = ""; // set to a CORS proxy (e.g. Cloudflare Worker) to enable live API
+async function fetchVehicleData(){ /* reserved for future live enhancement */ return null; }
+
+const uniq = a => [...new Set(a)];
+function years(){ return uniq(DATASET.map(r=>r.year)).sort((a,b)=>b-a); }
+function makes(y){ return uniq(DATASET.filter(r=>r.year==y).map(r=>r.make)).sort(); }
+function models(y,mk){ return uniq(DATASET.filter(r=>r.year==y&&r.make==mk).map(r=>r.model)).sort(); }
+function configs(y,mk,md){ return DATASET.filter(r=>r.year==y&&r.make==mk&&r.model==md); }
+function rowIndex(row){ return DATASET.indexOf(row); }
+
+/* ============================================================================
+   ESTIMATE ENGINE — build the pre-filled ("est.") field values for a row.
+   Powertrain multipliers are folded into the concrete numbers so every
+   resulting value is directly editable.
+   ========================================================================== */
+function estimateFor(row){
+  const seg = CONFIG.segments[row.class];
+  const pwr = CONFIG.powertrain[row.powertrain];
+  return {
+    msrp: row.msrp,
+    powertrain: row.powertrain,
+    mpg: row.mpg,
+    kwhPerMile: row.kwhPerMile,
+    elecShare: row.powertrain==="phev" ? CONFIG.constants.phevElecShare : null,
+    insurance: Math.round(seg.insurance * pwr.insurance),
+    maintBase: Math.round(seg.maintBase * pwr.maint),
+    maintGrowth: CONFIG.constants.maintGrowth * 100,
+    deprYr1: seg.deprYr1 * 100,
+    deprAnnual: +(seg.deprAnnual * pwr.deprAnnual * 100).toFixed(2),
+    tireSet: seg.tireSet,
+    tireLife: Math.round(seg.tireLife * pwr.tireLife),
+    incentives: 0,
+    regSurcharge: 0
+  };
+}
+
+/* Field descriptors: which fields show for which powertrain, plus labels/units. */
+function fieldDefs(pt){
+  const energy = [];
+  if(pt==="ev"){ energy.push(F("kwhPerMile","Energy use","kWh/mi",3)); }
+  else if(pt==="phev"){ energy.push(F("mpg","Gas economy","mpg",0), F("kwhPerMile","Energy use","kWh/mi",3), F("elecShare","Miles driven electric","share 0–1",2)); }
+  else { energy.push(F("mpg","Fuel economy","mpg",0)); }
+  return {
+    purchase: [ F("msrp","Price / MSRP","$",0) ],
+    energy,
+    ownership: [
+      F("insurance","Insurance","$/yr",0),
+      F("maintBase","Maintenance (yr 1)","$/yr",0),
+      F("maintGrowth","Maint. growth","%/yr",1),
+      F("deprYr1","1st-yr depreciation","%",1),
+      F("deprAnnual","Annual depreciation","%",2),
+      F("tireSet","Tire set","$",0),
+      F("tireLife","Tire life","mi",0),
+      F("regSurcharge","Extra registration","$/yr",0),
+      F("incentives","Incentives / credits","$",0)
+    ]
+  };
+  function F(key,label,unit,dp){return{key,label,unit,dp};}
+}
+
+/* ============================================================================
+   COMPUTE ENGINE — all formulas match the spec.
+   Returns per-category totals, headline numbers, and a cumulative-by-year array.
+   ========================================================================== */
+function computeVehicle(v, g){
+  const Y = Math.max(1, Math.round(g.horizon));
+  const M = num(g.milesPerYear);
+  const taxRate = num(g.salesTax)/100;
+  const msrp = num(v.msrp);
+
+  // --- Fuel / energy per year ---
+  function fuelPerYear(){
+    if(v.powertrain==="ev") return M * num(v.kwhPerMile) * num(g.elecPrice);
+    if(v.powertrain==="phev"){
+      const es = clamp(num(v.elecShare),0,1);
+      const gasPart = safeDiv(M,num(v.mpg)) * num(g.gasPrice);
+      return es*(M*num(v.kwhPerMile)*num(g.elecPrice)) + (1-es)*gasPart;
+    }
+    return safeDiv(M,num(v.mpg)) * num(g.gasPrice); // gas/hybrid
+  }
+  const fuelYr = fuelPerYear();
+
+  // --- Depreciation curve (floored at 5% residual) ---
+  const deprYr1 = num(v.deprYr1)/100, deprAnnual = num(v.deprAnnual)/100;
+  function residual(t){
+    const floor = CONFIG.constants.deprFloor * msrp;
+    const val = msrp * (1-deprYr1) * Math.pow(1-deprAnnual, Math.max(0,t-1));
+    return Math.max(val, floor);
+  }
+  const deprThrough = t => msrp - residual(t);
+
+  // --- Maintenance (rises with age; jumps out of warranty) ---
+  const growth = num(v.maintGrowth)/100;
+  function annualMaint(t){
+    let m = num(v.maintBase) * Math.pow(1+growth, t-1);
+    if(t > CONFIG.constants.warrantyYears) m *= CONFIG.constants.postWarrantyMult;
+    return m;
+  }
+  function maintThrough(t){ let s=0; for(let i=1;i<=t;i++) s+=annualMaint(i); return s; }
+
+  // --- Tires (factory set not charged) ---
+  const tireLife = num(v.tireLife);
+  function tiresThrough(t){
+    if(tireLife<=0) return 0;
+    return Math.floor((M*t)/tireLife) * num(v.tireSet);
+  }
+
+  // --- Insurance / registration / sales tax ---
+  const insYr = num(v.insurance);
+  const regYr = num(g.registration) + num(v.regSurcharge);
+  const salesTax = msrp * taxRate;
+
+  // --- Financing: interest only, via amortization (tax is financed) ---
+  const principal = Math.max(0, msrp + salesTax - num(g.downPayment));
+  const r = num(g.apr)/100/12, n = Math.max(0, Math.round(num(g.loanTerm)));
+  let payment = 0;
+  if(r>0 && n>0) payment = principal*r / (1 - Math.pow(1+r,-n));
+  else if(n>0)   payment = principal/n; // 0% APR
+  // cumulative interest paid through month k
+  function interestThroughMonths(months){
+    if(n<=0 || principal<=0) return 0;
+    let bal = principal, interest = 0;
+    const cap = Math.min(n, Math.max(0,months));
+    for(let k=1;k<=cap;k++){
+      const im = bal*r;
+      interest += im;
+      bal -= (payment - im);
+      if(bal<0) bal=0;
+    }
+    return interest;
+  }
+  const interestThrough = t => interestThroughMonths(t*12);
+
+  // --- Cumulative total by year ---
+  const incentives = num(v.incentives);
+  function cumulativeAt(t){
+    return deprThrough(t) + interestThrough(t)
+         + (fuelYr + insYr + regYr)*t
+         + maintThrough(t) + tiresThrough(t)
+         + salesTax - incentives;
+  }
+  const cumulative = [];
+  for(let t=1;t<=Y;t++) cumulative.push({year:t, value:cumulativeAt(t)});
+
+  // --- Category breakdown at the full horizon ---
+  const breakdown = {
+    depreciation: deprThrough(Y),
+    interest: interestThrough(Y),
+    fuel: fuelYr*Y,
+    insurance: insYr*Y,
+    maintenance: maintThrough(Y),
+    tires: tiresThrough(Y),
+    tax: salesTax,
+    registration: regYr*Y
+  };
+  const total = Object.values(breakdown).reduce((a,b)=>a+b,0) - incentives;
+  const totalMiles = M*Y;
+
+  return {
+    breakdown, incentives, total,
+    perYear: total/Y,
+    perMile: totalMiles>0 ? total/totalMiles : 0,
+    cumulative, horizon:Y
+  };
+}
+
+// small numeric helpers
+function num(x){ const n=parseFloat(x); return isFinite(n)?n:0; }
+function safeDiv(a,b){ return b>0 ? a/b : 0; }
+function clamp(x,lo,hi){ return Math.min(hi,Math.max(lo,x)); }
+
+/* ============================================================================
+   STATE
+   ========================================================================== */
+let state = { globals:{...CONFIG.globals}, vehicles:[] };
+
+function defaultVehicles(){
+  const gh = DATASET.findIndex(r=>r.model==="Grand Highlander Hybrid");
+  const my = DATASET.findIndex(r=>r.model==="Model Y");
+  return [ {key: gh<0?0:gh, ov:{}}, {key: my<0?1:my, ov:{}} ];
+}
+
+function rowFor(v){ return DATASET[v.key] || DATASET[0]; }
+// resolved field values = estimate merged with overrides
+function resolved(v){
+  const est = estimateFor(rowFor(v));
+  return {...est, ...v.ov};
+}
+
+/* ============================================================================
+   RENDERING
+   ========================================================================== */
+const $ = s => document.querySelector(s);
+const el = (tag,cls,html) => { const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; };
+const fmt$ = n => "$"+Math.round(n).toLocaleString();
+const fmt$k = n => Math.abs(n)>=1000 ? "$"+(n/1000).toFixed(n>=10000?0:1)+"k" : "$"+Math.round(n);
+
+function renderGlobals(){
+  const g = state.globals;
+  $("#g_horizon").value = g.horizon; $("#horizonVal").textContent = g.horizon;
+  $("#g_miles").value = g.milesPerYear;
+  $("#g_gas").value = g.gasPrice;
+  $("#g_elec").value = g.elecPrice;
+  $("#g_down").value = g.downPayment;
+  $("#g_apr").value = g.apr;
+  $("#g_term").value = g.loanTerm;
+  $("#g_tax").value = g.salesTax;
+  $("#g_reg").value = g.registration;
+}
+
+function renderVehicles(){
+  const host = $("#vehicles"); host.innerHTML = "";
+  state.vehicles.forEach((v,i)=> host.appendChild(vehicleColumn(v,i)));
+  $("#addVehicle").disabled = state.vehicles.length>=4;
+}
+
+function vehicleColumn(v,i){
+  const row = rowFor(v);
+  const r = resolved(v);
+  const col = el("div","vcol card");
+  col.style.borderTop = "4px solid "+VEHICLE_COLORS[i];
+
+  // header
+  const h = el("h3",null,`<span>Vehicle ${i+1}</span>`);
+  if(state.vehicles.length>2){
+    const rm = el("button","rm","✕"); rm.title="Remove vehicle"; rm.setAttribute("aria-label","Remove vehicle "+(i+1));
+    rm.onclick = ()=>{ state.vehicles.splice(i,1); commit(); };
+    h.appendChild(rm);
+  }
+  col.appendChild(h);
+  col.appendChild(el("p","vname", `${row.make} ${row.model} — ${row.config} · ${CONFIG.segments[row.class].label}`));
+
+  // cascading dropdowns
+  const casc = el("div","cascade");
+  casc.appendChild(selectField("Year", years(), row.year, y=>{
+    const mk = makes(y)[0]; const md = models(y,mk)[0]; const cf = configs(y,mk,md)[0];
+    v.key = rowIndex(cf); v.ov = {}; commit();
+  }));
+  casc.appendChild(selectField("Make", makes(row.year), row.make, mk=>{
+    const md = models(row.year,mk)[0]; const cf = configs(row.year,mk,md)[0];
+    v.key = rowIndex(cf); v.ov = {}; commit();
+  }));
+  casc.appendChild(selectField("Model", models(row.year,row.make), row.model, md=>{
+    const cf = configs(row.year,row.make,md)[0];
+    v.key = rowIndex(cf); v.ov = {}; commit();
+  }, true));
+  casc.appendChild(selectField("Config", configs(row.year,row.make,row.model).map(c=>c.config), row.config, cf=>{
+    const match = configs(row.year,row.make,row.model).find(c=>c.config===cf);
+    v.key = rowIndex(match); v.ov = {}; commit();
+  }, true));
+  col.appendChild(casc);
+
+  // editable groups
+  const defs = fieldDefs(r.powertrain);
+  col.appendChild(groupBlock("Purchase", [
+    powertrainField(v,r),
+    ...defs.purchase.map(d=>editField(v,r,d))
+  ]));
+  col.appendChild(groupBlock("Energy", defs.energy.map(d=>editField(v,r,d))));
+  col.appendChild(groupBlock("Ownership", defs.ownership.map(d=>editField(v,r,d))));
+  return col;
+}
+
+function selectField(label, options, value, onChange, full){
+  const wrap = el("div","field"+(full?" full":""));
+  wrap.appendChild(el("label",null,label));
+  const sel = el("select");
+  options.forEach(o=>{ const opt=el("option",null,String(o)); opt.value=o; if(String(o)===String(value)) opt.selected=true; sel.appendChild(opt); });
+  sel.onchange = ()=>onChange(sel.value);
+  wrap.appendChild(sel);
+  return wrap;
+}
+
+function groupBlock(title, fields){
+  const g = el("div","group");
+  g.appendChild(el("h4",null,title));
+  fields.forEach(f=>g.appendChild(f));
+  return g;
+}
+
+function powertrainField(v,r){
+  const est = estimateFor(rowFor(v)).powertrain;
+  const edited = v.ov.powertrain!=null && v.ov.powertrain!==est;
+  const wrap = el("div","efield"+(edited?" edited":""));
+  const top = el("div","toprow");
+  top.appendChild(el("span","lbl","Powertrain"));
+  top.appendChild(el("span","badge "+(edited?"edited":"est"), edited?"edited":"est."));
+  wrap.appendChild(top);
+  const inrow = el("div","inrow");
+  const sel = el("select");
+  Object.keys(CONFIG.powertrain).forEach(pt=>{
+    const opt = el("option",null,CONFIG.powertrain[pt].label); opt.value=pt;
+    if(pt===r.powertrain) opt.selected=true; sel.appendChild(opt);
+  });
+  sel.onchange = ()=>{
+    v.ov.powertrain = sel.value;
+    // seed sensible energy defaults when switching powertrain
+    if(sel.value==="ev"){ if(v.ov.kwhPerMile==null && r.kwhPerMile==null) v.ov.kwhPerMile=0.30; }
+    if(sel.value==="phev"){ if(v.ov.kwhPerMile==null && r.kwhPerMile==null) v.ov.kwhPerMile=0.35; if(v.ov.elecShare==null) v.ov.elecShare=CONFIG.constants.phevElecShare; if(v.ov.mpg==null && r.mpg==null) v.ov.mpg=25; }
+    if((sel.value==="gas"||sel.value==="hybrid")){ if(v.ov.mpg==null && r.mpg==null) v.ov.mpg=25; }
+    commit();
+  };
+  inrow.appendChild(sel);
+  const reset = el("button","reset","↺"); reset.title="Reset to estimate"; reset.hidden=!edited;
+  reset.onclick = ()=>{ delete v.ov.powertrain; commit(); };
+  inrow.appendChild(reset);
+  wrap.appendChild(inrow);
+  return wrap;
+}
+
+function editField(v,r,d){
+  const estAll = estimateFor(rowFor(v));
+  const estVal = estAll[d.key];
+  const curVal = r[d.key];
+  const edited = v.ov[d.key]!=null;
+  const wrap = el("div","efield"+(edited?" edited":""));
+  const top = el("div","toprow");
+  const lbl = el("span","lbl", d.label + (d.unit?` <span class="suffix">(${d.unit})</span>`:""));
+  top.appendChild(lbl);
+  top.appendChild(el("span","badge "+(edited?"edited":"est"), edited?"edited":"est."));
+  wrap.appendChild(top);
+  const inrow = el("div","inrow");
+  const inp = el("input"); inp.type="number";
+  inp.value = curVal==null ? "" : round(curVal,d.dp);
+  inp.step = d.dp>0 ? Math.pow(10,-d.dp) : (d.key==="msrp"||d.key==="incentives"?100:1);
+  inp.min = 0;
+  inp.setAttribute("aria-label", d.label);
+  inp.oninput = ()=>{
+    const val = parseFloat(inp.value);
+    if(inp.value===""){ delete v.ov[d.key]; }
+    else v.ov[d.key] = val;
+    softUpdate(); // recompute results without full re-render (keeps focus)
+    refreshFieldBadge(wrap,v,d,reset);
+  };
+  inrow.appendChild(inp);
+  const reset = el("button","reset","↺"); reset.title="Reset to estimate ("+round(estVal,d.dp)+")"; reset.hidden=!edited;
+  reset.onclick = ()=>{ delete v.ov[d.key]; commit(); };
+  inrow.appendChild(reset);
+  wrap.appendChild(inrow);
+  return wrap;
+}
+
+function refreshFieldBadge(wrap,v,d,reset){
+  const edited = v.ov[d.key]!=null;
+  wrap.classList.toggle("edited",edited);
+  const badge = wrap.querySelector(".badge");
+  badge.className = "badge "+(edited?"edited":"est");
+  badge.textContent = edited?"edited":"est.";
+  reset.hidden = !edited;
+}
+
+function round(x,dp){ if(x==null) return ""; const f=Math.pow(10,dp||0); return Math.round(x*f)/f; }
+
+/* ---- Results ---- */
+function computeAll(){
+  return state.vehicles.map(v=>({
+    v, row:rowFor(v), res:computeVehicle(resolved(v), state.globals)
+  }));
+}
+
+function renderResults(){
+  const data = computeAll();
+  renderTotals(data);
+  renderBarChart(data);
+  renderLineChart(data);
+}
+
+function renderTotals(data){
+  const host = $("#totals"); host.innerHTML="";
+  const min = Math.min(...data.map(d=>d.res.total));
+  data.forEach((d,i)=>{
+    const win = d.res.total===min && data.length>1;
+    const c = el("div","tcard card"+(win?" win":""));
+    const bar = el("div","cbar"); bar.style.background=VEHICLE_COLORS[i]; c.appendChild(bar);
+    if(win) c.appendChild(el("span","wintag","Lowest cost"));
+    c.appendChild(el("div","nm",`${d.row.make} ${d.row.model}`));
+    c.appendChild(el("div","big",fmt$(d.res.total)));
+    c.appendChild(el("div","sub",`${fmt$(d.res.perYear)}/yr · $${d.res.perMile.toFixed(2)}/mi · ${d.res.horizon} yr`));
+    host.appendChild(c);
+  });
+}
+
+function renderBarChart(data){
+  const host = $("#barChart");
+  const n = data.length;
+  const barW = 80, gap = 46, padL = 54, padR = 16, padT = 16, padB = 64;
+  const W = padL + padR + n*barW + (n-1)*gap;
+  const H = 320, plotH = H - padT - padB;
+  const maxTotal = Math.max(...data.map(d=>Object.values(d.res.breakdown).reduce((a,b)=>a+b,0)), 1);
+  const y = val => padT + plotH*(1 - val/maxTotal);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cost breakdown by category for each vehicle">`;
+  // y gridlines
+  const ticks = 4;
+  for(let i=0;i<=ticks;i++){
+    const val = maxTotal*i/ticks, yy = y(val);
+    svg += `<line class="gridline" x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}"/>`;
+    svg += `<text class="tick" x="${padL-8}" y="${yy+4}" text-anchor="end">${fmt$k(val)}</text>`;
+  }
+  data.forEach((d,i)=>{
+    const x = padL + i*(barW+gap);
+    let acc = 0;
+    CATEGORIES.forEach(cat=>{
+      const val = d.res.breakdown[cat.key]||0;
+      if(val<=0) return;
+      const h = plotH*(val/maxTotal);
+      const yy = y(acc+val);
+      svg += `<rect x="${x}" y="${yy}" width="${barW}" height="${h}" fill="${cat.color}"><title>${cat.label}: ${fmt$(val)}</title></rect>`;
+      acc += val;
+    });
+    // total label
+    svg += `<text class="tick" x="${x+barW/2}" y="${y(acc)-8}" text-anchor="middle" style="font-weight:700;fill:var(--ink)">${fmt$k(d.res.total)}</text>`;
+    // vehicle name (wrapped)
+    const nm = `${d.row.make} ${d.row.model}`;
+    svg += `<text x="${x+barW/2}" y="${H-padB+20}" text-anchor="middle" class="tick" style="fill:var(--ink)">${wrapLabel(nm,x+barW/2,H-padB+20,14)}</text>`;
+    svg += `<rect x="${x}" y="${H-padB+30}" width="${barW}" height="4" fill="${VEHICLE_COLORS[i]}"/>`;
+  });
+  svg += `</svg>`;
+  host.innerHTML = svg;
+
+  // legend
+  const leg = $("#barLegend"); leg.innerHTML="";
+  CATEGORIES.forEach(cat=>{
+    const it = el("div","item");
+    it.innerHTML = `<span class="sw" style="background:${cat.color}"></span>${cat.label}`;
+    leg.appendChild(it);
+  });
+}
+
+function wrapLabel(text,cx,cy,maxChars){
+  const words = text.split(" ");
+  let lines=[], cur="";
+  words.forEach(w=>{ if((cur+" "+w).trim().length>maxChars){ lines.push(cur.trim()); cur=w; } else cur=(cur+" "+w).trim(); });
+  if(cur) lines.push(cur);
+  return lines.map((ln,i)=>`<tspan x="${cx}" dy="${i===0?0:13}">${escapeXml(ln)}</tspan>`).join("");
+}
+function escapeXml(s){return s.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));}
+
+function renderLineChart(data){
+  const host = $("#lineChart");
+  const Y = Math.max(...data.map(d=>d.res.horizon));
+  const padL=58, padR=18, padT=16, padB=42;
+  const W = 720, H = 320, plotW = W-padL-padR, plotH = H-padT-padB;
+  const maxVal = Math.max(...data.flatMap(d=>d.res.cumulative.map(p=>p.value)), 1);
+  const x = t => padL + (Y<=1?plotW/2:plotW*(t-1)/(Y-1));
+  const y = v => padT + plotH*(1 - v/maxVal);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cumulative cost of ownership over time for each vehicle">`;
+  const ticks=4;
+  for(let i=0;i<=ticks;i++){
+    const val=maxVal*i/ticks, yy=y(val);
+    svg += `<line class="gridline" x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}"/>`;
+    svg += `<text class="tick" x="${padL-8}" y="${yy+4}" text-anchor="end">${fmt$k(val)}</text>`;
+  }
+  // x axis ticks
+  const step = Y<=10?1:Math.ceil(Y/10);
+  for(let t=1;t<=Y;t+=step){
+    svg += `<text class="tick" x="${x(t)}" y="${H-padB+18}" text-anchor="middle">${t}</text>`;
+  }
+  svg += `<text class="tick" x="${padL+plotW/2}" y="${H-6}" text-anchor="middle">Years of ownership</text>`;
+  svg += `<line class="axis" x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}"/>`;
+  svg += `<line class="axis" x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}"/>`;
+
+  data.forEach((d,i)=>{
+    const pts = d.res.cumulative.map(p=>`${x(p.year)},${y(p.value)}`).join(" ");
+    svg += `<polyline points="${pts}" fill="none" stroke="${VEHICLE_COLORS[i]}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    d.res.cumulative.forEach(p=>{
+      svg += `<circle cx="${x(p.year)}" cy="${y(p.value)}" r="2.6" fill="${VEHICLE_COLORS[i]}"><title>${d.row.make} ${d.row.model} — yr ${p.year}: ${fmt$(p.value)}</title></circle>`;
+    });
+  });
+  svg += `</svg>`;
+  host.innerHTML = svg;
+
+  const leg = $("#lineLegend"); leg.innerHTML="";
+  data.forEach((d,i)=>{
+    const it = el("div","item");
+    it.innerHTML = `<span class="sw" style="background:${VEHICLE_COLORS[i]}"></span>${d.row.make} ${d.row.model}`;
+    leg.appendChild(it);
+  });
+}
+
+/* softUpdate: recompute results only (used during typing to preserve focus) */
+function softUpdate(){ renderResults(); persist(); }
+/* commit: full re-render (structure may have changed) + persist */
+function commit(){ renderVehicles(); renderResults(); persist(); }
+
+/* ============================================================================
+   PERSISTENCE — URL query string (shareable) + localStorage
+   ========================================================================== */
+function serializeState(){
+  return {
+    g: state.globals,
+    v: state.vehicles.map(x=>({k:x.key, o:x.ov}))
+  };
+}
+function applyState(obj){
+  if(!obj) return false;
+  try{
+    if(obj.g) state.globals = {...CONFIG.globals, ...obj.g};
+    if(Array.isArray(obj.v) && obj.v.length){
+      state.vehicles = obj.v.slice(0,4).map(x=>({
+        key: (x.k>=0 && x.k<DATASET.length)?x.k:0,
+        ov: x.o && typeof x.o==="object" ? x.o : {}
+      }));
+    }
+    return true;
+  }catch(e){ return false; }
+}
+function persist(){
+  const s = JSON.stringify(serializeState());
+  try{ localStorage.setItem("tcoState", s); }catch(e){}
+  const url = new URL(location.href);
+  url.searchParams.set("s", encodeURIComponent(s));
+  history.replaceState(null,"",url);
+}
+function loadState(){
+  const q = new URL(location.href).searchParams.get("s");
+  if(q){ try{ if(applyState(JSON.parse(decodeURIComponent(q)))) return; }catch(e){} }
+  try{ const ls = localStorage.getItem("tcoState"); if(ls && applyState(JSON.parse(ls))) return; }catch(e){}
+  state.vehicles = defaultVehicles();
+}
+
+/* ============================================================================
+   EVENTS + INIT
+   ========================================================================== */
+function bindGlobals(){
+  const map = {g_horizon:"horizon",g_miles:"milesPerYear",g_gas:"gasPrice",g_elec:"elecPrice",
+    g_down:"downPayment",g_apr:"apr",g_term:"loanTerm",g_tax:"salesTax",g_reg:"registration"};
+  Object.entries(map).forEach(([id,key])=>{
+    const node = document.getElementById(id);
+    node.addEventListener("input", ()=>{
+      state.globals[key] = node.value==="" ? 0 : parseFloat(node.value);
+      if(id==="g_horizon"){ $("#horizonVal").textContent = node.value; }
+      softUpdate();
+    });
+  });
+  // collapse
+  const head=$("#assumpHead"), body=$("#assumpBody"), tog=$("#assumpToggle");
+  function toggle(){
+    const open = body.hasAttribute("hidden");
+    if(open){ body.removeAttribute("hidden"); tog.textContent="▼ collapse"; head.setAttribute("aria-expanded","true"); }
+    else { body.setAttribute("hidden",""); tog.textContent="► expand"; head.setAttribute("aria-expanded","false"); }
+  }
+  head.addEventListener("click",toggle);
+  head.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(); }});
+}
+
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),1900);
+}
+
+$("#addVehicle").addEventListener("click",()=>{
+  if(state.vehicles.length>=4) return;
+  const used = new Set(state.vehicles.map(v=>v.key));
+  let k = DATASET.findIndex((_,i)=>!used.has(i)); if(k<0) k=0;
+  state.vehicles.push({key:k, ov:{}});
+  commit();
+});
+$("#copyLink").addEventListener("click",()=>{
+  persist();
+  const link = location.href;
+  if(navigator.clipboard){ navigator.clipboard.writeText(link).then(()=>toast("Link copied to clipboard")).catch(()=>toast("Copy failed — URL is in the address bar")); }
+  else toast("URL is in the address bar");
+});
+$("#resetAll").addEventListener("click",()=>{
+  state = {globals:{...CONFIG.globals}, vehicles:defaultVehicles()};
+  try{ localStorage.removeItem("tcoState"); }catch(e){}
+  renderGlobals(); commit(); toast("Reset to defaults");
+});
+
+function init(){
+  loadState();
+  renderGlobals();
+  bindGlobals();
+  renderVehicles();
+  renderResults();
+  persist();
+}
+init();
+</script>
+</body>
+</html>

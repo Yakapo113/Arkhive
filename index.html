@@ -1,80 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ArkHive</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f5f5f5;
-      color: #333;
-    }
-    header {
-      background: #222;
-      color: #fff;
-      text-align: center;
-      padding: 2rem 1rem;
-    }
-    main {
-      max-width: 800px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-    .tool-card {
-      background: #fff;
-      padding: 1.5rem;
-      margin: 1rem 0;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      text-decoration: none;
-      color: #222;
-      display: block;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .tool-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-    }
-    footer {
-      text-align: center;
-      padding: 1rem;
-      background: #222;
-      color: #fff;
-      margin-top: 2rem;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ArkHive — Useful Calculators</title>
+<meta name="description" content="A small collection of clean, free calculators for big financial decisions — retirement, Social Security, real estate, and vehicle cost of ownership.">
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1f2430; --muted:#6b7280;
+    --line:#e5e7eb; --accent:#2563eb;
+    --radius:16px; --shadow:0 2px 6px rgba(20,25,40,.06),0 10px 30px rgba(20,25,40,.05);
+  }
+  *{box-sizing:border-box}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    margin:0; background:var(--bg); color:var(--ink); line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{text-decoration:none;color:inherit}
+  .hero{
+    background:linear-gradient(180deg,#111827,#1f2937); color:#fff;
+    text-align:center; padding:64px 20px 56px;
+  }
+  .brand{display:inline-flex;align-items:center;gap:12px;margin-bottom:14px}
+  .brand .mark{
+    width:44px;height:44px;border-radius:12px;
+    background:linear-gradient(135deg,#3b82f6,#2563eb);
+    display:flex;align-items:center;justify-content:center;font-size:1.4rem;
+    box-shadow:0 6px 18px rgba(37,99,235,.45);
+  }
+  .hero h1{margin:0;font-size:2.4rem;letter-spacing:.3px}
+  .hero p{margin:14px auto 0;max-width:560px;font-size:1.12rem;color:#c7cdd6}
+  main{max-width:1000px;margin:-32px auto 0;padding:0 20px 72px}
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;
+  }
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:26px 24px;display:flex;flex-direction:column;gap:10px;
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .card:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(20,25,40,.12);border-color:#cdd5e0}
+  .card:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .card .ic{
+    width:46px;height:46px;border-radius:12px;display:flex;align-items:center;
+    justify-content:center;font-size:1.5rem;background:#eef2ff;
+  }
+  .card h2{margin:6px 0 0;font-size:1.15rem}
+  .card p{margin:0;color:var(--muted);font-size:.95rem;flex:1}
+  .card .go{margin-top:6px;color:var(--accent);font-weight:600;font-size:.9rem;display:inline-flex;align-items:center;gap:6px}
+  .card:hover .go .arw{transform:translateX(3px)}
+  .card .arw{transition:transform .18s ease}
+  .section-label{
+    text-align:center;color:var(--muted);font-size:.8rem;letter-spacing:.14em;
+    text-transform:uppercase;margin:40px 0 18px;
+  }
+  footer{text-align:center;padding:30px 20px 50px;color:var(--muted);font-size:.88rem}
+  footer a{color:var(--accent)}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
 </head>
 <body>
-  <header>
+  <header class="hero">
+    <div class="brand">
+      <span class="mark">🐝</span>
+    </div>
     <h1>ArkHive</h1>
-    <p>Your offline survival & financial tools hub</p>
+    <p>A small collection of clean, free calculators to help you think clearly about big financial decisions. No sign-ups, no clutter — just useful tools.</p>
   </header>
 
   <main>
-    <section>
-      <h2>Tools</h2>
-      <a class="tool-card" href="RetirementCalc/index.html">
-        <h3>Retirement Simulator</h3>
-        <p>Compare retiring early vs. later side by side — and see if your money lasts.</p>
+    <p class="section-label">Calculators</p>
+    <div class="grid">
+
+      <a class="card" href="RetirementCalc/index.html">
+        <span class="ic">🌴</span>
+        <h2>Retirement Simulator</h2>
+        <p>Compare retiring early vs. later side by side — and see whether your money is likely to last.</p>
+        <span class="go">Open <span class="arw">→</span></span>
       </a>
-      <a class="tool-card" href="RetirementCalc/index2.html">
-        <h3>Social Security Break-Even Calculator</h3>
-        <p>Claim at 62, 67, or 70? Find your break-even age — even if you invest early checks.</p>
+
+      <a class="card" href="RetirementCalc/index2.html">
+        <span class="ic">📅</span>
+        <h2>Social Security Break-Even</h2>
+        <p>Claim at 62, 67, or 70? Find your break-even age — even if you invest the early checks.</p>
+        <span class="go">Open <span class="arw">→</span></span>
       </a>
-      <a class="tool-card" href="RealEstateCalc/index.html">
-        <h3>Real Estate Investment Calculator</h3>
-        <p>Determine if a real estate property is a good buy!</p>
+
+      <a class="card" href="RealEstateCalc/index.html">
+        <span class="ic">🏠</span>
+        <h2>Real Estate Investment</h2>
+        <p>Run the numbers on a rental property — cash flow, returns, and whether it's a good buy.</p>
+        <span class="go">Open <span class="arw">→</span></span>
       </a>
-      <!-- Add more tools here -->
-    </section>
+
+      <a class="card" href="VehicleTCO/index.html">
+        <span class="ic">🚗</span>
+        <h2>Vehicle Cost of Ownership</h2>
+        <p>Compare 2–4 vehicles on true cost — depreciation, fuel, insurance, maintenance and more.</p>
+        <span class="go">Open <span class="arw">→</span></span>
+      </a>
+
+    </div>
   </main>
 
   <footer>
-    <p>&copy; 2025 ArkHive</p>
+    <p>&copy; 2026 ArkHive · <a href="https://arkhive.us">arkhive.us</a></p>
   </footer>
 </body>
 </html>
