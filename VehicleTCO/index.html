@@ -132,7 +132,7 @@
   <div class="inner">
     <a class="back" href="../index.html">← All calculators</a>
     <h1>Vehicle Cost-of-Ownership Comparison</h1>
-    <p>Compare the true cost of owning 2–4 vehicles — depreciation, fuel, insurance, maintenance & more.</p>
+    <p>Compare the true cost of ownership of up to 4 vehicles at a time — modelling real costs including depreciation, fuel, insurance, maintenance, and more.</p>
   </div>
 </header>
 
@@ -431,8 +431,7 @@ function estimateFor(row, age){
     deprAnnual: +(curve.deprAnnual * 100).toFixed(2),
     tireSet: seg.tireSet,
     tireLife: Math.round(seg.tireLife * pwr.tireLife),
-    incentives: 0,
-    regSurcharge: 0
+    incentives: 0
   };
 }
 
@@ -449,11 +448,9 @@ function fieldDefs(pt){
       F("insurance","Insurance","$/yr",0),
       F("maintBase","Maintenance (yr 1)","$/yr",0),
       F("maintGrowth","Maint. growth","%/yr",1),
-      F("deprYr1","1st-yr depreciation","%",1),
       F("deprAnnual","Annual depreciation","%",2),
       F("tireSet","Tire set","$",0),
       F("tireLife","Tire life","mi",0),
-      F("regSurcharge","Extra registration","$/yr",0),
       F("incentives","Incentives / credits","$",0)
     ]
   };
@@ -515,7 +512,7 @@ function computeVehicle(v, g){
 
   // --- Insurance / registration / sales tax ---
   const insYr = num(v.insurance);
-  const regYr = num(g.registration) + num(v.regSurcharge);
+  const regYr = num(g.registration);
   const salesTax = price * taxRate;
 
   // --- Financing: interest only, via amortization (tax is financed) ---
@@ -569,7 +566,8 @@ function computeVehicle(v, g){
     perYear: total/Y,
     perMile: totalMiles>0 ? total/totalMiles : 0,
     cumulative, horizon:Y,
-    monthlyPayment: payment, loanTermMonths: n, financedPrincipal: principal
+    monthlyPayment: payment, loanTermMonths: n, financedPrincipal: principal,
+    purchasePrice: price, resaleValue: residual(Y)   // sale price = purchase - depreciation
   };
 }
 
@@ -657,7 +655,7 @@ function vehicleColumn(v,i){
     const cf = configsOf(row.make,md)[0];
     v.key = rowIndex(cf); v.ov = {}; commit();
   }, true));
-  casc.appendChild(selectField("Config", configsOf(row.make,row.model).map(c=>c.config), row.config, cf=>{
+  casc.appendChild(selectField("Trim", configsOf(row.make,row.model).map(c=>c.config), row.config, cf=>{
     const match = configsOf(row.make,row.model).find(c=>c.config===cf);
     v.key = rowIndex(match); v.ov = {}; commit();
   }, true));
@@ -794,6 +792,7 @@ function renderTotals(data){
       ? `💳 ${fmt$(pay)}/mo × ${d.res.loanTermMonths} mo`
       : `💳 No loan (paid cash)`;
     c.appendChild(el("div","sub pay",payTxt));
+    c.appendChild(el("div","sub",`↩︎ Est. resale after ${d.res.horizon} yr: ${fmt$(d.res.resaleValue)}`));
     host.appendChild(c);
   });
 }
