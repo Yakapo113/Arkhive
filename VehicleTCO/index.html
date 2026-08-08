@@ -97,18 +97,28 @@
   .tcard.win{outline:2px solid var(--good)}
   .tcard .wintag{position:absolute;right:10px;top:10px;background:var(--good);color:#fff;font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.04em}
 
-  .chartcard{padding:18px;margin-top:18px}
-  .chartcard h3{margin:0 0 4px;font-size:1rem}
-  .chartcard .csub{color:var(--muted);font-size:.82rem;margin:0 0 12px}
-  .legend{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:12px;font-size:.8rem}
+  .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px;align-items:start}
+  @media(max-width:900px){.charts-row{grid-template-columns:1fr}}
+  .chartcard{padding:16px}
+  .chartcard h3{margin:0 0 3px;font-size:.98rem}
+  .chartcard .csub{color:var(--muted);font-size:.8rem;margin:0 0 10px}
+  .legend{display:flex;flex-wrap:wrap;gap:7px 14px;margin-top:10px;font-size:.76rem}
   .legend .item{display:flex;align-items:center;gap:6px}
-  .legend .sw{width:12px;height:12px;border-radius:3px;flex:none}
+  .legend .sw{width:11px;height:11px;border-radius:3px;flex:none}
   .chartscroll{overflow-x:auto}
   svg{max-width:100%;height:auto;display:block}
   svg text{fill:var(--ink)}
+  svg [data-tip]{cursor:pointer}
+  svg rect[data-tip]:hover{opacity:.85}
+  svg circle[data-tip]:hover{r:4.5}
   .axis{stroke:var(--line2);stroke-width:1}
   .gridline{stroke:var(--line);stroke-width:1}
   .tick{fill:var(--muted);font-size:11px}
+  .chartTip{position:fixed;z-index:60;pointer-events:none;display:none;background:#111827;color:#fff;
+    padding:7px 10px;border-radius:8px;font-size:.78rem;line-height:1.35;max-width:220px;
+    box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .chartTip b{font-weight:600}
+  .chartTip .tval{color:#93c5fd}
 
   .toolbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-top:18px}
   .disclaimer{margin-top:26px;color:var(--muted);font-size:.82rem;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
@@ -158,18 +168,20 @@
     <h2>Results</h2>
     <div class="totals" id="totals"></div>
 
-    <div class="chartcard card">
-      <h3>Cost breakdown</h3>
-      <p class="csub">Total cost of ownership over the horizon, split by category.</p>
-      <div class="chartscroll" id="barChart"></div>
-      <div class="legend" id="barLegend"></div>
-    </div>
+    <div class="charts-row">
+      <div class="chartcard card">
+        <h3>Cost breakdown</h3>
+        <p class="csub">Total cost over the horizon, split by category.</p>
+        <div class="chartscroll" id="barChart"></div>
+        <div class="legend" id="barLegend"></div>
+      </div>
 
-    <div class="chartcard card">
-      <h3>Cumulative cost over time</h3>
-      <p class="csub">Watch for crossover points — a pricier vehicle can pull ahead as years add up.</p>
-      <div class="chartscroll" id="lineChart"></div>
-      <div class="legend" id="lineLegend"></div>
+      <div class="chartcard card">
+        <h3>Cumulative cost over time</h3>
+        <p class="csub">Crossover points show where a pricier vehicle pulls ahead.</p>
+        <div class="chartscroll" id="lineChart"></div>
+        <div class="legend" id="lineLegend"></div>
+      </div>
     </div>
   </section>
 
@@ -179,14 +191,17 @@
   </div>
 
   <div class="disclaimer">
-    <strong>Heads up:</strong> Every number here is a formula-based estimate, not a per-VIN quote. Prices, insurance,
-    fuel economy, depreciation and incentives vary widely by trim, region, driver and market conditions. Use these as a
-    starting point and edit any field to match real quotes. EV federal tax credit rules change frequently — leave
-    incentives at $0 unless you've confirmed current eligibility.
+    <strong>Heads up:</strong> Every number here is a formula-based estimate, not a per-VIN quote. Depreciation is
+    modeled from each model's typical <em>5-year value-retention</em> (so a Tacoma holds value far better than a luxury
+    sedan), but real resale varies by mileage, condition, color, region and market swings. Insurance especially varies
+    wildly by driver — treat the estimate as a placeholder and edit it. Everything is editable; adjust any field to
+    match real quotes. EV federal tax credit rules change frequently — leave incentives at $0 unless you've confirmed
+    current eligibility.
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="chartTip" id="chartTip"></div>
 
 <script>
 /* ============================================================================
@@ -233,67 +248,104 @@ const CONFIG = {
   }
 };
 
-/* Bundled dataset — works with zero network calls. ~58 popular configs. */
-const DATASET = [
-  {year:2026,make:"Toyota",model:"Grand Highlander Hybrid",config:"Limited AWD",class:"midsize_suv",powertrain:"hybrid",mpg:35,kwhPerMile:null,msrp:56250},
-  {year:2026,make:"Toyota",model:"Highlander Hybrid",config:"XLE AWD",class:"midsize_suv",powertrain:"hybrid",mpg:35,kwhPerMile:null,msrp:45000},
-  {year:2026,make:"Toyota",model:"Highlander",config:"XLE AWD",class:"midsize_suv",powertrain:"gas",mpg:24,kwhPerMile:null,msrp:42000},
-  {year:2026,make:"Toyota",model:"RAV4",config:"XLE AWD",class:"compact_suv",powertrain:"gas",mpg:30,kwhPerMile:null,msrp:33000},
-  {year:2026,make:"Toyota",model:"RAV4 Hybrid",config:"XLE AWD",class:"compact_suv",powertrain:"hybrid",mpg:39,kwhPerMile:null,msrp:36000},
-  {year:2026,make:"Toyota",model:"Camry",config:"LE",class:"midsize_car",powertrain:"hybrid",mpg:47,kwhPerMile:null,msrp:29000},
-  {year:2026,make:"Toyota",model:"Corolla",config:"LE",class:"compact_car",powertrain:"gas",mpg:34,kwhPerMile:null,msrp:23000},
-  {year:2026,make:"Toyota",model:"Tacoma",config:"SR5 4WD",class:"pickup",powertrain:"gas",mpg:21,kwhPerMile:null,msrp:38000},
-  {year:2026,make:"Toyota",model:"Sienna",config:"XLE",class:"minivan",powertrain:"hybrid",mpg:36,kwhPerMile:null,msrp:42000},
-  {year:2026,make:"Hyundai",model:"Palisade",config:"SEL AWD",class:"midsize_suv",powertrain:"gas",mpg:21,kwhPerMile:null,msrp:40000},
-  {year:2026,make:"Hyundai",model:"Tucson",config:"SEL AWD",class:"compact_suv",powertrain:"gas",mpg:26,kwhPerMile:null,msrp:31000},
-  {year:2026,make:"Hyundai",model:"Elantra",config:"SEL",class:"compact_car",powertrain:"gas",mpg:35,kwhPerMile:null,msrp:23000},
-  {year:2026,make:"Hyundai",model:"Ioniq 5",config:"SE AWD",class:"compact_suv",powertrain:"ev",mpg:null,kwhPerMile:0.29,msrp:46000},
-  {year:2026,make:"Kia",model:"Telluride",config:"EX AWD",class:"midsize_suv",powertrain:"gas",mpg:21,kwhPerMile:null,msrp:42000},
-  {year:2026,make:"Kia",model:"Sportage",config:"LX AWD",class:"compact_suv",powertrain:"gas",mpg:25,kwhPerMile:null,msrp:30000},
-  {year:2026,make:"Kia",model:"EV6",config:"Wind AWD",class:"compact_suv",powertrain:"ev",mpg:null,kwhPerMile:0.29,msrp:49000},
-  {year:2026,make:"Honda",model:"Accord",config:"EX",class:"midsize_car",powertrain:"gas",mpg:32,kwhPerMile:null,msrp:30000},
-  {year:2026,make:"Honda",model:"Accord Hybrid",config:"Sport",class:"midsize_car",powertrain:"hybrid",mpg:44,kwhPerMile:null,msrp:34000},
-  {year:2026,make:"Honda",model:"Civic",config:"EX",class:"compact_car",powertrain:"gas",mpg:36,kwhPerMile:null,msrp:26000},
-  {year:2026,make:"Honda",model:"CR-V",config:"EX AWD",class:"compact_suv",powertrain:"gas",mpg:30,kwhPerMile:null,msrp:34000},
-  {year:2026,make:"Honda",model:"Pilot",config:"EX-L AWD",class:"midsize_suv",powertrain:"gas",mpg:22,kwhPerMile:null,msrp:44000},
-  {year:2026,make:"Honda",model:"Odyssey",config:"EX-L",class:"minivan",powertrain:"gas",mpg:22,kwhPerMile:null,msrp:42000},
-  {year:2026,make:"Ford",model:"Explorer",config:"XLT AWD",class:"midsize_suv",powertrain:"gas",mpg:23,kwhPerMile:null,msrp:42000},
-  {year:2026,make:"Ford",model:"F-150",config:"XLT 4WD",class:"pickup",powertrain:"gas",mpg:20,kwhPerMile:null,msrp:45000},
-  {year:2026,make:"Ford",model:"F-150 Lightning",config:"XLT",class:"pickup",powertrain:"ev",mpg:null,kwhPerMile:0.48,msrp:55000},
-  {year:2026,make:"Ford",model:"Mustang Mach-E",config:"Select",class:"compact_suv",powertrain:"ev",mpg:null,kwhPerMile:0.30,msrp:43000},
-  {year:2026,make:"Ford",model:"Escape",config:"SE AWD",class:"compact_suv",powertrain:"gas",mpg:27,kwhPerMile:null,msrp:31000},
-  {year:2026,make:"Ford",model:"Bronco",config:"Big Bend 4WD",class:"midsize_suv",powertrain:"gas",mpg:20,kwhPerMile:null,msrp:40000},
-  {year:2026,make:"Chevrolet",model:"Silverado 1500",config:"LT 4WD",class:"pickup",powertrain:"gas",mpg:19,kwhPerMile:null,msrp:46000},
-  {year:2026,make:"Chevrolet",model:"Equinox",config:"LT AWD",class:"compact_suv",powertrain:"gas",mpg:26,kwhPerMile:null,msrp:30000},
-  {year:2026,make:"Chevrolet",model:"Equinox EV",config:"LT",class:"compact_suv",powertrain:"ev",mpg:null,kwhPerMile:0.30,msrp:35000},
-  {year:2026,make:"Chevrolet",model:"Tahoe",config:"LS 4WD",class:"fullsize_suv",powertrain:"gas",mpg:16,kwhPerMile:null,msrp:58000},
-  {year:2026,make:"Chevrolet",model:"Corvette",config:"Stingray",class:"sports",powertrain:"gas",mpg:19,kwhPerMile:null,msrp:69000},
-  {year:2026,make:"GMC",model:"Acadia",config:"SLE AWD",class:"midsize_suv",powertrain:"gas",mpg:21,kwhPerMile:null,msrp:43000},
-  {year:2026,make:"GMC",model:"Sierra 1500",config:"SLE 4WD",class:"pickup",powertrain:"gas",mpg:19,kwhPerMile:null,msrp:47000},
-  {year:2026,make:"Cadillac",model:"CT5",config:"Luxury AWD",class:"luxury_car",powertrain:"gas",mpg:23,kwhPerMile:null,msrp:42000},
-  {year:2026,make:"Cadillac",model:"Escalade",config:"Luxury 4WD",class:"fullsize_suv",powertrain:"gas",mpg:16,kwhPerMile:null,msrp:88000},
-  {year:2026,make:"Cadillac",model:"Lyriq",config:"Tech AWD",class:"midsize_suv",powertrain:"ev",mpg:null,kwhPerMile:0.34,msrp:61000},
-  {year:2026,make:"Chrysler",model:"Pacifica",config:"Touring L",class:"minivan",powertrain:"gas",mpg:22,kwhPerMile:null,msrp:42000},
-  {year:2026,make:"Chrysler",model:"Pacifica Hybrid",config:"Select",class:"minivan",powertrain:"phev",mpg:30,kwhPerMile:0.37,msrp:51000},
-  {year:2026,make:"Tesla",model:"Model Y",config:"Long Range AWD",class:"compact_suv",powertrain:"ev",mpg:null,kwhPerMile:0.28,msrp:47000},
-  {year:2026,make:"Tesla",model:"Model 3",config:"Long Range AWD",class:"midsize_car",powertrain:"ev",mpg:null,kwhPerMile:0.25,msrp:45000},
-  {year:2026,make:"Tesla",model:"Model S",config:"AWD",class:"luxury_car",powertrain:"ev",mpg:null,kwhPerMile:0.30,msrp:75000},
-  {year:2026,make:"Subaru",model:"Outback",config:"Premium AWD",class:"midsize_suv",powertrain:"gas",mpg:28,kwhPerMile:null,msrp:32000},
-  {year:2026,make:"Subaru",model:"Forester",config:"Premium AWD",class:"compact_suv",powertrain:"gas",mpg:29,kwhPerMile:null,msrp:31000},
-  {year:2026,make:"Subaru",model:"Crosstrek",config:"Premium AWD",class:"compact_suv",powertrain:"gas",mpg:30,kwhPerMile:null,msrp:28000},
-  {year:2026,make:"Mazda",model:"CX-5",config:"Select AWD",class:"compact_suv",powertrain:"gas",mpg:26,kwhPerMile:null,msrp:31000},
-  {year:2026,make:"Mazda",model:"Mazda3",config:"Select",class:"compact_car",powertrain:"gas",mpg:33,kwhPerMile:null,msrp:25000},
-  {year:2026,make:"Nissan",model:"Rogue",config:"SV AWD",class:"compact_suv",powertrain:"gas",mpg:30,kwhPerMile:null,msrp:31000},
-  {year:2026,make:"Nissan",model:"Altima",config:"SV",class:"midsize_car",powertrain:"gas",mpg:32,kwhPerMile:null,msrp:27000},
-  {year:2026,make:"Jeep",model:"Grand Cherokee",config:"Laredo 4WD",class:"midsize_suv",powertrain:"gas",mpg:22,kwhPerMile:null,msrp:40000},
-  {year:2026,make:"Jeep",model:"Wrangler",config:"Sport 4WD",class:"compact_suv",powertrain:"gas",mpg:22,kwhPerMile:null,msrp:35000},
-  {year:2026,make:"Jeep",model:"Wrangler 4xe",config:"Sahara",class:"compact_suv",powertrain:"phev",mpg:20,kwhPerMile:0.42,msrp:50000},
-  {year:2026,make:"BMW",model:"3 Series",config:"330i",class:"luxury_car",powertrain:"gas",mpg:30,kwhPerMile:null,msrp:46000},
-  {year:2026,make:"BMW",model:"X5",config:"xDrive40i",class:"fullsize_suv",powertrain:"gas",mpg:24,kwhPerMile:null,msrp:66000},
-  {year:2026,make:"Mercedes-Benz",model:"C-Class",config:"C300",class:"luxury_car",powertrain:"gas",mpg:28,kwhPerMile:null,msrp:47000},
-  {year:2026,make:"Rivian",model:"R1T",config:"Adventure",class:"pickup",powertrain:"ev",mpg:null,kwhPerMile:0.48,msrp:72000},
-  {year:2026,make:"Porsche",model:"911",config:"Carrera",class:"sports",powertrain:"gas",mpg:20,kwhPerMile:null,msrp:116000}
+/* ============================================================================
+   VEHICLE CATALOG — bundled, zero network calls.
+   Each model carries a real-world 5-year depreciation estimate (d5 = fraction
+   of value lost over 5 years, from market value-retention data) and its actual
+   trims with MSRPs. Trim = [name, msrp, mpg?, kwhPerMile?]. Model-level mpg/kwh
+   are fallbacks when a trim doesn't override them.
+   ========================================================================== */
+const CATALOG = [
+  // ---- Toyota (strong value retention) ----
+  {mk:"Toyota",md:"RAV4",cls:"compact_suv",pt:"gas",d5:0.35,mpg:30,trims:[["LE FWD",29000,30],["XLE AWD",33000,29],["XLE Premium AWD",35500,29],["Limited AWD",39500,28]]},
+  {mk:"Toyota",md:"RAV4 Hybrid",cls:"compact_suv",pt:"hybrid",d5:0.34,mpg:39,trims:[["LE AWD",33000,39],["XLE AWD",35500,39],["XSE AWD",38000,38],["Limited AWD",41000,38]]},
+  {mk:"Toyota",md:"Highlander",cls:"midsize_suv",pt:"gas",d5:0.37,mpg:24,trims:[["LE AWD",41000,24],["XLE AWD",44000,24],["Limited AWD",49000,23],["Platinum AWD",52000,22]]},
+  {mk:"Toyota",md:"Highlander Hybrid",cls:"midsize_suv",pt:"hybrid",d5:0.35,mpg:35,trims:[["XLE AWD",46000,35],["Limited AWD",51000,34],["Platinum AWD",54000,34]]},
+  {mk:"Toyota",md:"Grand Highlander Hybrid",cls:"midsize_suv",pt:"hybrid",d5:0.36,mpg:35,trims:[["XLE AWD",47000,36],["Limited AWD",56250,35],["Platinum AWD",60000,34]]},
+  {mk:"Toyota",md:"Camry",cls:"midsize_car",pt:"hybrid",d5:0.40,mpg:47,trims:[["LE",29000,47],["SE",30500,47],["XLE",34000,44],["XSE AWD",36000,44]]},
+  {mk:"Toyota",md:"Corolla",cls:"compact_car",pt:"gas",d5:0.40,mpg:34,trims:[["LE",23000,34],["SE",25000,34],["XSE",27000,32]]},
+  {mk:"Toyota",md:"Tacoma",cls:"pickup",pt:"gas",d5:0.28,mpg:21,trims:[["SR",33000,21],["SR5 4WD",38000,21],["TRD Off-Road 4WD",43000,20],["Limited 4WD",52000,19]]},
+  {mk:"Toyota",md:"Sienna",cls:"minivan",pt:"hybrid",d5:0.42,mpg:36,trims:[["LE",39000,36],["XLE",42000,36],["XSE",44000,35],["Limited AWD",52000,35]]},
+
+  // ---- Honda (strong value retention) ----
+  {mk:"Honda",md:"Civic",cls:"compact_car",pt:"gas",d5:0.40,mpg:36,trims:[["LX",25000,36],["Sport",27000,35],["EX",28000,36],["Touring",31000,34]]},
+  {mk:"Honda",md:"Accord",cls:"midsize_car",pt:"gas",d5:0.44,mpg:32,trims:[["LX",28000,32],["EX",30000,32],["Sport",32000,29]]},
+  {mk:"Honda",md:"Accord Hybrid",cls:"midsize_car",pt:"hybrid",d5:0.43,mpg:44,trims:[["Sport",34000,44],["EX-L",36000,44],["Touring",39000,44]]},
+  {mk:"Honda",md:"CR-V",cls:"compact_suv",pt:"gas",d5:0.38,mpg:30,trims:[["LX",30000,30],["EX AWD",34000,30],["EX-L AWD",37000,29],["Sport-L AWD",39000,28]]},
+  {mk:"Honda",md:"Pilot",cls:"midsize_suv",pt:"gas",d5:0.42,mpg:22,trims:[["Sport",40000,22],["EX-L AWD",44000,22],["Touring AWD",48000,21],["Elite AWD",53000,21]]},
+  {mk:"Honda",md:"Odyssey",cls:"minivan",pt:"gas",d5:0.45,mpg:22,trims:[["EX",40000,22],["EX-L",42000,22],["Touring",47000,22],["Elite",51000,22]]},
+
+  // ---- Hyundai / Kia ----
+  {mk:"Hyundai",md:"Elantra",cls:"compact_car",pt:"gas",d5:0.50,mpg:35,trims:[["SE",22000,35],["SEL",23000,35],["Limited",27000,33]]},
+  {mk:"Hyundai",md:"Tucson",cls:"compact_suv",pt:"gas",d5:0.50,mpg:26,trims:[["SE AWD",29000,26],["SEL AWD",31000,26],["Limited AWD",37000,25]]},
+  {mk:"Hyundai",md:"Palisade",cls:"midsize_suv",pt:"gas",d5:0.50,mpg:21,trims:[["SEL AWD",40000,21],["Limited AWD",47000,20],["Calligraphy AWD",52000,19]]},
+  {mk:"Hyundai",md:"Ioniq 5",cls:"compact_suv",pt:"ev",d5:0.55,kwh:0.29,trims:[["SE RWD",43000,null,0.28],["SE AWD",46000,null,0.29],["Limited AWD",53000,null,0.31]]},
+  {mk:"Kia",md:"Sportage",cls:"compact_suv",pt:"gas",d5:0.50,mpg:25,trims:[["LX AWD",29000,25],["EX AWD",32000,25],["SX AWD",37000,24]]},
+  {mk:"Kia",md:"Telluride",cls:"midsize_suv",pt:"gas",d5:0.46,mpg:21,trims:[["LX AWD",39000,21],["EX AWD",44000,21],["SX AWD",48000,20],["SX Prestige AWD",53000,20]]},
+  {mk:"Kia",md:"EV6",cls:"compact_suv",pt:"ev",d5:0.55,kwh:0.29,trims:[["Light RWD",44000,null,0.28],["Wind AWD",49000,null,0.29],["GT-Line AWD",54000,null,0.31]]},
+
+  // ---- Ford ----
+  {mk:"Ford",md:"Escape",cls:"compact_suv",pt:"gas",d5:0.52,mpg:27,trims:[["Active",31000,27],["ST-Line",34000,26],["Platinum AWD",39000,26]]},
+  {mk:"Ford",md:"Explorer",cls:"midsize_suv",pt:"gas",d5:0.52,mpg:23,trims:[["Active",40000,23],["ST-Line",45000,22],["Platinum AWD",53000,21]]},
+  {mk:"Ford",md:"Bronco",cls:"midsize_suv",pt:"gas",d5:0.35,mpg:20,trims:[["Big Bend 4WD",40000,20],["Black Diamond 4WD",44000,19],["Outer Banks 4WD",48000,19],["Wildtrak 4WD",55000,18]]},
+  {mk:"Ford",md:"F-150",cls:"pickup",pt:"gas",d5:0.45,mpg:20,trims:[["XL 4WD",40000,20],["XLT 4WD",45000,20],["Lariat 4WD",58000,19],["Platinum 4WD",72000,18]]},
+  {mk:"Ford",md:"F-150 Lightning",cls:"pickup",pt:"ev",d5:0.58,kwh:0.49,trims:[["Pro",55000,null,0.48],["XLT",63000,null,0.49],["Lariat",77000,null,0.50]]},
+  {mk:"Ford",md:"Mustang Mach-E",cls:"compact_suv",pt:"ev",d5:0.55,kwh:0.30,trims:[["Select",43000,null,0.30],["Premium AWD",48000,null,0.30],["GT AWD",55000,null,0.34]]},
+
+  // ---- GM (Chevrolet / GMC / Cadillac) ----
+  {mk:"Chevrolet",md:"Equinox",cls:"compact_suv",pt:"gas",d5:0.52,mpg:26,trims:[["LT AWD",30000,26],["RS AWD",33000,26],["Premier AWD",36000,25]]},
+  {mk:"Chevrolet",md:"Equinox EV",cls:"compact_suv",pt:"ev",d5:0.55,kwh:0.30,trims:[["LT FWD",35000,null,0.30],["RS AWD",43000,null,0.31]]},
+  {mk:"Chevrolet",md:"Silverado 1500",cls:"pickup",pt:"gas",d5:0.48,mpg:19,trims:[["WT 4WD",42000,19],["LT 4WD",46000,19],["RST 4WD",52000,19],["High Country 4WD",62000,18]]},
+  {mk:"Chevrolet",md:"Tahoe",cls:"fullsize_suv",pt:"gas",d5:0.52,mpg:16,trims:[["LS 4WD",58000,16],["LT 4WD",64000,16],["Z71 4WD",68000,15],["High Country 4WD",78000,15]]},
+  {mk:"Chevrolet",md:"Corvette",cls:"sports",pt:"gas",d5:0.30,mpg:19,trims:[["Stingray 1LT",69000,19],["Stingray 3LT",79000,19],["Z06",111000,15]]},
+  {mk:"GMC",md:"Acadia",cls:"midsize_suv",pt:"gas",d5:0.50,mpg:21,trims:[["Elevation AWD",43000,21],["AT4 AWD",48000,20],["Denali AWD",55000,20]]},
+  {mk:"GMC",md:"Sierra 1500",cls:"pickup",pt:"gas",d5:0.46,mpg:19,trims:[["Pro 4WD",43000,19],["SLE 4WD",47000,19],["SLT 4WD",56000,18],["Denali 4WD",68000,17]]},
+  {mk:"Cadillac",md:"CT5",cls:"luxury_car",pt:"gas",d5:0.58,mpg:23,trims:[["Luxury AWD",42000,23],["Premium Luxury AWD",48000,23],["Sport AWD",52000,22]]},
+  {mk:"Cadillac",md:"Escalade",cls:"fullsize_suv",pt:"gas",d5:0.55,mpg:16,trims:[["Luxury 4WD",88000,16],["Premium Luxury 4WD",97000,16],["Sport Platinum 4WD",110000,15]]},
+  {mk:"Cadillac",md:"Lyriq",cls:"midsize_suv",pt:"ev",d5:0.60,kwh:0.34,trims:[["Tech AWD",61000,null,0.34],["Luxury AWD",65000,null,0.34],["Sport AWD",69000,null,0.35]]},
+
+  // ---- Chrysler / Jeep ----
+  {mk:"Chrysler",md:"Pacifica",cls:"minivan",pt:"gas",d5:0.55,mpg:22,trims:[["Touring",40000,22],["Touring L",42000,22],["Limited",50000,21]]},
+  {mk:"Chrysler",md:"Pacifica Hybrid",cls:"minivan",pt:"phev",d5:0.55,mpg:30,kwh:0.37,trims:[["Select",51000,30,0.37],["Limited",57000,30,0.37]]},
+  {mk:"Jeep",md:"Grand Cherokee",cls:"midsize_suv",pt:"gas",d5:0.52,mpg:22,trims:[["Laredo 4WD",40000,22],["Limited 4WD",47000,21],["Overland 4WD",55000,21],["Summit 4WD",62000,20]]},
+  {mk:"Jeep",md:"Wrangler",cls:"compact_suv",pt:"gas",d5:0.32,mpg:22,trims:[["Sport 4WD",35000,22],["Sport S 4WD",38000,22],["Sahara 4WD",45000,21],["Rubicon 4WD",52000,20]]},
+  {mk:"Jeep",md:"Wrangler 4xe",cls:"compact_suv",pt:"phev",d5:0.42,mpg:20,kwh:0.42,trims:[["Sahara",50000,20,0.42],["Rubicon",57000,20,0.42]]},
+
+  // ---- Tesla ----
+  {mk:"Tesla",md:"Model 3",cls:"midsize_car",pt:"ev",d5:0.48,kwh:0.25,trims:[["RWD",42000,null,0.24],["Long Range AWD",47000,null,0.25],["Performance AWD",54000,null,0.28]]},
+  {mk:"Tesla",md:"Model Y",cls:"compact_suv",pt:"ev",d5:0.48,kwh:0.28,trims:[["RWD",45000,null,0.27],["Long Range AWD",49000,null,0.28],["Performance AWD",53000,null,0.30]]},
+  {mk:"Tesla",md:"Model S",cls:"luxury_car",pt:"ev",d5:0.55,kwh:0.30,trims:[["AWD",75000,null,0.30],["Plaid",90000,null,0.34]]},
+
+  // ---- Subaru / Mazda / Nissan (strong value: Subaru/Mazda) ----
+  {mk:"Subaru",md:"Crosstrek",cls:"compact_suv",pt:"gas",d5:0.40,mpg:30,trims:[["Base AWD",26000,30],["Premium AWD",28000,30],["Limited AWD",32000,29]]},
+  {mk:"Subaru",md:"Forester",cls:"compact_suv",pt:"gas",d5:0.40,mpg:29,trims:[["Base AWD",29000,29],["Premium AWD",31000,29],["Limited AWD",35000,28]]},
+  {mk:"Subaru",md:"Outback",cls:"midsize_suv",pt:"gas",d5:0.42,mpg:28,trims:[["Base AWD",30000,28],["Premium AWD",32000,28],["Limited AWD",38000,27]]},
+  {mk:"Mazda",md:"Mazda3",cls:"compact_car",pt:"gas",d5:0.44,mpg:33,trims:[["2.5 S",25000,33],["Select",26500,33],["Premium",30000,31]]},
+  {mk:"Mazda",md:"CX-5",cls:"compact_suv",pt:"gas",d5:0.44,mpg:26,trims:[["S Select AWD",31000,26],["S Preferred AWD",33000,26],["Turbo Premium AWD",40000,24]]},
+  {mk:"Nissan",md:"Altima",cls:"midsize_car",pt:"gas",d5:0.55,mpg:32,trims:[["S",27000,32],["SV",29000,32],["SR",31000,31]]},
+  {mk:"Nissan",md:"Rogue",cls:"compact_suv",pt:"gas",d5:0.52,mpg:30,trims:[["S AWD",30000,30],["SV AWD",33000,30],["SL AWD",38000,29]]},
+
+  // ---- Luxury / EV / exotic ----
+  {mk:"BMW",md:"3 Series",cls:"luxury_car",pt:"gas",d5:0.58,mpg:30,trims:[["330i",46000,30],["330i xDrive",48000,29],["M340i xDrive",60000,26]]},
+  {mk:"BMW",md:"X5",cls:"fullsize_suv",pt:"gas",d5:0.60,mpg:24,trims:[["xDrive40i",66000,24],["M60i xDrive",90000,20]]},
+  {mk:"Mercedes-Benz",md:"C-Class",cls:"luxury_car",pt:"gas",d5:0.58,mpg:28,trims:[["C300",47000,28],["C300 4MATIC",49000,27],["AMG C43",62000,23]]},
+  {mk:"Rivian",md:"R1T",cls:"pickup",pt:"ev",d5:0.55,kwh:0.48,trims:[["Adventure",72000,null,0.48],["Adventure Max Pack",79000,null,0.46]]},
+  {mk:"Porsche",md:"911",cls:"sports",pt:"gas",d5:0.22,mpg:20,trims:[["Carrera",116000,20],["Carrera S",132000,19],["Carrera 4S",140000,19]]}
 ];
+
+/* Flatten the catalog into row records the rest of the app consumes. */
+const DATASET = [];
+CATALOG.forEach(m=>{
+  m.trims.forEach(tr=>{
+    DATASET.push({
+      year: 2026, make: m.mk, model: m.md, config: tr[0], class: m.cls, powertrain: m.pt,
+      msrp: tr[1],
+      mpg: tr[2]!==undefined ? tr[2] : (m.mpg!=null ? m.mpg : null),
+      kwhPerMile: tr[3]!==undefined ? tr[3] : (m.kwh!=null ? m.kwh : null),
+      depr5: m.d5
+    });
+  });
+});
 
 /* Category metadata (order + colors match CSS variables). */
 const CATEGORIES = [
@@ -335,6 +387,23 @@ function residualFraction(age, deprYr1, deprAnnual){
   return Math.max(CONFIG.constants.deprFloor, f);
 }
 
+// Convert a real-world 5-year depreciation figure (fraction of value lost over
+// 5 years) into a two-part curve: a heavier first-year drop plus a steady
+// annual rate. We model year-1 as ~1.8x the steady rate and solve for the rate
+// that reproduces the observed 5-year retained value: (1-1.8g)(1-g)^4 = R5.
+const DEPR_YR1_RATIO = 1.8;
+function curveFromDepr5(depr5){
+  const R5 = Math.min(0.95, Math.max(0.05, 1 - (depr5!=null?depr5:0.5)));
+  let lo = 0, hi = 0.9/DEPR_YR1_RATIO;   // keep year-1 drop < 90%
+  for(let i=0;i<40;i++){
+    const g = (lo+hi)/2;
+    const r = (1-DEPR_YR1_RATIO*g)*Math.pow(1-g,4);
+    if(r > R5) lo = g; else hi = g;       // r decreases as g grows
+  }
+  const g = (lo+hi)/2;
+  return { deprYr1: DEPR_YR1_RATIO*g, deprAnnual: g };
+}
+
 /* ============================================================================
    ESTIMATE ENGINE — build the pre-filled ("est.") field values for a row.
    Powertrain multipliers are folded into the concrete numbers so every
@@ -344,13 +413,13 @@ function estimateFor(row, age){
   const seg = CONFIG.segments[row.class];
   const pwr = CONFIG.powertrain[row.powertrain];
   age = age||0;
-  const deprYr1 = seg.deprYr1, deprAnnual = seg.deprAnnual*pwr.deprAnnual;
+  // Depreciation comes from the model's real 5-year value-retention figure.
+  const curve = curveFromDepr5(row.depr5);
   // For an older model year, pre-fill the estimated used value at that age.
-  const price = Math.round(row.msrp * residualFraction(age, deprYr1, deprAnnual));
+  const price = Math.round(row.msrp * residualFraction(age, curve.deprYr1, curve.deprAnnual));
   return {
     age: age,
-    msrpNew: row.msrp,     // reference new-car price (drives the depreciation curve)
-    msrp: price,           // estimated purchase price (used value if older)
+    msrp: price,           // purchase price (estimated used value if older)
     powertrain: row.powertrain,
     mpg: row.mpg,
     kwhPerMile: row.kwhPerMile,
@@ -358,8 +427,8 @@ function estimateFor(row, age){
     insurance: Math.round(seg.insurance * pwr.insurance),
     maintBase: Math.round(seg.maintBase * pwr.maint),
     maintGrowth: CONFIG.constants.maintGrowth * 100,
-    deprYr1: seg.deprYr1 * 100,
-    deprAnnual: +(seg.deprAnnual * pwr.deprAnnual * 100).toFixed(2),
+    deprYr1: +(curve.deprYr1 * 100).toFixed(1),
+    deprAnnual: +(curve.deprAnnual * 100).toFixed(2),
     tireSet: seg.tireSet,
     tireLife: Math.round(seg.tireLife * pwr.tireLife),
     incentives: 0,
@@ -400,7 +469,6 @@ function computeVehicle(v, g){
   const M = num(g.milesPerYear);
   const taxRate = num(g.salesTax)/100;
   const price = num(v.msrp);                    // actual purchase price
-  const msrpNew = num(v.msrpNew) || price;      // new-car reference for the curve
   const age = Math.max(0, num(v.age));          // age of the car at purchase
 
   // --- Fuel / energy per year ---
@@ -416,16 +484,16 @@ function computeVehicle(v, g){
   const fuelYr = fuelPerYear();
 
   // --- Depreciation curve (floored at 5% residual) ---
-  // The new-car curve is anchored to msrpNew; for a used car we scale that
-  // curve so it passes through the actual purchase price at the current age,
-  // then continue depreciating from age -> age+t (no repeated year-1 cliff).
+  // Projected forward from the purchase price. If bought NEW (age 0) the first
+  // year takes the heavier year-1 drop; if bought USED that cliff already
+  // happened, so we depreciate at the steady annual rate from the price paid.
   const deprYr1 = num(v.deprYr1)/100, deprAnnual = num(v.deprAnnual)/100;
-  const frac = a => residualFraction(a, deprYr1, deprAnnual);
-  const fAge = frac(age);
-  const scale = (msrpNew*fAge>0) ? price/(msrpNew*fAge) : 1;
   function residual(t){
     const floor = CONFIG.constants.deprFloor * price;
-    return Math.max(floor, scale * msrpNew * frac(age+t));
+    const val = age<=0
+      ? price * (1-deprYr1) * Math.pow(1-deprAnnual, Math.max(0,t-1))
+      : price * Math.pow(1-deprAnnual, t);
+    return Math.max(val, floor);
   }
   const deprThrough = t => price - residual(t);
 
@@ -733,42 +801,43 @@ function renderTotals(data){
 function renderBarChart(data){
   const host = $("#barChart");
   const n = data.length;
-  const barW = 80, gap = 46, padL = 54, padR = 16, padT = 16, padB = 64;
+  const barW = n>=4?40:(n===3?50:60), gap = 30, padL = 44, padR = 12, padT = 20, padB = 54;
   const W = padL + padR + n*barW + (n-1)*gap;
-  const H = 320, plotH = H - padT - padB;
-  const maxTotal = Math.max(...data.map(d=>Object.values(d.res.breakdown).reduce((a,b)=>a+b,0)), 1);
+  const H = 280, plotH = H - padT - padB;
+  const totals = data.map(d=>Object.values(d.res.breakdown).reduce((a,b)=>a+b,0));
+  const maxTotal = Math.max(...totals, 1);
   const y = val => padT + plotH*(1 - val/maxTotal);
 
   let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cost breakdown by category for each vehicle">`;
-  // y gridlines
   const ticks = 4;
   for(let i=0;i<=ticks;i++){
     const val = maxTotal*i/ticks, yy = y(val);
     svg += `<line class="gridline" x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}"/>`;
-    svg += `<text class="tick" x="${padL-8}" y="${yy+4}" text-anchor="end">${fmt$k(val)}</text>`;
+    svg += `<text class="tick" x="${padL-6}" y="${yy+4}" text-anchor="end">${fmt$k(val)}</text>`;
   }
   data.forEach((d,i)=>{
     const x = padL + i*(barW+gap);
+    const name = `${d.row.make} ${d.row.model}`;
     let acc = 0;
     CATEGORIES.forEach(cat=>{
       const val = d.res.breakdown[cat.key]||0;
       if(val<=0) return;
       const h = plotH*(val/maxTotal);
       const yy = y(acc+val);
-      svg += `<rect x="${x}" y="${yy}" width="${barW}" height="${h}" fill="${cat.color}"><title>${cat.label}: ${fmt$(val)}</title></rect>`;
+      const pct = Math.round(val/totals[i]*100);
+      svg += `<rect x="${x}" y="${yy}" width="${barW}" height="${Math.max(0.5,h)}" fill="${cat.color}" `+
+             `data-tip="${esc(name)}||${cat.label}||${fmt$(val)} (${pct}%)"/>`;
       acc += val;
     });
-    // total label
-    svg += `<text class="tick" x="${x+barW/2}" y="${y(acc)-8}" text-anchor="middle" style="font-weight:700;fill:var(--ink)">${fmt$k(d.res.total)}</text>`;
-    // vehicle name (wrapped)
-    const nm = `${d.row.make} ${d.row.model}`;
-    svg += `<text x="${x+barW/2}" y="${H-padB+20}" text-anchor="middle" class="tick" style="fill:var(--ink)">${wrapLabel(nm,x+barW/2,H-padB+20,14)}</text>`;
-    svg += `<rect x="${x}" y="${H-padB+30}" width="${barW}" height="4" fill="${VEHICLE_COLORS[i]}"/>`;
+    // total above the bar
+    svg += `<text x="${x+barW/2}" y="${y(acc)-6}" text-anchor="middle" class="tick" style="font-weight:700;fill:var(--ink)">${fmt$k(d.res.total)}</text>`;
+    // wrapped vehicle name below (no colored underline — that was the artifact)
+    svg += `<text x="${x+barW/2}" y="${H-padB+15}" text-anchor="middle" style="fill:var(--ink);font-size:10px">${wrapLabel(name,x+barW/2,0,15)}</text>`;
   });
   svg += `</svg>`;
   host.innerHTML = svg;
+  attachTips(host);
 
-  // legend
   const leg = $("#barLegend"); leg.innerHTML="";
   CATEGORIES.forEach(cat=>{
     const it = el("div","item");
@@ -782,15 +851,16 @@ function wrapLabel(text,cx,cy,maxChars){
   let lines=[], cur="";
   words.forEach(w=>{ if((cur+" "+w).trim().length>maxChars){ lines.push(cur.trim()); cur=w; } else cur=(cur+" "+w).trim(); });
   if(cur) lines.push(cur);
-  return lines.map((ln,i)=>`<tspan x="${cx}" dy="${i===0?0:13}">${escapeXml(ln)}</tspan>`).join("");
+  return lines.map((ln,i)=>`<tspan x="${cx}" dy="${i===0?0:11}">${escapeXml(ln)}</tspan>`).join("");
 }
-function escapeXml(s){return s.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));}
+function escapeXml(s){return String(s).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));}
+const esc = escapeXml;
 
 function renderLineChart(data){
   const host = $("#lineChart");
   const Y = Math.max(...data.map(d=>d.res.horizon));
-  const padL=58, padR=18, padT=16, padB=42;
-  const W = 720, H = 320, plotW = W-padL-padR, plotH = H-padT-padB;
+  const padL=46, padR=14, padT=16, padB=42;
+  const W = 560, H = 280, plotW = W-padL-padR, plotH = H-padT-padB;
   const maxVal = Math.max(...data.flatMap(d=>d.res.cumulative.map(p=>p.value)), 1);
   const x = t => padL + (Y<=1?plotW/2:plotW*(t-1)/(Y-1));
   const y = v => padT + plotH*(1 - v/maxVal);
@@ -800,9 +870,8 @@ function renderLineChart(data){
   for(let i=0;i<=ticks;i++){
     const val=maxVal*i/ticks, yy=y(val);
     svg += `<line class="gridline" x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}"/>`;
-    svg += `<text class="tick" x="${padL-8}" y="${yy+4}" text-anchor="end">${fmt$k(val)}</text>`;
+    svg += `<text class="tick" x="${padL-6}" y="${yy+4}" text-anchor="end">${fmt$k(val)}</text>`;
   }
-  // x axis ticks
   const step = Y<=10?1:Math.ceil(Y/10);
   for(let t=1;t<=Y;t+=step){
     svg += `<text class="tick" x="${x(t)}" y="${H-padB+18}" text-anchor="middle">${t}</text>`;
@@ -814,12 +883,15 @@ function renderLineChart(data){
   data.forEach((d,i)=>{
     const pts = d.res.cumulative.map(p=>`${x(p.year)},${y(p.value)}`).join(" ");
     svg += `<polyline points="${pts}" fill="none" stroke="${VEHICLE_COLORS[i]}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    const name = `${d.row.make} ${d.row.model}`;
     d.res.cumulative.forEach(p=>{
-      svg += `<circle cx="${x(p.year)}" cy="${y(p.value)}" r="2.6" fill="${VEHICLE_COLORS[i]}"><title>${d.row.make} ${d.row.model} — yr ${p.year}: ${fmt$(p.value)}</title></circle>`;
+      svg += `<circle cx="${x(p.year)}" cy="${y(p.value)}" r="3" fill="${VEHICLE_COLORS[i]}" `+
+             `data-tip="${esc(name)}||Year ${p.year}||${fmt$(p.value)}"/>`;
     });
   });
   svg += `</svg>`;
   host.innerHTML = svg;
+  attachTips(host);
 
   const leg = $("#lineLegend"); leg.innerHTML="";
   data.forEach((d,i)=>{
@@ -827,6 +899,26 @@ function renderLineChart(data){
     it.innerHTML = `<span class="sw" style="background:${VEHICLE_COLORS[i]}"></span>${d.row.make} ${d.row.model}`;
     leg.appendChild(it);
   });
+}
+
+/* Interactive tooltip shared by both charts (delegated; bound once per host). */
+function attachTips(host){
+  if(host._tipsBound) return;
+  host._tipsBound = true;
+  const tip = $("#chartTip");
+  host.addEventListener("mousemove", e=>{
+    const t = e.target.closest("[data-tip]");
+    if(!t){ tip.style.display="none"; return; }
+    const p = t.getAttribute("data-tip").split("||");
+    tip.innerHTML = `<b>${p[0]||""}</b>` + (p[1]!=null?`<br>${p[1]}`:"") + (p[2]!=null?`: <span class="tval">${p[2]}</span>`:"");
+    tip.style.display="block";
+    const pad=14, w=tip.offsetWidth, h=tip.offsetHeight;
+    let lx=e.clientX+pad, ly=e.clientY+pad;
+    if(lx+w>window.innerWidth) lx=e.clientX-w-pad;
+    if(ly+h>window.innerHeight) ly=e.clientY-h-pad;
+    tip.style.left=lx+"px"; tip.style.top=ly+"px";
+  });
+  host.addEventListener("mouseleave", ()=>{ tip.style.display="none"; });
 }
 
 /* softUpdate: recompute results only (used during typing to preserve focus) */
