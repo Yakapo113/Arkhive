@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>New Construction Walkthrough — ArkHive</title>
+<meta name="description" content="A free, private checklist for walking a new-construction home before closing. Mark each check pass or fail, add notes and photos, and build a punch list for your builder.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏠</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EBE6; --paper:#F7F8F4; --ink:#1B2430; --muted:#5B6570; --line:#C9CEC6;
+  --pass:#2F7D4F; --pass-bg:#DCEEDF; --fail:#C2372B; --fail-bg:#F6DCD8; --na:#6B7280; --na-bg:#E3E5E8;
+  --tag:#F2C230; --tag-ink:#1B2430;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#12171D; --paper:#1B222A; --ink:#E7EAE4; --muted:#9AA4AE; --line:#2E3842;
+  --pass:#5BBF83; --pass-bg:#1D3326; --fail:#F0715F; --fail-bg:#3A1F1C; --na:#A0A7B0; --na-bg:#272E36;
+  --tag:#F2C230; --tag-ink:#1B2430; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#12171D; --paper:#1B222A; --ink:#E7EAE4; --muted:#9AA4AE; --line:#2E3842;
+  --pass:#5BBF83; --pass-bg:#1D3326; --fail:#F0715F; --fail-bg:#3A1F1C; --na:#A0A7B0; --na-bg:#272E36;
+  --tag:#F2C230; --tag-ink:#1B2430; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 96px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.45}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--ink);color:var(--paper)}
+header.top .wrap{padding-top:12px;padding-bottom:12px}
+.brand{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.home{color:var(--tag);text-decoration:none;font-size:.85rem;font-weight:700;display:inline-block;margin-bottom:2px}
+.home:hover{text-decoration:underline}
+.brand h1{margin:0;font-stretch:72%;font-weight:800;font-size:1.35rem;letter-spacing:.01em}
+.brand .count{font-stretch:72%;font-weight:700;font-size:1.05rem;white-space:nowrap}
+.bar{margin-top:8px;height:8px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden;display:flex}
+.bar span{display:block;height:100%}
+.bar .p{background:var(--pass)} .bar .f{background:var(--fail)} .bar .n{background:#8A929B}
+.filters{display:flex;gap:6px;margin-top:10px}
+.filters button{border:1px solid rgba(255,255,255,.3);background:transparent;color:var(--paper);border-radius:999px;padding:4px 12px;font-size:.85rem}
+.filters button[aria-pressed="true"]{background:var(--tag);color:var(--tag-ink);border-color:var(--tag);font-weight:700}
+
+.intro{padding:20px 0 8px}
+.intro p{margin:0 0 14px;color:var(--muted);max-width:62ch}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.meta label{display:flex;flex-direction:column;font-size:.85rem;color:var(--muted);gap:4px}
+.meta label.full{grid-column:1/-1}
+.meta input{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:10px;font-size:1rem}
+
+section.group{margin:18px 0;background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+section.group > button.gh{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;background:none;border:0;text-align:left}
+.gh h2{margin:0;font-stretch:80%;font-weight:750;font-size:1.15rem}
+.gh .tally{font-size:.85rem;color:var(--muted);white-space:nowrap}
+.gh .tally b{color:var(--fail)}
+.gh .chev{transition:transform .15s}
+section.group.closed .chev{transform:rotate(-90deg)}
+section.group.closed .items{display:none}
+
+.item{border-top:1px solid var(--line);padding:14px 16px;border-left:5px solid transparent}
+.item[data-s="pass"]{border-left-color:var(--pass)}
+.item[data-s="fail"]{border-left-color:var(--fail);background:var(--fail-bg)}
+.item[data-s="na"]{border-left-color:var(--na)}
+.item h3{margin:0;font-size:1rem;font-weight:650}
+.item .hint{margin:4px 0 10px;font-size:.88rem;color:var(--muted)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1 1 0;min-width:72px;min-height:44px;border:1.5px solid var(--line);background:var(--bg);border-radius:6px;font-weight:700}
+.seg button.pass[aria-pressed="true"]{background:var(--pass);border-color:var(--pass);color:#fff}
+.seg button.fail[aria-pressed="true"]{background:var(--fail);border-color:var(--fail);color:#fff}
+.seg button.na[aria-pressed="true"]{background:var(--na);border-color:var(--na);color:#fff}
+.item textarea{width:100%;margin-top:10px;min-height:44px;resize:vertical;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.95rem}
+.item[data-s="fail"] textarea{border-color:var(--fail)}
+.item[data-s="fail"] textarea:placeholder-shown{border-width:2px}
+.photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+.photos .thumb{position:relative;width:72px;height:72px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.photos .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photos .thumb button{position:absolute;top:2px;right:2px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:14px;line-height:1}
+.addphoto{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:4px 12px;border:1.5px dashed var(--line);border-radius:6px;font-size:.88rem;color:var(--muted);cursor:pointer}
+.addphoto input{display:none}
+
+footer.actions{position:sticky;bottom:0;background:linear-gradient(to top,var(--bg) 70%,transparent);padding:16px 0 calc(16px + env(safe-area-inset-bottom,0px))}
+footer.actions .wrap{display:flex;gap:10px}
+.btn{min-height:50px;border-radius:8px;border:0;padding:0 18px;font-weight:750;font-size:1rem}
+.btn.primary{flex:1;background:var(--tag);color:var(--tag-ink)}
+.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--muted)}
+
+#report{position:fixed;inset:0;z-index:30;background:var(--bg);overflow:auto;display:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body.show-report #report{display:block}
+body.show-report{overflow:hidden}
+.rhead{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:2}
+.rhead .wrap{display:flex;gap:8px;padding-top:10px;padding-bottom:10px;flex-wrap:wrap}
+.rhead .btn{min-height:42px;font-size:.92rem}
+.rbody{padding:20px 0 40px}
+.rbody h1{font-stretch:72%;font-weight:800;margin:0 0 4px;font-size:1.7rem}
+.rbody .sub{color:var(--muted);margin:0 0 16px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.stats div{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font-size:.9rem;color:var(--muted)}
+.stats b{display:block;font-size:1.4rem;color:var(--ink);font-stretch:80%}
+.stats .bad b{color:var(--fail)}
+.rsec h2{font-stretch:80%;font-size:1.15rem;margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--ink)}
+.ritem{padding:10px 0;border-bottom:1px solid var(--line);break-inside:avoid}
+.ritem h3{margin:0;font-size:1rem}
+.ritem p{margin:4px 0 0}
+.ritem .missing{color:var(--fail);font-style:italic}
+.ritem .rph{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ritem .rph img{width:140px;height:105px;object-fit:cover;border-radius:4px;border:1px solid var(--line)}
+.warn{background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--tag);border-radius:6px;padding:10px 14px;margin:0 0 16px;font-size:.92rem}
+.empty{padding:24px;text-align:center;color:var(--muted);background:var(--paper);border-radius:8px}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 16px;border-radius:999px;font-size:.9rem;z-index:50;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+
+@media (max-width:480px){.meta{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  body.show-report > *:not(#report){display:none!important}
+  #report{position:static;overflow:visible;background:#fff;color:#000}
+  .rhead{display:none}
+  .ritem .rph img{width:180px;height:135px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="home" href="/">← ArkHive</a>
+    <div class="brand"><h1>New construction walkthrough</h1><span class="count" id="count">0 / 0</span></div>
+    <div class="bar" aria-hidden="true"><span class="p" id="barP"></span><span class="f" id="barF"></span><span class="n" id="barN"></span></div>
+    <div class="filters" role="group" aria-label="Show">
+      <button data-f="all" aria-pressed="true">All</button>
+      <button data-f="todo" aria-pressed="false">Not checked</button>
+      <button data-f="fail" aria-pressed="false">Failed</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="intro">
+    <p>Mark each check Pass, Fail, or N/A. Failed items need a note so the builder knows exactly what to fix. Everything, including photos, saves only in this browser on this device. Nothing is uploaded.</p>
+    <div class="meta">
+      <label class="full">Property address<input id="m-address" autocomplete="off"></label>
+      <label>Builder<input id="m-builder" autocomplete="off"></label>
+      <label>Inspection date<input id="m-date" type="date"></label>
+    </div>
+  </div>
+  <div id="groups"></div>
+</main>
+
+<footer class="actions">
+  <div class="wrap">
+    <button class="btn ghost" id="resetBtn">Start over</button>
+    <button class="btn primary" id="reportBtn">Build punch list</button>
+  </div>
+</footer>
+
+<div id="report" role="dialog" aria-modal="true" aria-label="Punch list">
+  <div class="rhead"><div class="wrap">
+    <button class="btn ghost" id="closeReport">Back to checklist</button>
+    <button class="btn ghost" id="copyReport">Copy as text</button>
+    <button class="btn primary" id="printReport">Print or save PDF</button>
+  </div></div>
+  <div class="wrap rbody" id="reportBody"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SECTIONS = [
+ {t:"Exterior & grading", i:[
+  ["Ground slopes away from foundation","Look for about 6 in. of fall over the first 10 ft on every side. Watch for low spots or soil packed against siding."],
+  ["Downspouts discharge away from house","Extensions or splash blocks should carry water at least 4–6 ft from the foundation."],
+  ["Window wells","Drained with gravel, secure covers, no soil washing in, and liner fastened to foundation."],
+  ["Foundation visible exterior","Hairline shrinkage cracks are common; flag anything wider than about 1/8 in., offset, or leaking."],
+  ["Siding, stone, and stucco","No gaps, loose pieces, cracked stucco, or missing trim. Check corners and where materials meet."],
+  ["Caulk and seals at penetrations","Hose bibs, vents, lights, meters, and window/door perimeters should be sealed."],
+  ["Hose bibs","Run each one. Frost-free style, no leaks at the wall, and it shuts off fully."],
+  ["Exterior doors","Weatherstripping seals, thresholds tight, doors latch and lock without forcing."],
+  ["Driveway, walks, and patio","No large cracks or settling; water drains off rather than pooling or running toward the house."],
+  ["Sprinklers and landscaping","Run each zone. No heads spraying the house or foundation; plants not against siding."],
+  ["Exterior paint and trim","Complete coverage, no bare wood or missed spots on fascia, soffit, and trim."],
+  ["Utility meters and AC pad","Gas and electric meters secure; AC condenser level with clearance around it."]
+ ]},
+ {t:"Roof & gutters", i:[
+  ["Shingles lie flat and complete","Check from the ground with binoculars or a phone zoom. No lifted, missing, or scuffed shingles."],
+  ["Flashing","Step and counter flashing at walls, chimneys, and valleys look complete and tight."],
+  ["Roof vents and penetrations","Vent boots and caps present, sealed, and not damaged by trades."],
+  ["Gutters","Secure, sloped toward downspouts, seams sealed, no debris from construction."],
+  ["Soffit and fascia","No gaps, loose panels, or openings for pests."]
+ ]},
+ {t:"Garage", i:[
+  ["House-to-garage door","Solid or fire-rated, self-closing, and latches on its own."],
+  ["Garage door opener safety","Auto-reverses when it hits an object (a 2×4 on the floor) and when the photo-eye beam is broken."],
+  ["Garage door condition","Panels undamaged, opens smoothly, weatherstrip seals at the bottom."],
+  ["Firewall drywall","Walls and ceiling shared with the house are fully taped with no holes or unsealed penetrations."],
+  ["Slab","No major cracks, heaving, or pooling; slopes toward the door."],
+  ["Garage outlets","GFCI protected and all working."]
+ ]},
+ {t:"Attic", i:[
+  ["Insulation depth and coverage","Even coverage with no bare spots. Utah code targets around R-49, roughly 14–16 in. of blown-in."],
+  ["Baffles at eaves","Vent chutes installed so insulation doesn't block soffit airflow."],
+  ["No water stains or daylight","Look at roof sheathing and around penetrations. No stains, mold, or light coming through."],
+  ["Bath fans vent outdoors","Ducts connected and run to a roof or wall cap, not dumping into the attic."],
+  ["Attic hatch","Insulated and weatherstripped."]
+ ]},
+ {t:"Basement & structure", i:[
+  ["Foundation walls (interior)","No moisture, efflorescence, or cracks wider than about 1/8 in."],
+  ["Basement slab","No water, significant cracks, or heaving."],
+  ["Egress windows","Every basement bedroom has an egress window that opens easily; well is clear."],
+  ["Sump pit, if present","Lid secure; pump runs when you raise the float and discharges outside."],
+  ["Floors level and quiet","Walk every room. Note squeaks, soft spots, or noticeable slopes (a marble test helps)."],
+  ["Visible framing","Where exposed, no cut or notched joists, and no split or damaged lumber."],
+  ["Radon mitigation","Note whether a passive or active system is installed. Utah County often tests high; run a test after move-in."]
+ ]},
+ {t:"Plumbing", i:[
+  ["Water pressure","With a hose-bib gauge, 40–80 psi is normal. Over 80 psi needs a pressure regulator."],
+  ["Main water and gas shutoffs","Located, accessible, and they operate."],
+  ["Water heater","Seismic straps, T&P discharge pipe down to within 6 in. of floor, expansion tank if required, flue connected."],
+  ["Hot and cold at every fixture","Hot on the left everywhere. Hot water arrives in reasonable time."],
+  ["Drains","Fill and drain every sink and tub. No slow drains or gurgling."],
+  ["Simultaneous flow test","Run several fixtures and flush a toilet at once. Pressure shouldn't collapse."],
+  ["Toilets","Flush each twice. No rocking at base, no running, bowl refills properly."],
+  ["Under-sink checks","After running water, look under every sink for drips, and check supply lines are tight."],
+  ["Water softener loop and laundry box","Plumbed where expected; valves work with no leaks."]
+ ]},
+ {t:"Electrical", i:[
+  ["Panel labeling","Every breaker labeled. Don't remove the panel cover; just look at the face."],
+  ["GFCI protection","Kitchen counters, baths, garage, exterior, laundry, and unfinished basement. Test and reset each."],
+  ["All outlets work","Use a plug-in outlet tester in every outlet. Note dead outlets or reversed polarity."],
+  ["Switches and lights","Every switch does something sensible; every fixture lights; three-ways work from both ends."],
+  ["Exterior outlets and lights","Weatherproof covers present, outlets GFCI, all lights work."],
+  ["Smoke and CO alarms","Present in each bedroom, hallway, and each level; test button sounds them all together."],
+  ["Doorbell, fans, and low voltage","Doorbell rings; ceiling fans run without wobble; data and cable jacks present where promised."]
+ ]},
+ {t:"Heating & cooling", i:[
+  ["Furnace heats","Set heat up; warm air at registers within a few minutes."],
+  ["AC cools","Run 15 minutes. Supply air should be about 15–20°F cooler than return air."],
+  ["Airflow at every register","Feel each room. Weak rooms may have crushed or disconnected ducts."],
+  ["Filter","Installed and clean. Construction dust clogs filters fast; replace at move-in."],
+  ["Thermostat","Responds, and heat/cool modes switch correctly."],
+  ["Condensate drain","Routed to a drain or pump, no leaks at the furnace."],
+  ["Exhaust fans","Bath fans and range hood run and vent outdoors (feel for airflow at the exterior cap)."],
+  ["Dryer vent","Rigid or semi-rigid duct to exterior with a working flap."]
+ ]},
+ {t:"Kitchen", i:[
+  ["Range and oven","Every burner lights or heats; oven reaches set temperature."],
+  ["Dishwasher","Run a full cycle. No leaks, drains fully, anchored to counter."],
+  ["Disposal and sink","Disposal runs; no leaks at drain, sprayer works."],
+  ["Refrigerator and microwave","Cools, ice and water work if plumbed, microwave heats."],
+  ["Cabinets and drawers","Doors aligned, soft-close works, no damage, drawers glide."],
+  ["Countertops and backsplash","No chips, cracks, or visible seams; caulk at backsplash complete."]
+ ]},
+ {t:"Bathrooms", i:[
+  ["Tub and shower","No leaks; grout and caulk complete; valve limits scalding."],
+  ["Shower door and glass","Closes and seals without dripping outside."],
+  ["Tile","Tap with a knuckle for hollow spots; no cracked or lippy tiles."],
+  ["Vanity and mirrors","Secure, no damage, drawers and doors work."],
+  ["Towel bars and accessories","Solidly anchored."]
+ ]},
+ {t:"Interior finishes", i:[
+  ["Drywall","Look along walls with a flashlight at a low angle for nail pops, seams, dings, and cracks."],
+  ["Paint","Even coverage, clean cut lines, no overspray on trim, fixtures, or floors."],
+  ["Flooring","No gaps, scratches, lifted edges, or loose tiles; carpet seams hidden and stretched."],
+  ["Interior doors","Latch cleanly, don't swing on their own, even gaps, no rubbing."],
+  ["Trim and baseboards","Tight joints, filled nail holes, caulked where it meets walls."],
+  ["Windows","Every window opens, closes, and locks. Screens present. No fogging between panes."],
+  ["Stairs and railings","Handrails solid, balusters tight, treads don't squeak or flex."],
+  ["Closets and shelving","Shelves and rods secure and level."],
+  ["Fireplace, if present","Ignites, glass intact, remote works."]
+ ]},
+ {t:"Paperwork & closeout", i:[
+  ["Certificate of occupancy","Issued by the city before closing."],
+  ["Permits and final inspections","All finals signed off, including any late items like decks or basements."],
+  ["Builder warranty","Written copy in hand; you know how to file claims and the 11-month walkthrough date."],
+  ["Manuals and warranties","Appliance, HVAC, water heater, and window documents provided."],
+  ["Unfinished items in writing","Landscaping, final grading, or escrow items are documented with completion dates."]
+ ]}
+];
+
+const items = [];
+SECTIONS.forEach((s,si)=>s.i.forEach((it,ii)=>items.push({id:`s${si}-${ii}`,si,title:it[0],hint:it[1]})));
+let state = {meta:{},items:{},closed:{}};
+let filter = "all";
+
+// ---------- storage (IndexedDB on this device only) ----------
+const DB="homeInspection", STORE="kv", KEY="state";
+function openDB(){return new Promise((res,rej)=>{try{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore(STORE);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e)}})}
+async function load(){try{const db=await openDB();return await new Promise((res)=>{const q=db.transaction(STORE).objectStore(STORE).get(KEY);q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null);});}catch(e){return null}}
+let saveTimer;
+function save(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{const db=await openDB();db.transaction(STORE,"readwrite").objectStore(STORE).put(state,KEY);}catch(e){}},300)}
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function rec(id){return state.items[id]||(state.items[id]={status:"",note:"",photos:[]})}
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1800)}
+
+// ---------- render ----------
+function render(){
+  const g=$("#groups");
+  g.innerHTML=SECTIONS.map((s,si)=>`
+   <section class="group${state.closed[si]?" closed":""}" data-si="${si}">
+     <button class="gh" data-toggle="${si}" aria-expanded="${!state.closed[si]}">
+       <h2>${esc(s.t)}</h2><span class="tally" id="tally-${si}"></span>
+     </button>
+     <div class="items">${items.filter(x=>x.si===si).map(itemHTML).join("")}</div>
+   </section>`).join("");
+  applyFilter(); updateCounts();
+}
+function itemHTML(x){
+  const r=state.items[x.id]||{};
+  return `<div class="item" data-id="${x.id}" data-s="${r.status||""}">
+    <h3>${esc(x.title)}</h3>
+    <p class="hint">${esc(x.hint)}</p>
+    <div class="seg" role="group" aria-label="Result for ${esc(x.title)}">
+      ${["pass","fail","na"].map(s=>`<button class="${s}" data-set="${s}" aria-pressed="${r.status===s}">${s==="na"?"N/A":s[0].toUpperCase()+s.slice(1)}</button>`).join("")}
+    </div>
+    <textarea data-note placeholder="${r.status==="fail"?"What's wrong and where? (goes on the punch list)":"Notes (optional)"}" aria-label="Notes for ${esc(x.title)}">${esc(r.note||"")}</textarea>
+    <div class="photos">${photosHTML(x.id)}</div>
+  </div>`;
+}
+function photosHTML(id){
+  const p=(state.items[id]?.photos)||[];
+  return p.map((src,i)=>`<div class="thumb"><img src="${src}" alt="Photo ${i+1}"><button data-delphoto="${i}" aria-label="Remove photo">×</button></div>`).join("")+
+   `<label class="addphoto">+ Photo<input type="file" accept="image/*" multiple data-photo></label>`;
+}
+function updateCounts(){
+  let p=0,f=0,n=0;
+  items.forEach(x=>{const s=state.items[x.id]?.status;if(s==="pass")p++;else if(s==="fail")f++;else if(s==="na")n++;});
+  const T=items.length;
+  $("#count").textContent=`${p+f+n} / ${T}`;
+  $("#barP").style.width=p/T*100+"%";$("#barF").style.width=f/T*100+"%";$("#barN").style.width=n/T*100+"%";
+  SECTIONS.forEach((s,si)=>{
+    const its=items.filter(x=>x.si===si);
+    const done=its.filter(x=>state.items[x.id]?.status).length;
+    const fails=its.filter(x=>state.items[x.id]?.status==="fail").length;
+    const el=$("#tally-"+si); if(el) el.innerHTML=`${done}/${its.length}${fails?` <b>${fails} failed</b>`:""} <span class="chev">▾</span>`;
+  });
+}
+function applyFilter(){
+  document.querySelectorAll(".item").forEach(el=>{
+    const s=el.dataset.s;
+    el.hidden = filter==="todo" ? !!s : filter==="fail" ? s!=="fail" : false;
+  });
+  document.querySelectorAll("section.group").forEach(sec=>{
+    sec.hidden = filter!=="all" && ![...sec.querySelectorAll(".item")].some(i=>!i.hidden);
+    if(filter!=="all") sec.classList.remove("closed"); else sec.classList.toggle("closed",!!state.closed[sec.dataset.si]);
+  });
+}
+
+// ---------- photos (resized, kept on this device) ----------
+function readAsDataURL(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(file);})}
+async function compress(file){
+  const src=await readAsDataURL(file);
+  return new Promise(res=>{const img=new Image();img.onload=()=>{const m=1280,s=Math.min(1,m/Math.max(img.width,img.height));
+    const c=document.createElement("canvas");c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.72));};
+    img.onerror=()=>res(null);img.src=src;});
+}
+
+// ---------- events ----------
+document.addEventListener("click",e=>{
+  const t=e.target;
+  const tog=t.closest("[data-toggle]");
+  if(tog){const si=tog.dataset.toggle;state.closed[si]=!state.closed[si];tog.parentElement.classList.toggle("closed",state.closed[si]);tog.setAttribute("aria-expanded",!state.closed[si]);save();return;}
+  const set=t.closest("[data-set]");
+  if(set){const it=set.closest(".item"),r=rec(it.dataset.id),v=set.dataset.set;
+    r.status = r.status===v ? "" : v;
+    it.dataset.s=r.status;
+    it.querySelectorAll("[data-set]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.set===r.status));
+    const ta=it.querySelector("textarea");
+    ta.placeholder = r.status==="fail" ? "What's wrong and where? (goes on the punch list)" : "Notes (optional)";
+    if(r.status==="fail" && !r.note) ta.focus();
+    updateCounts();save();return;}
+  const del=t.closest("[data-delphoto]");
+  if(del){const it=del.closest(".item"),r=rec(it.dataset.id);r.photos.splice(+del.dataset.delphoto,1);it.querySelector(".photos").innerHTML=photosHTML(it.dataset.id);save();return;}
+  const f=t.closest("[data-f]");
+  if(f){filter=f.dataset.f;document.querySelectorAll("[data-f]").forEach(b=>b.setAttribute("aria-pressed",b===f));applyFilter();window.scrollTo({top:0});}
+});
+document.addEventListener("input",e=>{
+  if(e.target.matches("[data-note]")){rec(e.target.closest(".item").dataset.id).note=e.target.value;save();}
+  if(e.target.id?.startsWith("m-")){state.meta[e.target.id.slice(2)]=e.target.value;save();}
+});
+document.addEventListener("change",async e=>{
+  if(!e.target.matches("[data-photo]"))return;
+  const it=e.target.closest(".item"),r=rec(it.dataset.id);
+  for(const file of e.target.files){const d=await compress(file);if(d)r.photos.push(d);else toast("That image couldn't be read");}
+  it.querySelector(".photos").innerHTML=photosHTML(it.dataset.id);save();
+});
+
+$("#resetBtn").onclick=()=>{
+  if(!confirm("Clear every result, note, and photo from this checklist?"))return;
+  state={meta:{},items:{},closed:{}};["address","builder","date"].forEach(k=>$("#m-"+k).value="");render();save();window.scrollTo({top:0});
+};
+
+// ---------- report ----------
+function failures(){return SECTIONS.map((s,si)=>({t:s.t,list:items.filter(x=>x.si===si&&state.items[x.id]?.status==="fail")})).filter(g=>g.list.length)}
+function buildReport(){
+  const m=state.meta, fails=failures(), nF=fails.reduce((a,g)=>a+g.list.length,0);
+  const done=items.filter(x=>state.items[x.id]?.status).length, todo=items.length-done;
+  const noNote=fails.flatMap(g=>g.list).filter(x=>!state.items[x.id].note?.trim()).length;
+  let n=0;
+  $("#reportBody").innerHTML=`
+   <h1>Punch list</h1>
+   <p class="sub">${esc(m.address||"Address not entered")}${m.builder?`<br>Builder: ${esc(m.builder)}`:""}<br>Walkthrough: ${esc(m.date||new Date().toISOString().slice(0,10))}</p>
+   <div class="stats"><div class="bad"><b>${nF}</b>items to fix</div><div><b>${done}</b>of ${items.length} checked</div></div>
+   ${todo?`<div class="warn">${todo} check${todo>1?"s are":" is"} still unmarked. Go back and use the “Not checked” filter to find them.</div>`:""}
+   ${noNote?`<div class="warn">${noNote} failed item${noNote>1?"s have":" has"} no note. Add detail so the builder knows what to fix.</div>`:""}
+   ${nF?fails.map(g=>`<div class="rsec"><h2>${esc(g.t)}</h2>${g.list.map(x=>{const r=state.items[x.id];n++;
+      return `<div class="ritem"><h3>${n}. ${esc(x.title)}</h3>${r.note?.trim()?`<p>${esc(r.note).replace(/\n/g,"<br>")}</p>`:`<p class="missing">No note added</p>`}
+      ${r.photos?.length?`<div class="rph">${r.photos.map(p=>`<img src="${p}" alt="">`).join("")}</div>`:""}</div>`}).join("")}</div>`).join("")
+     :`<div class="empty">No failed items yet. Mark a check as Fail and it will show up here.</div>`}`;
+}
+function reportText(){
+  const m=state.meta;let n=0;
+  const lines=[`PUNCH LIST — ${m.address||"(address)"}`, m.builder?`Builder: ${m.builder}`:"", `Walkthrough: ${m.date||new Date().toISOString().slice(0,10)}`,""];
+  failures().forEach(g=>{lines.push(g.t.toUpperCase());g.list.forEach(x=>{n++;const r=state.items[x.id];lines.push(`${n}. ${x.title}${r.note?.trim()?` — ${r.note.trim()}`:""}${r.photos?.length?` [${r.photos.length} photo${r.photos.length>1?"s":""}]`:""}`)});lines.push("");});
+  if(!n)lines.push("No failed items.");
+  return lines.filter((l,i)=>l!==""||i>2).join("\n");
+}
+$("#reportBtn").onclick=()=>{buildReport();document.body.classList.add("show-report");$("#report").scrollTop=0;};
+$("#closeReport").onclick=()=>document.body.classList.remove("show-report");
+$("#printReport").onclick=()=>window.print();
+$("#copyReport").onclick=async()=>{
+  const txt=reportText();
+  try{await navigator.clipboard.writeText(txt);toast("Copied punch list");}
+  catch(e){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();
+    try{document.execCommand("copy");toast("Copied punch list");}catch(_){toast("Copy blocked — use Print instead");}ta.remove();}
+};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.body.classList.remove("show-report")});
+
+// ---------- init ----------
+(async()=>{
+  const saved=await load();
+  if(saved) state=Object.assign({meta:{},items:{},closed:{}},saved);
+  ["address","builder","date"].forEach(k=>$("#m-"+k).value=state.meta[k]||"");
+  render();
+})();
+</script>
+</body>
+</html>
