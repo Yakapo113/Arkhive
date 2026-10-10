@@ -184,13 +184,6 @@
     <div class="layout">
       <!-- LEFT: Inputs -->
       <div class="card" id="inputsCard">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:linear-gradient(180deg,rgba(37,99,235,.07),transparent);border:1px solid rgba(37,99,235,.35);border-radius:10px;padding:10px 12px;margin-bottom:12px">
-          <div style="flex:1;min-width:170px">
-            <div style="font-weight:700;font-size:13px">New here? Try a sample deal</div>
-            <div class="muted" style="font-size:12px;margin-top:2px">Fills a realistic example rental, then runs the numbers. A starting point to edit — not a recommendation.</div>
-          </div>
-          <button id="loadExampleDeal" type="button" class="btn" style="white-space:nowrap">📂 Load example deal</button>
-        </div>
         <div class="section-title"><strong>Property & Financing</strong></div>
 
         <div class="form-row"><label for="purchasePrice">Purchase Price ($)</label><input id="purchasePrice" type="number" value="300000" placeholder="$" /></div>
@@ -594,8 +587,8 @@ purchasePriceInput.addEventListener('input', () => {
     $(id).addEventListener('input', ()=> setActiveScenario('custom'));
   });
 
-  /* Load a realistic sample rental deal, then run the analysis. Just a
-     starting point for the user to edit — not a recommendation. */
+  /* Fill a realistic sample rental deal, then run the analysis. Used as the
+     on-load default so the page opens with a worked example the user can edit. */
   function loadExampleDeal(){
     const set = (id,v)=>{ const el=$(id); if(el) el.value=v; };
     set('purchasePrice',300000); set('appraisedValue',300000);
@@ -616,7 +609,6 @@ purchasePriceInput.addEventListener('input', () => {
     // apply "average" market assumptions (this also triggers calculateAll)
     applyScenario('avg');
   }
-  $('loadExampleDeal').addEventListener('click', loadExampleDeal);
 
   /* Unit management */
   function refreshUnitsFromState() {
@@ -1276,8 +1268,8 @@ function calculateAll(){
     // Init slider BEFORE first calculateAll so max/label are correct
     initHoldStratSlider();
 
-    // Apply default scenario (triggers calculateAll internally)
-    applyScenario('avg');
+    // Open with a worked example deal (fills inputs incl. rent, then calculateAll)
+    loadExampleDeal();
 
     // Charts render at 0-width while <details> is closed; resize once it's opened
     const advancedDetails = $('advancedDetails');

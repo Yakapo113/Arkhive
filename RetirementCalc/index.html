@@ -115,15 +115,6 @@
     <div class="layout">
       <!-- ================= INPUTS ================= -->
       <div>
-        <div class="card" style="background:linear-gradient(180deg,rgba(37,99,235,.07),transparent);border-color:rgba(37,99,235,.35)">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-            <div style="flex:1;min-width:180px">
-              <div style="font-weight:700;font-size:14px">New here? Start with an example</div>
-              <div class="hint" style="margin-top:3px">Loads a sample 45-year-old's plan so you can see the tool in action, then change any value. Just a starting point — not financial advice.</div>
-            </div>
-            <button id="loadExampleTop" class="btn" style="white-space:nowrap">📂 Load example scenario</button>
-          </div>
-        </div>
         <div class="card">
           <h2>You</h2>
           <div class="grid2">
@@ -782,7 +773,6 @@ function loadDemo(){
 $('addAsset').onclick=()=>{accountCard();recompute();};
 $('addOther').onclick=()=>{otherRow();recompute();};
 $('loadDemo').onclick=loadDemo;
-$('loadExampleTop').onclick=loadDemo;
 document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{
   rangeMode=b.dataset.r;
   document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.toggle('on',x===b));
