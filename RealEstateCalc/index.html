@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Real Estate Investment Calculator – Cap Rate, Cash Flow &amp; ROI (Free)</title>
-  <meta name="description" content="Free real estate investment calculator. Instantly analyze a rental property's cap rate, cash-on-cash return, monthly cash flow, DSCR, and long-term ROI including taxes, depreciation, and appreciation." />
+  <title>Rental Property Analyzer &amp; Tax Simulator (Free)</title>
+  <meta name="description" content="Free rental property analyzer and multi-year tax simulator: model cash flow, cap rate, cash-on-cash, DSCR, depreciation and after-tax ROI on any rental deal." />
   <link rel="canonical" href="https://arkhive.us/RealEstateCalc/" />
   <meta name="robots" content="index,follow" />
   <!-- Inline SVG favicon (blue house) — no external file needed -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232563eb'/%3E%3Cpath d='M50 24 L80 50 H71 V78 H56 V60 H44 V78 H29 V50 H20 Z' fill='white'/%3E%3C/svg%3E" />
   <!-- Open Graph / social sharing -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Free Real Estate Investment Calculator" />
-  <meta property="og:description" content="Analyze a rental property's cap rate, cash flow, DSCR, and ROI in seconds — free, no signup." />
+  <meta property="og:title" content="Free Rental Property Analyzer &amp; Tax Simulator" />
+  <meta property="og:description" content="Analyze any rental deal — cash flow, cap rate, cash-on-cash, DSCR and multi-year after-tax ROI. Free, no signup." />
   <meta property="og:url" content="https://arkhive.us/RealEstateCalc/" />
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Free Real Estate Investment Calculator" />
-  <meta name="twitter:description" content="Analyze a rental property's cap rate, cash flow, DSCR, and ROI in seconds — free, no signup." />
+  <meta name="twitter:title" content="Free Rental Property Analyzer &amp; Tax Simulator" />
+  <meta name="twitter:description" content="Analyze any rental deal — cash flow, cap rate, cash-on-cash, DSCR and multi-year after-tax ROI. Free, no signup." />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -172,6 +172,7 @@
 </head>
 <body>
   <div class="container">
+    <a href="../index.html" style="display:inline-block;margin:0 0 10px;color:var(--accent);text-decoration:none;font-size:13px;font-weight:600">← All calculators</a>
     <header>
       <div class="logo">RE</div>
       <div>
@@ -183,6 +184,13 @@
     <div class="layout">
       <!-- LEFT: Inputs -->
       <div class="card" id="inputsCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:linear-gradient(180deg,rgba(37,99,235,.07),transparent);border:1px solid rgba(37,99,235,.35);border-radius:10px;padding:10px 12px;margin-bottom:12px">
+          <div style="flex:1;min-width:170px">
+            <div style="font-weight:700;font-size:13px">New here? Try a sample deal</div>
+            <div class="muted" style="font-size:12px;margin-top:2px">Fills a realistic example rental, then runs the numbers. A starting point to edit — not a recommendation.</div>
+          </div>
+          <button id="loadExampleDeal" type="button" class="btn" style="white-space:nowrap">📂 Load example deal</button>
+        </div>
         <div class="section-title"><strong>Property & Financing</strong></div>
 
         <div class="form-row"><label for="purchasePrice">Purchase Price ($)</label><input id="purchasePrice" type="number" value="300000" placeholder="$" /></div>
@@ -585,6 +593,30 @@ purchasePriceInput.addEventListener('input', () => {
   ['vacancyRate','rentGrowth','appreciation','maintenancePct','expenseGrowth'].forEach(id=>{
     $(id).addEventListener('input', ()=> setActiveScenario('custom'));
   });
+
+  /* Load a realistic sample rental deal, then run the analysis. Just a
+     starting point for the user to edit — not a recommendation. */
+  function loadExampleDeal(){
+    const set = (id,v)=>{ const el=$(id); if(el) el.value=v; };
+    set('purchasePrice',300000); set('appraisedValue',300000);
+    set('downPaymentPercent',20); set('downPaymentValue',60000);
+    set('interestRate',6.5); set('loanTerm',30);
+    set('closingCosts',6000); set('sellerpaidclosingCosts',1500);
+    set('landValue',15000);
+    set('propTaxes',3000); set('insurance',2000);
+    set('mortgageInsurance',0); set('utilities',0); set('otherExpenses',0);
+    set('managementFeePct',8);
+    set('holdYears',10); set('sellingCostsPct',6);
+    set('taxRate',24); set('capGainsRate',15); set('recaptureRate',25);
+    // single unit renting for $2,400/mo
+    set('numUnits',1); unitRents = [2400]; refreshUnitsFromState();
+    // reformat currency fields and sync the down-payment pair
+    CURRENCY_IDS.forEach(id=>{ const el=$(id); if(el) formatCurrency(el); });
+    if (typeof refreshDownPaymentInputs === 'function') refreshDownPaymentInputs();
+    // apply "average" market assumptions (this also triggers calculateAll)
+    applyScenario('avg');
+  }
+  $('loadExampleDeal').addEventListener('click', loadExampleDeal);
 
   /* Unit management */
   function refreshUnitsFromState() {

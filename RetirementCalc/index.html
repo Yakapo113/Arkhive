@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Retirement Simulator – Will My Money Last? (Free)</title>
-  <meta name="description" content="Free retirement calculator. Model every income source at retirement — accounts, contributions, withdrawal ages, RMDs, Social Security, pensions, and selling a business or rentals. See if your money lasts, alone or comparing retire-early vs later." />
+  <meta name="description" content="Free retirement simulator: will your money last? Model accounts, RMDs, Social Security, pensions and asset sales, and compare retiring early vs. later." />
   <link rel="canonical" href="https://arkhive.us/RetirementCalc/" />
   <meta name="robots" content="index,follow" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232563eb'/%3E%3Cpath d='M22 74 L22 46 L50 24 L78 46 L78 74 Z' fill='none' stroke='white' stroke-width='7' stroke-linejoin='round'/%3E%3Cpath d='M34 74 L34 56 L50 56 M66 74 L66 52' fill='none' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E" />
@@ -103,6 +103,7 @@
 </head>
 <body>
   <div class="container">
+    <a href="../index.html" style="display:inline-block;margin:0 0 10px;color:var(--accent);text-decoration:none;font-size:13px;font-weight:600">← All calculators</a>
     <header>
       <div class="logo"><svg viewBox="0 0 100 100"><path d="M20 76 L20 46 L50 22 L80 46 L80 76 Z" fill="none" stroke="#2563eb" stroke-width="7" stroke-linejoin="round"/><path d="M34 76 L34 58 L48 58 M64 76 L64 54" fill="none" stroke="#2563eb" stroke-width="6" stroke-linecap="round"/></svg></div>
       <div>
@@ -114,6 +115,15 @@
     <div class="layout">
       <!-- ================= INPUTS ================= -->
       <div>
+        <div class="card" style="background:linear-gradient(180deg,rgba(37,99,235,.07),transparent);border-color:rgba(37,99,235,.35)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px">
+              <div style="font-weight:700;font-size:14px">New here? Start with an example</div>
+              <div class="hint" style="margin-top:3px">Loads a sample 45-year-old's plan so you can see the tool in action, then change any value. Just a starting point — not financial advice.</div>
+            </div>
+            <button id="loadExampleTop" class="btn" style="white-space:nowrap">📂 Load example scenario</button>
+          </div>
+        </div>
         <div class="card">
           <h2>You</h2>
           <div class="grid2">
@@ -772,6 +782,7 @@ function loadDemo(){
 $('addAsset').onclick=()=>{accountCard();recompute();};
 $('addOther').onclick=()=>{otherRow();recompute();};
 $('loadDemo').onclick=loadDemo;
+$('loadExampleTop').onclick=loadDemo;
 document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{
   rangeMode=b.dataset.r;
   document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.toggle('on',x===b));
