@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Basketball Stat Tracker — Live Game Stats (Free)</title>
+<meta name="description" content="Free basketball stat tracker for parents. Tap to log points, rebounds, assists, steals, blocks and fouls from your phone, see makes and misses, and export the game to a spreadsheet.">
+<link rel="canonical" href="https://arkhive.us/BasketballStats/">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Basketball Stat Tracker — Live Game Stats">
+<meta property="og:description" content="Tap to log points, rebounds, assists, steals, blocks and fouls from your phone, see makes and misses, and export the game to a spreadsheet.">
+<meta property="og:url" content="https://arkhive.us/BasketballStats/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23111827'/%3E%3Ccircle cx='50' cy='50' r='30' fill='%23ea7317'/%3E%3Cg fill='none' stroke='%235a2600' stroke-width='3'%3E%3Cpath d='M20 50h60M50 20v60M30 28c14 11 14 33 0 44M70 28c-14 11-14 33 0 44'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#fff; --ink:#1f2430; --muted:#6b7280; --line:#e5e7eb; --line2:#d1d5db;
+    --accent:#2563eb; --ball:#ea7317; --made:#16a34a; --miss:#9aa4b2; --foul:#b45309;
+    --radius:14px; --shadow:0 2px 6px rgba(20,25,40,.06),0 8px 24px rgba(20,25,40,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.45;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom,0)}
+  button{font:inherit;cursor:pointer}
+  :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+  .topbar{background:linear-gradient(180deg,#111827,#1f2937);color:#fff;padding:14px 16px;
+    padding-top:calc(14px + env(safe-area-inset-top,0))}
+  .topbar .inner{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .back{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;
+    background:#2563eb;color:#fff;font-size:13px;font-weight:600;text-decoration:none;box-shadow:0 2px 6px rgba(37,99,235,.3)}
+  .topbar h1{margin:0;font-size:1.05rem;font-weight:700;flex:1;min-width:120px}
+
+  .wrap{max-width:720px;margin:0 auto;padding:16px 16px 48px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:14px}
+  .card h2{margin:0 0 10px;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+  /* Game info */
+  .ginfo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:3px}
+  .field input{width:100%;padding:9px 10px;border:1px solid var(--line2);border-radius:9px;font-size:.95rem;background:#fff;color:var(--ink)}
+  .field.full{grid-column:1/-1}
+  .field.score input{text-align:center;font-weight:700;font-size:1.1rem}
+
+  /* Scoreboard */
+  .score{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .score .pts{font-size:2.6rem;font-weight:800;line-height:1;color:var(--ink)}
+  .score .pts small{font-size:.8rem;font-weight:600;color:var(--muted);display:block;letter-spacing:.06em;text-transform:uppercase}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;flex:1;justify-content:flex-end}
+  .chip{background:#f1f5f9;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:.8rem;min-width:52px;text-align:center}
+  .chip b{display:block;font-size:1.1rem}
+  .chip span{color:var(--muted);font-size:.68rem;letter-spacing:.04em;text-transform:uppercase}
+
+  /* Stat buttons */
+  .grouplbl{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:4px 0 8px}
+  .btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px}
+  .btns.four{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:460px){.btns.four{grid-template-columns:repeat(2,1fr)}}
+  .sbtn{position:relative;border:1px solid var(--line2);border-radius:14px;background:#fff;padding:14px 8px 12px;
+    min-height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    transition:transform .06s ease, box-shadow .12s ease;color:var(--ink)}
+  .sbtn:active{transform:scale(.96)}
+  .sbtn .big{font-size:1.5rem;font-weight:800;line-height:1}
+  .sbtn .sub{font-size:.72rem;color:var(--muted)}
+  .sbtn .cnt{position:absolute;top:6px;right:8px;min-width:22px;height:22px;padding:0 5px;border-radius:999px;
+    background:#eef2f7;color:var(--muted);font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .sbtn.has .cnt{background:var(--accent);color:#fff}
+  .sbtn.make{border-color:#bbf7d0;background:#f0fdf4}.sbtn.make .big{color:var(--made)}.sbtn.make.has .cnt{background:var(--made)}
+  .sbtn.miss{border-color:#e2e8f0;background:#f8fafc}.sbtn.miss .big{color:#64748b}.sbtn.miss.has .cnt{background:#64748b}
+  .sbtn.pos{border-color:#bfdbfe;background:#eff6ff}.sbtn.pos .big{color:var(--accent)}.sbtn.pos.has .cnt{background:var(--accent)}
+  .sbtn.foul{border-color:#fde68a;background:#fffbeb}.sbtn.foul .big{color:var(--foul)}.sbtn.foul.has .cnt{background:var(--foul)}
+
+  .actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .btn{flex:1;min-width:120px;border:1px solid var(--line2);background:#fff;color:var(--ink);padding:12px;border-radius:12px;font-weight:600;font-size:.95rem}
+  .btn:active{transform:scale(.98)}
+  .btn.warn{border-color:#fecaca;color:#b91c1c;background:#fef2f2}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn:disabled{opacity:.45}
+
+  /* Shot chart */
+  .shots{display:flex;flex-wrap:wrap;gap:7px;min-height:38px}
+  .shotwrap{position:relative;width:30px;height:30px}
+  .shotwrap svg{width:30px;height:30px;display:block}
+  .shotwrap .v3{position:absolute;right:-3px;top:-4px;background:#111827;color:#fff;font-size:9px;font-weight:800;
+    border-radius:999px;width:14px;height:14px;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff}
+  .legend{display:flex;gap:16px;margin-top:12px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .empty{color:var(--muted);font-size:.9rem;padding:6px 2px}
+
+  /* Summary */
+  .splits{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+  .stat{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:1.3rem}
+  .stat span{color:var(--muted);font-size:.7rem;letter-spacing:.04em;text-transform:uppercase}
+  .shootline{display:flex;justify-content:space-between;padding:8px 2px;border-top:1px solid var(--line);font-size:.92rem}
+  .shootline:first-of-type{border-top:none}
+  .shootline .pct{color:var(--muted)}
+  .finalscore{text-align:center;font-size:1rem;margin-top:10px;padding:10px;border-radius:10px;background:#f1f5f9}
+  .finalscore .res{font-weight:800}
+  .res.win{color:var(--made)} .res.loss{color:#b91c1c}
+
+  .note{color:var(--muted);font-size:.8rem;margin-top:4px}
+  .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0));transform:translateX(-50%) translateY(20px);
+    background:#111827;color:#fff;padding:10px 18px;border-radius:10px;font-size:.88rem;opacity:0;pointer-events:none;
+    transition:opacity .25s,transform .25s;z-index:50;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="inner">
+    <a class="back" href="/">← ArkHive</a>
+    <h1>🏀 Basketball Stat Tracker</h1>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Game info -->
+  <div class="card">
+    <h2>Game details</h2>
+    <div class="ginfo">
+      <div class="field full"><label for="player">Player name</label><input id="player" type="text" placeholder="e.g. Jordan M." autocomplete="off"></div>
+      <div class="field"><label for="opponent">Opponent team</label><input id="opponent" type="text" placeholder="e.g. Hawks" autocomplete="off"></div>
+      <div class="field"><label for="venue">Venue</label><input id="venue" type="text" placeholder="e.g. Central HS" autocomplete="off"></div>
+      <div class="field"><label for="gdate">Date</label><input id="gdate" type="date"></div>
+      <div class="field"><label for="gtime" style="visibility:hidden">·</label><div style="display:flex;gap:8px">
+        <div class="field score" style="flex:1"><label for="teamScore">Your score</label><input id="teamScore" type="number" inputmode="numeric" placeholder="0"></div>
+        <div class="field score" style="flex:1"><label for="oppScore">Opp score</label><input id="oppScore" type="number" inputmode="numeric" placeholder="0"></div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- Live scoreboard -->
+  <div class="card">
+    <div class="score">
+      <div class="pts"><small>Player points</small><span id="ptsVal">0</span></div>
+      <div class="chips">
+        <div class="chip"><b id="cReb">0</b><span>Reb</span></div>
+        <div class="chip"><b id="cAst">0</b><span>Ast</span></div>
+        <div class="chip"><b id="cStl">0</b><span>Stl</span></div>
+        <div class="chip"><b id="cBlk">0</b><span>Blk</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stat buttons -->
+  <div class="card">
+    <div class="grouplbl">Scoring — tap each shot</div>
+    <div class="btns four" id="shotBtns"></div>
+    <div class="grouplbl" style="margin-top:16px">Other stats</div>
+    <div class="btns" id="otherBtns"></div>
+    <div class="actions">
+      <button class="btn warn" id="undoBtn">↩︎ Undo last</button>
+      <button class="btn" id="newBtn">New game</button>
+    </div>
+  </div>
+
+  <!-- Shot chart -->
+  <div class="card">
+    <h2>Shots, in order</h2>
+    <div class="shots" id="shotChart"></div>
+    <div class="legend">
+      <span><span class="shotwrap" style="width:18px;height:18px"><svg viewBox="0 0 32 32" style="width:18px;height:18px"><circle cx="16" cy="16" r="14" fill="#ea7317"/><g fill="none" stroke="#5a2600" stroke-width="1.6"><path d="M2 16h28M16 2v28M6 6c6 5 6 15 0 20M26 6c-6 5-6 15 0 20"/></g></svg></span> Made</span>
+      <span><span class="shotwrap" style="width:18px;height:18px"><svg viewBox="0 0 32 32" style="width:18px;height:18px"><circle cx="16" cy="16" r="14" fill="#cbd5e1"/></svg></span> Missed</span>
+      <span><b style="color:#111827">③</b> = 3-pointer</span>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="card">
+    <h2>Game summary</h2>
+    <div class="splits">
+      <div class="stat"><b id="sPts">0</b><span>Points</span></div>
+      <div class="stat"><b id="sReb">0</b><span>Rebounds</span></div>
+      <div class="stat"><b id="sAst">0</b><span>Assists</span></div>
+      <div class="stat"><b id="sStl">0</b><span>Steals</span></div>
+      <div class="stat"><b id="sBlk">0</b><span>Blocks</span></div>
+      <div class="stat"><b id="sFoul">0</b><span>Fouls</span></div>
+    </div>
+    <div class="shootline"><span>Field goals</span><span><b id="fgLine">0 / 0</b> <span class="pct" id="fgPct"></span></span></div>
+    <div class="shootline"><span>2-pointers</span><span><b id="fg2Line">0 / 0</b> <span class="pct" id="fg2Pct"></span></span></div>
+    <div class="shootline"><span>3-pointers</span><span><b id="fg3Line">0 / 0</b> <span class="pct" id="fg3Pct"></span></span></div>
+    <div class="shootline"><span>Fouls drawn</span><span><b id="sFoulDrawn">0</b></span></div>
+    <div class="finalscore" id="finalScore">Enter final scores above to show the result</div>
+
+    <div class="actions">
+      <button class="btn primary" id="csvBtn">⬇︎ Download CSV</button>
+      <button class="btn" id="copyRowBtn">⧉ Copy row for Sheets</button>
+    </div>
+    <p class="note">Everything stays on your phone (and is auto-saved in this browser). Use <b>Copy row for Sheets</b> to paste the game under existing headers in Google Sheets or Excel — tap <a href="#" id="copyHeaders">copy the header row</a> first for a new sheet.</p>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---- stat definitions ---- */
+const SHOTS = [
+  {key:'made2', big:'+2', sub:'Made 2', cls:'make'},
+  {key:'made3', big:'+3', sub:'Made 3', cls:'make'},
+  {key:'miss2', big:'M2', sub:'Miss 2', cls:'miss'},
+  {key:'miss3', big:'M3', sub:'Miss 3', cls:'miss'},
+];
+const OTHER = [
+  {key:'reb', big:'REB', sub:'Rebound', cls:'pos'},
+  {key:'ast', big:'AST', sub:'Assist', cls:'pos'},
+  {key:'stl', big:'STL', sub:'Steal', cls:'pos'},
+  {key:'blk', big:'BLK', sub:'Block', cls:'pos'},
+  {key:'foul', big:'FOUL', sub:'Committed', cls:'foul'},
+  {key:'fouldrawn', big:'DRAWN', sub:'Foul against', cls:'foul'},
+];
+const ALL = [...SHOTS, ...OTHER];
+const SHOT_INFO = {made2:{made:true,val:2},made3:{made:true,val:3},miss2:{made:false,val:2},miss3:{made:false,val:3}};
+const INFO_IDS = ['player','opponent','venue','gdate','teamScore','oppScore'];
+
+let state = { info:{}, events:[] };   // events = array of stat keys, in order
+
+/* ---- persistence (local only) ---- */
+function save(){ try{ localStorage.setItem('bballStats', JSON.stringify(state)); }catch(e){} }
+function load(){
+  try{ const s=JSON.parse(localStorage.getItem('bballStats')); if(s&&Array.isArray(s.events)){ state=s; state.info=s.info||{}; } }catch(e){}
+}
+
+/* ---- helpers ---- */
+const $=id=>document.getElementById(id);
+const count=k=>state.events.filter(e=>e===k).length;
+function tally(){
+  const c={}; ALL.forEach(d=>c[d.key]=count(d.key));
+  const pts=2*c.made2+3*c.made3;
+  const fgm=c.made2+c.made3, fga=fgm+c.miss2+c.miss3;
+  const p2m=c.made2, p2a=c.made2+c.miss2, p3m=c.made3, p3a=c.made3+c.miss3;
+  return {c,pts,fgm,fga,p2m,p2a,p3m,p3a};
+}
+const pct=(m,a)=>a>0?Math.round(1000*m/a)/10+'%':'—';
+
+/* ---- rendering ---- */
+function buildButtons(){
+  const mk=(host,list)=>{ host.innerHTML=''; list.forEach(d=>{
+    const b=document.createElement('button'); b.className='sbtn '+d.cls; b.dataset.key=d.key;
+    b.setAttribute('aria-label',d.sub);
+    b.innerHTML=`<span class="cnt">0</span><span class="big">${d.big}</span><span class="sub">${d.sub}</span>`;
+    b.addEventListener('click',()=>add(d.key));
+    host.appendChild(b);
+  });};
+  mk($('shotBtns'),SHOTS); mk($('otherBtns'),OTHER);
+}
+
+function ballSVG(made){
+  return made
+    ? `<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#ea7317"/><g fill="none" stroke="#5a2600" stroke-width="1.6"><path d="M2 16h28M16 2v28M6 6c6 5 6 15 0 20M26 6c-6 5-6 15 0 20"/></g></svg>`
+    : `<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#cbd5e1"/></svg>`;
+}
+
+function render(){
+  const t=tally();
+  // button counts
+  document.querySelectorAll('.sbtn').forEach(b=>{
+    const n=t.c[b.dataset.key]; b.querySelector('.cnt').textContent=n; b.classList.toggle('has',n>0);
+  });
+  // scoreboard
+  $('ptsVal').textContent=t.pts;
+  $('cReb').textContent=t.c.reb; $('cAst').textContent=t.c.ast; $('cStl').textContent=t.c.stl; $('cBlk').textContent=t.c.blk;
+  // shot chart
+  const chart=$('shotChart');
+  const shots=state.events.filter(e=>SHOT_INFO[e]);
+  if(!shots.length){ chart.innerHTML='<div class="empty">No shots yet — tap +2, +3, M2 or M3 to start.</div>'; }
+  else{
+    chart.innerHTML=shots.map(e=>{
+      const s=SHOT_INFO[e];
+      return `<span class="shotwrap">${ballSVG(s.made)}${s.val===3?'<span class="v3">3</span>':''}</span>`;
+    }).join('');
+  }
+  // summary
+  $('sPts').textContent=t.pts; $('sReb').textContent=t.c.reb; $('sAst').textContent=t.c.ast;
+  $('sStl').textContent=t.c.stl; $('sBlk').textContent=t.c.blk; $('sFoul').textContent=t.c.foul;
+  $('sFoulDrawn').textContent=t.c.fouldrawn;
+  $('fgLine').textContent=`${t.fgm} / ${t.fga}`; $('fgPct').textContent=pct(t.fgm,t.fga);
+  $('fg2Line').textContent=`${t.p2m} / ${t.p2a}`; $('fg2Pct').textContent=pct(t.p2m,t.p2a);
+  $('fg3Line').textContent=`${t.p3m} / ${t.p3a}`; $('fg3Pct').textContent=pct(t.p3m,t.p3a);
+  renderFinal();
+  $('undoBtn').disabled=state.events.length===0;
+  save();
+}
+
+function renderFinal(){
+  const ts=state.info.teamScore, os=state.info.oppScore;
+  const el=$('finalScore');
+  if(ts===''||os===''||ts==null||os==null||isNaN(+ts)||isNaN(+os)){
+    el.innerHTML='Enter final scores above to show the result'; return;
+  }
+  const a=+ts, b=+os; let res='Tie', cls='';
+  if(a>b){res='Win';cls='win';} else if(a<b){res='Loss';cls='loss';}
+  const opp=state.info.opponent?` vs ${escapeHtml(state.info.opponent)}`:'';
+  el.innerHTML=`<span class="res ${cls}">${res}</span> &nbsp; ${a} – ${b}${opp}`;
+}
+function escapeHtml(s){return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+
+/* ---- actions ---- */
+function add(key){ state.events.push(key); render(); }
+function undo(){ if(state.events.length){ const k=state.events.pop(); render(); toast('Removed last: '+(ALL.find(d=>d.key===k)||{}).sub); } }
+function newGame(){
+  if(state.events.length && !confirm('Start a new game? This clears all stats (game details are kept).')) return;
+  state.events=[]; render(); toast('New game started');
+}
+
+/* ---- info inputs ---- */
+function bindInfo(){
+  INFO_IDS.forEach(id=>{
+    const el=$(id);
+    el.value = state.info[id] != null ? state.info[id] : el.value;
+    el.addEventListener('input',()=>{ state.info[id]=el.value; if(id==='teamScore'||id==='oppScore') renderFinal(); save(); });
+  });
+  if(!$('gdate').value){ const d=new Date(); $('gdate').value=d.toISOString().slice(0,10); state.info.gdate=$('gdate').value; }
+}
+
+/* ---- export ---- */
+const HEADERS=['Date','Player','Team Score','Opponent','Opp Score','Result','PTS','FGM','FGA','FG%','2PM','2PA','3PM','3PA','REB','AST','STL','BLK','Fouls','Fouls Drawn','Venue'];
+function rowValues(){
+  const t=tally(), i=state.info;
+  const ts=i.teamScore, os=i.oppScore;
+  let res=''; if(ts!=''&&os!=''&&ts!=null&&os!=null&&!isNaN(+ts)&&!isNaN(+os)){ res=(+ts>+os)?'Win':(+ts<+os)?'Loss':'Tie'; }
+  const fgp=t.fga>0?(Math.round(1000*t.fgm/t.fga)/10):'';
+  return [ i.gdate||'', i.player||'', i.teamScore||'', i.opponent||'', i.oppScore||'', res,
+    t.pts, t.fgm, t.fga, fgp, t.p2m, t.p2a, t.p3m, t.p3a,
+    t.c.reb, t.c.ast, t.c.stl, t.c.blk, t.c.foul, t.c.fouldrawn, i.venue||'' ];
+}
+function csvCell(v){ v=String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+function downloadCSV(){
+  const csv=[HEADERS.map(csvCell).join(','), rowValues().map(csvCell).join(',')].join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  const name=(state.info.player||'player')+'_vs_'+(state.info.opponent||'opp')+'_'+(state.info.gdate||'game');
+  a.href=URL.createObjectURL(blob); a.download=name.replace(/[^a-z0-9_\-]+/gi,'-')+'.csv';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  toast('CSV downloaded');
+}
+function copyToClipboard(text,msg){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast(msg)).catch(()=>fallbackCopy(text,msg));
+  } else fallbackCopy(text,msg);
+}
+function fallbackCopy(text,msg){
+  const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast(msg); }catch(e){ toast('Copy failed'); }
+  ta.remove();
+}
+
+/* ---- init ---- */
+function init(){
+  load();
+  buildButtons();
+  bindInfo();
+  render();
+  $('undoBtn').addEventListener('click',undo);
+  $('newBtn').addEventListener('click',newGame);
+  $('csvBtn').addEventListener('click',downloadCSV);
+  $('copyRowBtn').addEventListener('click',()=>copyToClipboard(rowValues().join('\t'),'Row copied — paste into your sheet'));
+  $('copyHeaders').addEventListener('click',e=>{ e.preventDefault(); copyToClipboard(HEADERS.join('\t'),'Header row copied'); });
+}
+let _t; function toast(m){ const el=$('toast'); el.textContent=m; el.classList.add('show'); clearTimeout(_t); _t=setTimeout(()=>el.classList.remove('show'),1800); }
+init();
+</script>
+</body>
+</html>
