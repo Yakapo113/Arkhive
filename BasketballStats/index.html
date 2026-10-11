@@ -39,7 +39,10 @@
 
   /* Game info */
   .ginfo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .ginfo3{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:10px;margin-top:10px}
+  .scorerow{margin-top:10px}
+  .scorerow.scores{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .scorerow .date{max-width:230px}
+  .scorerow .score{flex:0 1 130px;min-width:96px}
   .field{min-width:0}
   .field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .field input{width:100%;min-width:0;padding:9px 10px;border:1px solid var(--line2);border-radius:9px;font-size:.95rem;background:#fff;color:var(--ink)}
@@ -135,8 +138,10 @@
       <div class="field"><label for="opponent">Opponent team</label><input id="opponent" type="text" placeholder="e.g. Hawks" autocomplete="off"></div>
       <div class="field"><label for="venue">Venue</label><input id="venue" type="text" placeholder="e.g. Central HS" autocomplete="off"></div>
     </div>
-    <div class="ginfo3">
-      <div class="field"><label for="gdate">Date</label><input id="gdate" type="date"></div>
+    <div class="scorerow">
+      <div class="field date"><label for="gdate">Date</label><input id="gdate" type="date"></div>
+    </div>
+    <div class="scorerow scores">
       <div class="field score"><label for="teamScore">Your score</label><input id="teamScore" type="number" inputmode="numeric" placeholder="0"></div>
       <div class="field score"><label for="oppScore">Opp score</label><input id="oppScore" type="number" inputmode="numeric" placeholder="0"></div>
     </div>
