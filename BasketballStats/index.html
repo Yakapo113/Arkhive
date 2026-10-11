@@ -65,15 +65,15 @@
   .btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px}
   .btns.three{grid-template-columns:repeat(3,1fr)}
   .btns.four{grid-template-columns:repeat(4,1fr)}
-  .sbtn{position:relative;border:1px solid var(--line2);border-radius:14px;background:#fff;padding:14px 8px 12px;
-    min-height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  .sbtn{position:relative;border:1px solid var(--line2);border-radius:14px;background:#fff;padding:28px 6px 12px;
+    min-height:82px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
     transition:transform .06s ease, box-shadow .12s ease;color:var(--ink)}
   .sbtn:active{transform:scale(.96)}
   .sbtn .big{font-size:1.5rem;font-weight:800;line-height:1}
   .sbtn.pos .big,.sbtn.foul .big{font-size:1.15rem;letter-spacing:.01em}
   .sbtn .sub{font-size:.72rem;color:var(--muted)}
-  .sbtn .cnt{position:absolute;top:6px;right:8px;min-width:22px;height:22px;padding:0 5px;border-radius:999px;
-    background:#eef2f7;color:var(--muted);font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .sbtn .cnt{position:absolute;top:6px;right:7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;
+    background:#eef2f7;color:var(--muted);font-size:.74rem;font-weight:700;display:flex;align-items:center;justify-content:center}
   .sbtn.has .cnt{background:var(--accent);color:#fff}
   .sbtn.make{border-color:#bbf7d0;background:#f0fdf4}.sbtn.make .big{color:var(--made)}.sbtn.make.has .cnt{background:var(--made)}
   .sbtn.miss{border-color:#e2e8f0;background:#f8fafc}.sbtn.miss .big{color:#64748b}.sbtn.miss.has .cnt{background:#64748b}
@@ -139,19 +139,6 @@
       <div class="field"><label for="gdate">Date</label><input id="gdate" type="date"></div>
       <div class="field score"><label for="teamScore">Your score</label><input id="teamScore" type="number" inputmode="numeric" placeholder="0"></div>
       <div class="field score"><label for="oppScore">Opp score</label><input id="oppScore" type="number" inputmode="numeric" placeholder="0"></div>
-    </div>
-  </div>
-
-  <!-- Live scoreboard -->
-  <div class="card">
-    <div class="score">
-      <div class="pts"><small>Player points</small><span id="ptsVal">0</span></div>
-      <div class="chips">
-        <div class="chip"><b id="cReb">0</b><span>Reb</span></div>
-        <div class="chip"><b id="cAst">0</b><span>Ast</span></div>
-        <div class="chip"><b id="cStl">0</b><span>Stl</span></div>
-        <div class="chip"><b id="cBlk">0</b><span>Blk</span></div>
-      </div>
     </div>
   </div>
 
@@ -307,9 +294,6 @@ function render(){
   });
   // quarter selector
   document.querySelectorAll('.qbtn').forEach(b=>b.classList.toggle('on', +b.dataset.q===(state.q||1)));
-  // scoreboard
-  $('ptsVal').textContent=t.pts;
-  $('cReb').textContent=t.reb; $('cAst').textContent=t.c.ast; $('cStl').textContent=t.c.stl; $('cBlk').textContent=t.c.blk;
   // shot chart
   const chart=$('shotChart');
   const shots=state.events.filter(e=>SHOT_INFO[e.k]);
