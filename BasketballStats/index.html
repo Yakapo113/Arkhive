@@ -39,10 +39,13 @@
 
   /* Game info */
   .ginfo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:3px}
-  .field input{width:100%;padding:9px 10px;border:1px solid var(--line2);border-radius:9px;font-size:.95rem;background:#fff;color:var(--ink)}
+  .ginfo3{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:10px;margin-top:10px}
+  .field{min-width:0}
+  .field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .field input{width:100%;min-width:0;padding:9px 10px;border:1px solid var(--line2);border-radius:9px;font-size:.95rem;background:#fff;color:var(--ink)}
   .field.full{grid-column:1/-1}
-  .field.score input{text-align:center;font-weight:700;font-size:1.1rem}
+  #gdate{font-size:.82rem;padding:9px 6px}
+  .field.score input{text-align:center;font-weight:700;font-size:1.1rem;padding-left:4px;padding-right:4px}
 
   /* Scoreboard */
   .score{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
@@ -126,11 +129,11 @@
       <div class="field full"><label for="player">Player name</label><input id="player" type="text" placeholder="e.g. Jordan M." autocomplete="off"></div>
       <div class="field"><label for="opponent">Opponent team</label><input id="opponent" type="text" placeholder="e.g. Hawks" autocomplete="off"></div>
       <div class="field"><label for="venue">Venue</label><input id="venue" type="text" placeholder="e.g. Central HS" autocomplete="off"></div>
+    </div>
+    <div class="ginfo3">
       <div class="field"><label for="gdate">Date</label><input id="gdate" type="date"></div>
-      <div class="field"><label for="gtime" style="visibility:hidden">·</label><div style="display:flex;gap:8px">
-        <div class="field score" style="flex:1"><label for="teamScore">Your score</label><input id="teamScore" type="number" inputmode="numeric" placeholder="0"></div>
-        <div class="field score" style="flex:1"><label for="oppScore">Opp score</label><input id="oppScore" type="number" inputmode="numeric" placeholder="0"></div>
-      </div></div>
+      <div class="field score"><label for="teamScore">Your score</label><input id="teamScore" type="number" inputmode="numeric" placeholder="0"></div>
+      <div class="field score"><label for="oppScore">Opp score</label><input id="oppScore" type="number" inputmode="numeric" placeholder="0"></div>
     </div>
   </div>
 
@@ -192,6 +195,7 @@
       <button class="btn" id="copyRowBtn">⧉ Copy row for Sheets</button>
     </div>
     <p class="note">Everything stays on your phone (and is auto-saved in this browser). Use <b>Copy row for Sheets</b> to paste the game under existing headers in Google Sheets or Excel — tap <a href="#" id="copyHeaders">copy the header row</a> first for a new sheet.</p>
+    <button class="btn primary" id="imgBtn" style="width:100%;margin-top:6px">📸 Save dashboard as image</button>
   </div>
 
 </div>
@@ -351,6 +355,131 @@ function fallbackCopy(text,msg){
   ta.remove();
 }
 
+/* ---- dashboard image (shots + summary) rendered on a canvas ---- */
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function drawBall(ctx,x,y,r,made){
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.closePath();
+  ctx.fillStyle=made?'#ea7317':'#cbd5e1'; ctx.fill();
+  if(made){
+    ctx.save(); ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.clip();
+    ctx.strokeStyle='#5a2600'; ctx.lineWidth=Math.max(1.2,r*0.1); ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(x-r,y); ctx.lineTo(x+r,y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x,y-r); ctx.lineTo(x,y+r); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x,y-r); ctx.quadraticCurveTo(x-r*0.95,y,x,y+r); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x,y-r); ctx.quadraticCurveTo(x+r*0.95,y,x,y+r); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function fmtDate(iso){ if(!iso) return ''; const d=new Date(iso+'T00:00:00'); return isNaN(d)?iso:d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}); }
+
+function renderDashboard(){
+  const t=tally(), i=state.info;
+  const W=1080, pad=56, cw=W-pad*2, headerH=160;
+  const shots=state.events.filter(e=>SHOT_INFO[e]);
+  const r=23, step=46+14, perRow=Math.floor((cw+14)/step);
+  const rows=Math.max(1,Math.ceil((shots.length||0)/perRow));
+  const hasScore = i.teamScore!=''&&i.teamScore!=null&&i.oppScore!=''&&i.oppScore!=null&&!isNaN(+i.teamScore)&&!isNaN(+i.oppScore);
+  const H = headerH+40 + (hasScore?84:0) + 308 + 256 + (76+rows*64) + 66;
+
+  const canvas=document.createElement('canvas'); canvas.width=W; canvas.height=Math.round(H);
+  const ctx=canvas.getContext('2d');
+  const font=(s,w)=>`${w||'400'} ${s}px -apple-system, system-ui, 'Segoe UI', Roboto, Arial, sans-serif`;
+
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
+  // header band
+  ctx.fillStyle='#111827'; ctx.fillRect(0,0,W,headerH);
+  drawBall(ctx, pad+34, headerH/2, 34, true);
+  ctx.fillStyle='#fff'; ctx.font=font(46,'800'); ctx.fillText(i.player||'Player', pad+92, 78);
+  const sub=[]; if(i.gdate)sub.push(fmtDate(i.gdate)); if(i.opponent)sub.push('vs '+i.opponent); if(i.venue)sub.push('@ '+i.venue);
+  ctx.fillStyle='#c7cdd6'; ctx.font=font(26,'500'); ctx.fillText(sub.join('   ·   '), pad+92, 118);
+
+  let y=headerH+40;
+  // result chip
+  if(hasScore){
+    const a=+i.teamScore,b=+i.oppScore, res=a>b?'WIN':a<b?'LOSS':'TIE';
+    const col=a>b?'#16a34a':a<b?'#dc2626':'#6b7280', label=`${res}  ${a}–${b}`;
+    ctx.font=font(30,'800'); const chipW=ctx.measureText(label).width+56, chipH=56;
+    roundRect(ctx,pad,y,chipW,chipH,28); ctx.fillStyle=col; ctx.fill();
+    ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.fillText(label,pad+28,y+chipH/2+1); ctx.textBaseline='alphabetic';
+    y+=chipH+28;
+  }
+  // stat tiles (3 x 2)
+  const tiles=[['PTS',t.pts],['REB',t.c.reb],['AST',t.c.ast],['STL',t.c.stl],['BLK',t.c.blk],['FOULS',t.c.foul]];
+  const gap=16, tileW=(cw-2*gap)/3, tileH=130;
+  tiles.forEach((tl,idx)=>{
+    const x=pad+(idx%3)*(tileW+gap), ty=y+Math.floor(idx/3)*(tileH+gap);
+    roundRect(ctx,x,ty,tileW,tileH,16); ctx.fillStyle='#f8fafc'; ctx.fill();
+    ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1.5; roundRect(ctx,x,ty,tileW,tileH,16); ctx.stroke();
+    ctx.fillStyle='#1f2430'; ctx.textAlign='center'; ctx.font=font(52,'800'); ctx.fillText(String(tl[1]),x+tileW/2,ty+76);
+    ctx.fillStyle='#6b7280'; ctx.font=font(22,'600'); ctx.fillText(tl[0],x+tileW/2,ty+110);
+    ctx.textAlign='left';
+  });
+  y+=tileH*2+gap+32;
+  // shooting splits
+  ctx.fillStyle='#6b7280'; ctx.font=font(22,'700'); ctx.fillText('SHOOTING',pad,y); y+=20;
+  [['Field goals',`${t.fgm} / ${t.fga}`,pct(t.fgm,t.fga)],
+   ['2-pointers',`${t.p2m} / ${t.p2a}`,pct(t.p2m,t.p2a)],
+   ['3-pointers',`${t.p3m} / ${t.p3a}`,pct(t.p3m,t.p3a)],
+   ['Fouls drawn',`${t.c.fouldrawn}`,'']].forEach(ln=>{
+    const ly=y+36;
+    ctx.strokeStyle='#eef2f7'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(pad,y+2); ctx.lineTo(W-pad,y+2); ctx.stroke();
+    ctx.fillStyle='#1f2430'; ctx.font=font(28,'500'); ctx.textBaseline='middle'; ctx.fillText(ln[0],pad,ly);
+    ctx.textAlign='right'; let rx=W-pad;
+    if(ln[2]!=='' && ln[2]!=='—'){ ctx.fillStyle='#6b7280'; ctx.font=font(26,'500'); ctx.fillText(ln[2],rx,ly); rx-=ctx.measureText(ln[2]).width+18; }
+    ctx.fillStyle='#1f2430'; ctx.font=font(28,'800'); ctx.fillText(ln[1],rx,ly);
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic'; y+=52;
+  });
+  y+=28;
+  // shots in order
+  ctx.fillStyle='#6b7280'; ctx.font=font(22,'700'); ctx.fillText('SHOTS, IN ORDER',pad,y); y+=36;
+  if(!shots.length){ ctx.fillStyle='#9aa4b2'; ctx.font=font(26,'500'); ctx.fillText('No shots recorded',pad,y+30); }
+  else{
+    shots.forEach((e,idx)=>{
+      const cx=pad+(idx%perRow)*step+r, cy=y+Math.floor(idx/perRow)*64+r;
+      drawBall(ctx,cx,cy,r,SHOT_INFO[e].made);
+      if(SHOT_INFO[e].val===3){
+        const bx=cx+r*0.8, by=cy-r*0.8, br=r*0.6;
+        ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.fillStyle='#111827'; ctx.fill();
+        ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke();
+        ctx.fillStyle='#fff'; ctx.font=font(br*1.25,'800'); ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('3',bx,by+1); ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+      }
+    });
+  }
+  // footer
+  ctx.fillStyle='#9aa4b2'; ctx.font=font(24,'600'); ctx.textAlign='center';
+  ctx.fillText('Tracked with ArkHive · arkhive.us', W/2, H-38); ctx.textAlign='left';
+  return canvas;
+}
+
+function saveImage(){
+  let canvas; try{ canvas=renderDashboard(); }catch(e){ toast('Could not build image'); return; }
+  const base=((state.info.player||'player')+'_vs_'+(state.info.opponent||'opp')+'_'+(state.info.gdate||'game')).replace(/[^a-z0-9_\-]+/gi,'-');
+  const done=()=>toast('Image saved');
+  canvas.toBlob(async(blob)=>{
+    if(!blob){ // fallback for very old browsers
+      const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download=base+'.png';
+      document.body.appendChild(a); a.click(); a.remove(); done(); return;
+    }
+    const file=new File([blob],base+'.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:(state.info.player||'Game')+' — summary'}); return; }
+      catch(e){ if(e && e.name==='AbortError') return; /* else fall through to download */ }
+    }
+    const url=URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download=base+'.png'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000); done();
+  },'image/png');
+}
+
 /* ---- init ---- */
 function init(){
   load();
@@ -362,6 +491,7 @@ function init(){
   $('csvBtn').addEventListener('click',downloadCSV);
   $('copyRowBtn').addEventListener('click',()=>copyToClipboard(rowValues().join('\t'),'Row copied — paste into your sheet'));
   $('copyHeaders').addEventListener('click',e=>{ e.preventDefault(); copyToClipboard(HEADERS.join('\t'),'Header row copied'); });
+  $('imgBtn').addEventListener('click',saveImage);
 }
 let _t; function toast(m){ const el=$('toast'); el.textContent=m; el.classList.add('show'); clearTimeout(_t); _t=setTimeout(()=>el.classList.remove('show'),1800); }
 init();
