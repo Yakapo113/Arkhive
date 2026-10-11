@@ -351,8 +351,13 @@ function escapeHtml(s){return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&
 function add(key){ state.events.push({k:key, q:state.q||1}); render(); }
 function undo(){ if(state.events.length){ const e=state.events.pop(); render(); toast('Removed last: '+(ALL.find(d=>d.key===e.k)||{}).sub); } }
 function newGame(){
-  if(state.events.length && !confirm('Start a new game? This clears all stats (game details are kept).')) return;
-  state.events=[]; state.q=1; render(); toast('New game started');
+  const hasData = state.events.length || INFO_IDS.some(id=> id!=='gdate' && ($(id).value||'').trim()!=='');
+  if(hasData && !confirm('Start a new game? This clears all stats AND game details.')) return;
+  // reset everything
+  state.events=[]; state.q=1; state.info={};
+  INFO_IDS.forEach(id=>{ const el=$(id); if(el) el.value=''; });
+  const d=new Date(); $('gdate').value=d.toISOString().slice(0,10); state.info.gdate=$('gdate').value;
+  render(); toast('New game started');
 }
 function setQuarter(n){ state.q=n; render(); }
 
