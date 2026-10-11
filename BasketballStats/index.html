@@ -40,9 +40,12 @@
   /* Game info */
   .ginfo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .scorerow{margin-top:10px}
-  .scorerow.scores{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
   .scorerow .date{max-width:230px}
-  .scorerow .score{flex:0 1 130px;min-width:96px}
+  .fsrow{display:flex;gap:10px;margin-bottom:8px;align-items:center}
+  .fsrow input{padding:10px;border:1px solid var(--line2);border-radius:9px;font-size:.95rem;background:#fff;color:var(--ink);min-width:0}
+  .fsrow .tname{flex:1 1 auto}
+  .fsrow .scorein{flex:0 0 86px;text-align:center;font-weight:700;font-size:1.1rem;padding-left:4px;padding-right:4px}
+  .fsrow input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
   .field{min-width:0}
   .field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .field input{width:100%;min-width:0;padding:9px 10px;border:1px solid var(--line2);border-radius:9px;font-size:.95rem;background:#fff;color:var(--ink)}
@@ -135,15 +138,20 @@
     <h2>Game details</h2>
     <div class="ginfo">
       <div class="field full"><label for="player">Player name</label><input id="player" type="text" placeholder="e.g. Jordan M." autocomplete="off"></div>
-      <div class="field"><label for="opponent">Opponent team</label><input id="opponent" type="text" placeholder="e.g. Hawks" autocomplete="off"></div>
-      <div class="field"><label for="venue">Venue</label><input id="venue" type="text" placeholder="e.g. Central HS" autocomplete="off"></div>
+      <div class="field full"><label for="venue">Venue</label><input id="venue" type="text" placeholder="e.g. Central HS" autocomplete="off"></div>
     </div>
     <div class="scorerow">
       <div class="field date"><label for="gdate">Date</label><input id="gdate" type="date"></div>
     </div>
-    <div class="scorerow scores">
-      <div class="field score"><label for="teamScore">Your score</label><input id="teamScore" type="number" inputmode="numeric" placeholder="0"></div>
-      <div class="field score"><label for="oppScore">Opp score</label><input id="oppScore" type="number" inputmode="numeric" placeholder="0"></div>
+
+    <div class="grouplbl" style="margin-top:14px">Final score — team &amp; score</div>
+    <div class="fsrow">
+      <input id="yourTeam" class="tname" type="text" placeholder="Your team" autocomplete="off" aria-label="Your team name">
+      <input id="teamScore" class="scorein" type="number" inputmode="numeric" placeholder="0" aria-label="Your team score">
+    </div>
+    <div class="fsrow">
+      <input id="opponent" class="tname" type="text" placeholder="Opponent" autocomplete="off" aria-label="Opponent team name">
+      <input id="oppScore" class="scorein" type="number" inputmode="numeric" placeholder="0" aria-label="Opponent score">
     </div>
   </div>
 
@@ -194,6 +202,7 @@
     <div class="shootline"><span>3-pointers</span><span><b id="fg3Line">0 / 0</b> <span class="pct" id="fg3Pct"></span></span></div>
     <div class="shootline"><span>Free throws</span><span><b id="ftLine">0 / 0</b> <span class="pct" id="ftPct"></span></span></div>
     <div class="shootline"><span>Rebounds (off / def)</span><span><b id="sRebSplit">0 off / 0 def</b></span></div>
+    <div class="shootline"><span>Turnovers</span><span><b id="sTO">0</b></span></div>
     <div class="shootline"><span>Points by quarter</span><span class="pct" id="sByQ">—</span></div>
     <div class="finalscore" id="finalScore">Enter final scores above to show the result</div>
 
@@ -225,6 +234,7 @@ const OTHER = [
   {key:'ast', big:'AST', sub:'Assist', cls:'pos'},
   {key:'stl', big:'STL', sub:'Steal', cls:'pos'},
   {key:'blk', big:'BLK', sub:'Block', cls:'pos'},
+  {key:'to', big:'TO', sub:'Turnover', cls:'foul'},
   {key:'foul', big:'FOUL', sub:'Committed', cls:'foul'},
 ];
 const ALL = [...SHOTS, ...OTHER];
@@ -233,7 +243,7 @@ const SHOT_INFO = {
   miss2:{made:false,val:2}, miss3:{made:false,val:3}, miss1:{made:false,val:1,ft:true}
 };
 const PTS_FOR = {made2:2, made3:3, made1:1};
-const INFO_IDS = ['player','opponent','venue','gdate','teamScore','oppScore'];
+const INFO_IDS = ['player','yourTeam','opponent','venue','gdate','teamScore','oppScore'];
 
 let state = { info:{}, events:[], q:1 };   // events = [{k:statKey, q:quarter}], in order
 
@@ -317,6 +327,7 @@ function render(){
   $('fg3Line').textContent=`${t.p3m} / ${t.p3a}`; $('fg3Pct').textContent=pct(t.p3m,t.p3a);
   $('ftLine').textContent=`${t.ftm} / ${t.fta}`; $('ftPct').textContent=pct(t.ftm,t.fta);
   $('sRebSplit').textContent=`${t.oreb} off / ${t.dreb} def`;
+  $('sTO').textContent=t.c.to;
   $('sByQ').textContent=`Q1 ${t.q[0]} · Q2 ${t.q[1]} · Q3 ${t.q[2]} · Q4 ${t.q[3]}`+(t.q[4]>0?` · OT ${t.q[4]}`:'');
   renderFinal();
   $('undoBtn').disabled=state.events.length===0;
@@ -331,8 +342,8 @@ function renderFinal(){
   }
   const a=+ts, b=+os; let res='Tie', cls='';
   if(a>b){res='Win';cls='win';} else if(a<b){res='Loss';cls='loss';}
-  const opp=state.info.opponent?` vs ${escapeHtml(state.info.opponent)}`:'';
-  el.innerHTML=`<span class="res ${cls}">${res}</span> &nbsp; ${a} – ${b}${opp}`;
+  const yt=escapeHtml(state.info.yourTeam||'Your team'), ot=escapeHtml(state.info.opponent||'Opponent');
+  el.innerHTML=`<span class="res ${cls}">${res}</span> &nbsp; ${yt} ${a} &nbsp;–&nbsp; ${ot} ${b}`;
 }
 function escapeHtml(s){return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
 
@@ -356,15 +367,15 @@ function bindInfo(){
 }
 
 /* ---- export ---- */
-const HEADERS=['Date','Player','Team Score','Opponent','Opp Score','Result','PTS','Q1','Q2','Q3','Q4','OT','FGM','FGA','FG%','2PM','2PA','3PM','3PA','FTM','FTA','REB','OREB','DREB','AST','STL','BLK','Fouls','Venue'];
+const HEADERS=['Date','Player','Your Team','Team Score','Opponent','Opp Score','Result','PTS','Q1','Q2','Q3','Q4','OT','FGM','FGA','FG%','2PM','2PA','3PM','3PA','FTM','FTA','REB','OREB','DREB','AST','STL','BLK','TO','Fouls','Venue'];
 function rowValues(){
   const t=tally(), i=state.info;
   const ts=i.teamScore, os=i.oppScore;
   let res=''; if(ts!=''&&os!=''&&ts!=null&&os!=null&&!isNaN(+ts)&&!isNaN(+os)){ res=(+ts>+os)?'Win':(+ts<+os)?'Loss':'Tie'; }
   const fgp=t.fga>0?(Math.round(1000*t.fgm/t.fga)/10):'';
-  return [ i.gdate||'', i.player||'', i.teamScore||'', i.opponent||'', i.oppScore||'', res,
+  return [ i.gdate||'', i.player||'', i.yourTeam||'', i.teamScore||'', i.opponent||'', i.oppScore||'', res,
     t.pts, t.q[0], t.q[1], t.q[2], t.q[3], t.q[4], t.fgm, t.fga, fgp, t.p2m, t.p2a, t.p3m, t.p3a,
-    t.ftm, t.fta, t.reb, t.oreb, t.dreb, t.c.ast, t.c.stl, t.c.blk, t.c.foul, i.venue||'' ];
+    t.ftm, t.fta, t.reb, t.oreb, t.dreb, t.c.ast, t.c.stl, t.c.blk, t.c.to, t.c.foul, i.venue||'' ];
 }
 function csvCell(v){ v=String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
 function downloadCSV(){
@@ -420,7 +431,7 @@ function renderDashboard(){
   const r=23, step=46+14, perRow=Math.floor((cw+14)/step);
   const rows=Math.max(1,Math.ceil((shots.length||0)/perRow));
   const hasScore = i.teamScore!=''&&i.teamScore!=null&&i.oppScore!=''&&i.oppScore!=null&&!isNaN(+i.teamScore)&&!isNaN(+i.oppScore);
-  const splitLines = 6;
+  const splitLines = 7;
   const H = headerH+40 + (hasScore?84:0) + 308 + (20+splitLines*52+28) + (36+rows*64) + 66;
 
   const canvas=document.createElement('canvas'); canvas.width=W; canvas.height=Math.round(H);
@@ -432,14 +443,16 @@ function renderDashboard(){
   ctx.fillStyle='#111827'; ctx.fillRect(0,0,W,headerH);
   drawBall(ctx, pad+34, headerH/2, 34, true);
   ctx.fillStyle='#fff'; ctx.font=font(46,'800'); ctx.fillText(i.player||'Player', pad+92, 78);
-  const sub=[]; if(i.gdate)sub.push(fmtDate(i.gdate)); if(i.opponent)sub.push('vs '+i.opponent); if(i.venue)sub.push('@ '+i.venue);
+  const sub=[]; if(i.gdate)sub.push(fmtDate(i.gdate)); if(i.venue)sub.push('@ '+i.venue);
   ctx.fillStyle='#c7cdd6'; ctx.font=font(26,'500'); ctx.fillText(sub.join('   ·   '), pad+92, 118);
 
   let y=headerH+40;
   // result chip
   if(hasScore){
     const a=+i.teamScore,b=+i.oppScore, res=a>b?'WIN':a<b?'LOSS':'TIE';
-    const col=a>b?'#16a34a':a<b?'#dc2626':'#6b7280', label=`${res}  ${a}–${b}`;
+    const col=a>b?'#16a34a':a<b?'#dc2626':'#6b7280';
+    const yt=i.yourTeam||'Your team', ot=i.opponent||'Opponent';
+    const label=`${res}   ${yt} ${a}  –  ${ot} ${b}`;
     ctx.font=font(30,'800'); const chipW=ctx.measureText(label).width+56, chipH=56;
     roundRect(ctx,pad,y,chipW,chipH,28); ctx.fillStyle=col; ctx.fill();
     ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.fillText(label,pad+28,y+chipH/2+1); ctx.textBaseline='alphabetic';
@@ -464,6 +477,7 @@ function renderDashboard(){
    ['3-pointers',`${t.p3m} / ${t.p3a}`,pct(t.p3m,t.p3a)],
    ['Free throws',`${t.ftm} / ${t.fta}`,pct(t.ftm,t.fta)],
    ['Rebounds (off / def)',`${t.oreb} / ${t.dreb}`,''],
+   ['Turnovers',`${t.c.to}`,''],
    ['Points by quarter',`Q1 ${t.q[0]}  ·  Q2 ${t.q[1]}  ·  Q3 ${t.q[2]}  ·  Q4 ${t.q[3]}`+(t.q[4]>0?`  ·  OT ${t.q[4]}`:''),'']].forEach(ln=>{
     const ly=y+36;
     ctx.strokeStyle='#eef2f7'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(pad,y+2); ctx.lineTo(W-pad,y+2); ctx.stroke();
