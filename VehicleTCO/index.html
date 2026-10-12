@@ -109,7 +109,8 @@
   .tcard .sub{color:var(--muted);font-size:.85rem;padding-left:8px}
   .tcard .sub.pay{color:var(--ink);font-weight:600;margin-top:3px}
   .tcard .shop{border-top:1px solid var(--line);margin-top:12px;padding:10px 0 0 8px}
-  .tcard .shoplbl{font-size:.78rem;color:var(--muted);margin-bottom:7px}
+  .tcard .shoplbl{font-size:.78rem;color:var(--muted);margin-bottom:7px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px}
+  .tcard .shoptrim{display:inline-flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap}
   .tcard .shopbtns{display:flex;flex-wrap:wrap;gap:6px}
   .tcard .shopbtn{border:1px solid var(--line2);border-radius:999px;padding:5px 11px;font-size:.78rem;font-weight:600;color:var(--ink);text-decoration:none;background:#fff}
   .tcard .shopbtn:hover{border-color:var(--accent);color:var(--accent)}
@@ -970,24 +971,50 @@ function searchModel(md){
   return md.replace(/\s*\(.*?\)/g,"").split(" / ")[0]
     .replace(/\s+(gas|Hybrid|Plug-in Hybrid|PHEV|Prime|4xe|EcoBoost)$/i,"").trim();
 }
-function listingLinks(row, year){
+// Sites name trims without the drivetrain ("XLE", not "XLE AWD").
+function searchTrim(cfg){
+  return cfg.replace(/\b(AWD|FWD|RWD|4WD|2WD|4x4)\b/gi,"").replace(/\s+/g," ").trim();
+}
+let matchTrim = true;   // UI toggle; unchecking widens every link to all trims
+function listingUrls(row, year, withTrim){
   const mk = row.make, md = searchModel(row.model);
+  const tr = withTrim ? searchTrim(row.config) : "";
   const slug = s => s.toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"");
   const enc = encodeURIComponent;
-  const sites = [
-    ["KSL Cars", `https://cars.ksl.com/v2/search/make/${enc(mk)}/model/${enc(md)}/yearFrom/${year}/yearTo/${year}`],
-    ["Marketplace", `https://www.facebook.com/marketplace/search/?query=${enc(`${year} ${mk} ${md}`)}`],
-    ["Autotrader", `https://www.autotrader.com/cars-for-sale/all-cars/${year}/${slug(mk)}/${slug(md)}`]
+  // KSL: /trim/Make:Model:Trim. Autotrader: trimCode=MODELCODE|Trim, and it
+  // ignores codes it doesn't recognize, so a guessed model code is harmless.
+  const ksl = `https://cars.ksl.com/search/make/${enc(mk)}/model/${enc(md)}`
+    + (tr ? `/trim/${enc(`${mk}:${md}:${tr}`)}` : "") + `/yearFrom/${year}/yearTo/${year}`;
+  const fbq = `${year} ${mk} ${row.model.replace(/\s*\(.*?\)/g,"").split(" / ")[0]}` + (tr ? ` ${tr}` : "");
+  const at = `https://www.autotrader.com/cars-for-sale/all-cars/${year}/${slug(mk)}/${slug(md)}`
+    + (tr ? `?trimCode=${enc(`${md.toUpperCase().replace(/[\s-]/g,"")}|${tr}`)}` : "");
+  return [
+    ["KSL Cars", ksl],
+    ["Marketplace", `https://www.facebook.com/marketplace/search/?query=${enc(fbq)}`],
+    ["Autotrader", at]
   ];
+}
+function listingLinks(row, year){
   const wrap = el("div","shop");
-  wrap.appendChild(el("div","shoplbl",`🔎 Find a ${year} ${mk} ${md}`));
-  const btns = el("div","shopbtns");
-  sites.forEach(([name,url])=>{
-    const a = el("a","shopbtn"); a.textContent = name;
-    a.href = url; a.target = "_blank"; a.rel = "noopener";
-    btns.appendChild(a);
-  });
-  wrap.appendChild(btns);
+  const head = el("div","shoplbl");
+  const title = el("span"); head.appendChild(title);
+  const lbl = el("label","shoptrim"); const cb = el("input"); cb.type = "checkbox";
+  lbl.appendChild(cb); lbl.appendChild(document.createTextNode(" Match trim")); head.appendChild(lbl);
+  wrap.appendChild(head);
+  const btns = el("div","shopbtns"); wrap.appendChild(btns);
+  const draw = ()=>{
+    cb.checked = matchTrim;
+    const tr = matchTrim ? searchTrim(row.config) : "";
+    title.textContent = `🔎 Find a ${year} ${row.make} ${searchModel(row.model)}${tr ? " "+tr : ""}`;
+    btns.innerHTML = "";
+    listingUrls(row, year, matchTrim).forEach(([name,url])=>{
+      const a = el("a","shopbtn"); a.textContent = name;
+      a.href = url; a.target = "_blank"; a.rel = "noopener";
+      btns.appendChild(a);
+    });
+  };
+  cb.onchange = ()=>{ matchTrim = cb.checked; document.querySelectorAll(".shop").forEach(s=>s._draw()); };
+  wrap._draw = draw; draw();
   return wrap;
 }
 
