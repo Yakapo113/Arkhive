@@ -108,6 +108,11 @@
   .tcard .big{font-size:1.7rem;font-weight:700;margin:6px 0 2px;padding-left:8px}
   .tcard .sub{color:var(--muted);font-size:.85rem;padding-left:8px}
   .tcard .sub.pay{color:var(--ink);font-weight:600;margin-top:3px}
+  .tcard .shop{border-top:1px solid var(--line);margin-top:12px;padding:10px 0 0 8px}
+  .tcard .shoplbl{font-size:.78rem;color:var(--muted);margin-bottom:7px}
+  .tcard .shopbtns{display:flex;flex-wrap:wrap;gap:6px}
+  .tcard .shopbtn{border:1px solid var(--line2);border-radius:999px;padding:5px 11px;font-size:.78rem;font-weight:600;color:var(--ink);text-decoration:none;background:#fff}
+  .tcard .shopbtn:hover{border-color:var(--accent);color:var(--accent)}
   .tcard.win{outline:2px solid var(--good)}
   .tcard .wintag{position:absolute;right:10px;top:10px;background:var(--good);color:#fff;font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.04em}
 
@@ -951,8 +956,39 @@ function renderTotals(data){
       : `💳 No loan (paid cash)`;
     c.appendChild(el("div","sub pay",payTxt));
     c.appendChild(el("div","sub",`↩︎ Est. resale after ${d.res.horizon} yr: ${fmt$(d.res.resaleValue)}`));
+    c.appendChild(listingLinks(d.row, d.v.modelYear||CURRENT_YEAR));
     host.appendChild(c);
   });
+}
+
+/* ---- Listing search links ----
+   Classifieds sites block cross-site fetching, so we deep-link into each
+   site's own search, pre-filtered by year/make/model. Catalog names carry
+   powertrain/year suffixes ("RAV4 Hybrid", "Venza (2021–24)") that the
+   sites file under the base model, so strip those for the search. */
+function searchModel(md){
+  return md.replace(/\s*\(.*?\)/g,"").split(" / ")[0]
+    .replace(/\s+(gas|Hybrid|Plug-in Hybrid|PHEV|Prime|4xe|EcoBoost)$/i,"").trim();
+}
+function listingLinks(row, year){
+  const mk = row.make, md = searchModel(row.model);
+  const slug = s => s.toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"");
+  const enc = encodeURIComponent;
+  const sites = [
+    ["KSL Cars", `https://cars.ksl.com/v2/search/make/${enc(mk)}/model/${enc(md)}/yearFrom/${year}/yearTo/${year}`],
+    ["Marketplace", `https://www.facebook.com/marketplace/search/?query=${enc(`${year} ${mk} ${md}`)}`],
+    ["Autotrader", `https://www.autotrader.com/cars-for-sale/all-cars/${year}/${slug(mk)}/${slug(md)}`]
+  ];
+  const wrap = el("div","shop");
+  wrap.appendChild(el("div","shoplbl",`🔎 Find a ${year} ${mk} ${md}`));
+  const btns = el("div","shopbtns");
+  sites.forEach(([name,url])=>{
+    const a = el("a","shopbtn"); a.textContent = name;
+    a.href = url; a.target = "_blank"; a.rel = "noopener";
+    btns.appendChild(a);
+  });
+  wrap.appendChild(btns);
+  return wrap;
 }
 
 function renderBarChart(data){
