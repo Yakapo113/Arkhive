@@ -290,6 +290,32 @@ const CATALOG = [
   {mk:"Toyota",md:"Corolla",cls:"compact_car",pt:"gas",d5:0.40,mpg:34,trims:[["LE",23000,34],["SE",25000,34],["XSE",27000,32]]},
   {mk:"Toyota",md:"Tacoma",cls:"pickup",pt:"gas",d5:0.28,mpg:21,trims:[["SR",33000,21],["SR5 4WD",38000,21],["TRD Off-Road 4WD",43000,20],["Limited 4WD",52000,19]]},
   {mk:"Toyota",md:"Sienna",cls:"minivan",pt:"hybrid",d5:0.42,mpg:36,trims:[["LE",39000,36],["XLE",42000,36],["XSE",44000,35],["Limited AWD",52000,35]]},
+  {nw:1,mk:"Toyota",md:"bZ4X / bZ",cls:"compact_suv",pt:"ev",d5:0.60,kwh:0.30,trims:[["XLE FWD",38000,null,0.28],["XLE AWD",42000,null,0.31],["Limited AWD",46000,null,0.31]]},
+  {nw:1,mk:"Toyota",md:"RAV4 Prime / Plug-in Hybrid",cls:"compact_suv",pt:"phev",d5:0.36,mpg:38,kwh:0.36,trims:[["SE",44000,38,0.36],["XSE",48000,38,0.36]]},
+  {nw:1,mk:"Toyota",md:"Prius",cls:"compact_car",pt:"hybrid",d5:0.36,mpg:57,trims:[["LE",28500,57],["XLE",32000,52],["Limited",36000,52]]},
+  {nw:1,mk:"Toyota",md:"Prius Prime",cls:"compact_car",pt:"phev",d5:0.40,mpg:52,kwh:0.27,trims:[["SE",33500,52,0.27],["XSE",36500,48,0.28],["XSE Premium",40000,48,0.28]]},
+  {nw:1,mk:"Toyota",md:"Corolla Hybrid",cls:"compact_car",pt:"hybrid",d5:0.38,mpg:50,trims:[["LE",24500,50],["SE",27000,47]]},
+  {nw:1,mk:"Toyota",md:"Corolla Cross",cls:"compact_suv",pt:"gas",d5:0.38,mpg:31,trims:[["L",25000,31],["LE",27500,31],["XLE",30000,30]]},
+  {nw:1,mk:"Toyota",md:"Corolla Cross Hybrid",cls:"compact_suv",pt:"hybrid",d5:0.37,mpg:42,trims:[["S",30000,42],["SE",31500,42],["XSE",33500,41]]},
+  {nw:1,mk:"Toyota",md:"Camry gas (2021–24)",cls:"midsize_car",pt:"gas",d5:0.40,mpg:32,trims:[["LE",26500,32],["SE",28000,31],["XSE V6",36000,25]]},
+  {nw:1,mk:"Toyota",md:"Crown",cls:"midsize_car",pt:"hybrid",d5:0.48,mpg:41,trims:[["XLE",41000,41],["Limited",46000,41],["Platinum",54000,30]]},
+  {nw:1,mk:"Toyota",md:"Venza (2021–24)",cls:"compact_suv",pt:"hybrid",d5:0.42,mpg:39,trims:[["LE",35000,39],["XLE",38500,39],["Limited",42000,39]]},
+  {nw:1,mk:"Toyota",md:"C-HR (2021–22)",cls:"compact_suv",pt:"gas",d5:0.45,mpg:29,trims:[["LE",24000,29],["XLE",26000,29],["Limited",28000,29]]},
+  {nw:1,mk:"Toyota",md:"4Runner",cls:"midsize_suv",pt:"gas",d5:0.30,mpg:19,trims:[["SR5 4WD",43000,19],["TRD Off-Road 4WD",48000,19],["Limited 4WD",55000,19],["TRD Pro 4WD",67000,18]]},
+  {nw:1,mk:"Toyota",md:"Tundra",cls:"pickup",pt:"gas",d5:0.33,mpg:19,trims:[["SR5 4WD",50000,19],["Limited 4WD",58000,19],["Platinum 4WD",67000,18]]},
+  {nw:1,mk:"Toyota",md:"Sequoia",cls:"fullsize_suv",pt:"hybrid",d5:0.38,mpg:21,trims:[["SR5 4WD",63000,21],["Limited 4WD",70000,21],["Platinum 4WD",76000,20],["Capstone 4WD",82000,20]]},
+  {nw:1,mk:"Toyota",md:"GR86",cls:"sports",pt:"gas",d5:0.28,mpg:25,trims:[["Base",31000,25],["Premium",34000,25]]},
+
+  // ---- Lexus ----
+  {nw:1,mk:"Lexus",md:"RX",cls:"midsize_suv",pt:"gas",d5:0.42,mpg:24,trims:[["RX 350 AWD",52000,24],["RX 350 Premium AWD",56000,24],["RX 350 F Sport Handling",62000,23]]},
+  {nw:1,mk:"Lexus",md:"RX Hybrid",cls:"midsize_suv",pt:"hybrid",d5:0.41,mpg:36,trims:[["RX 350h Premium",55000,36],["RX 350h Luxury",63000,35]]},
+  {nw:1,mk:"Lexus",md:"NX Hybrid",cls:"compact_suv",pt:"hybrid",d5:0.40,mpg:39,trims:[["NX 350h",47000,39],["NX 350h Premium",50000,39],["NX 350h Luxury",55000,39]]},
+  {nw:1,mk:"Lexus",md:"NX Plug-in Hybrid",cls:"compact_suv",pt:"phev",d5:0.44,mpg:36,kwh:0.38,trims:[["NX 450h+ Luxury",62000,36,0.38]]},
+  {nw:1,mk:"Lexus",md:"UX Hybrid",cls:"compact_suv",pt:"hybrid",d5:0.42,mpg:41,trims:[["UX 250h/300h",37000,41],["F Sport",41000,41]]},
+  {nw:1,mk:"Lexus",md:"ES",cls:"luxury_car",pt:"hybrid",d5:0.45,mpg:44,trims:[["ES 300h",45000,44],["ES 300h Luxury",51000,44]]},
+  {nw:1,mk:"Lexus",md:"IS",cls:"luxury_car",pt:"gas",d5:0.48,mpg:25,trims:[["IS 300",41000,25],["IS 350 F Sport",46000,22]]},
+  {nw:1,mk:"Lexus",md:"RZ",cls:"midsize_suv",pt:"ev",d5:0.62,kwh:0.35,trims:[["RZ 300e FWD",47000,null,0.32],["RZ 450e AWD",56000,null,0.36]]},
+  {nw:1,mk:"Lexus",md:"GX",cls:"fullsize_suv",pt:"gas",d5:0.33,mpg:17,trims:[["Premium",66000,17],["Overtrail",70000,16],["Luxury",76000,17]]},
 
   // ---- Honda (strong value retention) ----
   {mk:"Honda",md:"Civic",cls:"compact_car",pt:"gas",d5:0.40,mpg:36,trims:[["LX",25000,36],["Sport",27000,35],["EX",28000,36],["Touring",31000,34]]},
@@ -298,6 +324,12 @@ const CATALOG = [
   {mk:"Honda",md:"CR-V",cls:"compact_suv",pt:"gas",d5:0.38,mpg:30,trims:[["LX",30000,30],["EX AWD",34000,30],["EX-L AWD",37000,29],["Sport-L AWD",39000,28]]},
   {mk:"Honda",md:"Pilot",cls:"midsize_suv",pt:"gas",d5:0.42,mpg:22,trims:[["Sport",40000,22],["EX-L AWD",44000,22],["Touring AWD",48000,21],["Elite AWD",53000,21]]},
   {mk:"Honda",md:"Odyssey",cls:"minivan",pt:"gas",d5:0.45,mpg:22,trims:[["EX",40000,22],["EX-L",42000,22],["Touring",47000,22],["Elite",51000,22]]},
+  {nw:1,mk:"Honda",md:"Civic Hybrid",cls:"compact_car",pt:"hybrid",d5:0.38,mpg:49,trims:[["Sport",30000,49],["Sport Touring",33000,47]]},
+  {nw:1,mk:"Honda",md:"CR-V Hybrid",cls:"compact_suv",pt:"hybrid",d5:0.37,mpg:40,trims:[["Sport",35000,40],["Sport-L AWD",38500,37],["Sport Touring AWD",42000,37]]},
+  {nw:1,mk:"Honda",md:"HR-V",cls:"compact_suv",pt:"gas",d5:0.42,mpg:28,trims:[["LX",26000,28],["Sport",28000,28],["EX-L",30000,27]]},
+  {nw:1,mk:"Honda",md:"Passport",cls:"midsize_suv",pt:"gas",d5:0.42,mpg:20,trims:[["EX-L AWD",43000,20],["TrailSport AWD",46000,20]]},
+  {nw:1,mk:"Honda",md:"Ridgeline",cls:"pickup",pt:"gas",d5:0.40,mpg:21,trims:[["Sport",41000,21],["RTL",45000,21],["TrailSport",46000,20],["Black Edition",48000,21]]},
+  {nw:1,mk:"Honda",md:"Prologue",cls:"midsize_suv",pt:"ev",d5:0.62,kwh:0.35,trims:[["EX",48000,null,0.34],["Touring",52000,null,0.35],["Elite AWD",58000,null,0.37]]},
 
   // ---- Hyundai / Kia ----
   {mk:"Hyundai",md:"Elantra",cls:"compact_car",pt:"gas",d5:0.50,mpg:35,trims:[["SE",22000,35],["SEL",23000,35],["Limited",27000,33]]},
@@ -307,6 +339,24 @@ const CATALOG = [
   {mk:"Kia",md:"Sportage",cls:"compact_suv",pt:"gas",d5:0.50,mpg:25,trims:[["LX AWD",29000,25],["EX AWD",32000,25],["SX AWD",37000,24]]},
   {mk:"Kia",md:"Telluride",cls:"midsize_suv",pt:"gas",d5:0.46,mpg:21,trims:[["LX AWD",39000,21],["EX AWD",44000,21],["SX AWD",48000,20],["SX Prestige AWD",53000,20]]},
   {mk:"Kia",md:"EV6",cls:"compact_suv",pt:"ev",d5:0.55,kwh:0.29,trims:[["Light RWD",44000,null,0.28],["Wind AWD",49000,null,0.29],["GT-Line AWD",54000,null,0.31]]},
+  {nw:1,mk:"Hyundai",md:"Elantra Hybrid",cls:"compact_car",pt:"hybrid",d5:0.48,mpg:54,trims:[["Blue",26000,54],["Limited",30000,50]]},
+  {nw:1,mk:"Hyundai",md:"Sonata",cls:"midsize_car",pt:"gas",d5:0.52,mpg:32,trims:[["SE",27500,32],["SEL",29000,32],["N Line",36000,27]]},
+  {nw:1,mk:"Hyundai",md:"Kona",cls:"compact_suv",pt:"gas",d5:0.50,mpg:31,trims:[["SE",25000,31],["SEL",27000,30],["Limited",32000,28]]},
+  {nw:1,mk:"Hyundai",md:"Kona Electric",cls:"compact_suv",pt:"ev",d5:0.60,kwh:0.27,trims:[["SE",34000,null,0.27],["SEL",38000,null,0.27],["Limited",42000,null,0.28]]},
+  {nw:1,mk:"Hyundai",md:"Tucson Hybrid",cls:"compact_suv",pt:"hybrid",d5:0.47,mpg:37,trims:[["Blue AWD",33000,38],["SEL AWD",35000,37],["Limited AWD",41000,35]]},
+  {nw:1,mk:"Hyundai",md:"Tucson Plug-in Hybrid",cls:"compact_suv",pt:"phev",d5:0.52,mpg:35,kwh:0.40,trims:[["SEL",39000,35,0.40],["Limited",45000,35,0.40]]},
+  {nw:1,mk:"Hyundai",md:"Santa Fe",cls:"midsize_suv",pt:"gas",d5:0.50,mpg:24,trims:[["SE AWD",35000,24],["SEL AWD",37000,24],["Limited AWD",45000,22],["Calligraphy AWD",48000,22]]},
+  {nw:1,mk:"Hyundai",md:"Santa Fe Hybrid",cls:"midsize_suv",pt:"hybrid",d5:0.48,mpg:34,trims:[["SEL AWD",38000,34],["Limited AWD",45000,34]]},
+  {nw:1,mk:"Hyundai",md:"Ioniq 6",cls:"midsize_car",pt:"ev",d5:0.58,kwh:0.25,trims:[["SE RWD",38000,null,0.24],["SEL RWD",43000,null,0.25],["Limited AWD",50000,null,0.28]]},
+  {nw:1,mk:"Kia",md:"Forte / K4",cls:"compact_car",pt:"gas",d5:0.50,mpg:34,trims:[["LXS",22000,34],["GT-Line",24000,33],["GT",27000,30]]},
+  {nw:1,mk:"Kia",md:"Seltos",cls:"compact_suv",pt:"gas",d5:0.48,mpg:29,trims:[["LX AWD",25000,29],["S AWD",26000,29],["SX Turbo AWD",31000,27]]},
+  {nw:1,mk:"Kia",md:"Niro Hybrid",cls:"compact_suv",pt:"hybrid",d5:0.47,mpg:53,trims:[["LX",28000,53],["EX",31000,53],["SX Touring",35000,49]]},
+  {nw:1,mk:"Kia",md:"Niro EV",cls:"compact_suv",pt:"ev",d5:0.60,kwh:0.28,trims:[["Wind",41000,null,0.28],["Wave",46000,null,0.28]]},
+  {nw:1,mk:"Kia",md:"Sorento",cls:"midsize_suv",pt:"gas",d5:0.48,mpg:24,trims:[["LX",32000,24],["S",35000,24],["EX",39000,24],["X-Line SX AWD",45000,22]]},
+  {nw:1,mk:"Kia",md:"Sorento Hybrid",cls:"midsize_suv",pt:"hybrid",d5:0.46,mpg:37,trims:[["EX",39000,37],["SX-Prestige",45000,35]]},
+  {nw:1,mk:"Kia",md:"Sorento Plug-in Hybrid",cls:"midsize_suv",pt:"phev",d5:0.52,mpg:34,kwh:0.42,trims:[["X-Line SX Prestige",52000,34,0.42]]},
+  {nw:1,mk:"Kia",md:"Carnival",cls:"minivan",pt:"gas",d5:0.45,mpg:22,trims:[["LX",37000,22],["EX",42000,22],["SX",47000,22],["SX Prestige",53000,22]]},
+  {nw:1,mk:"Kia",md:"EV9",cls:"midsize_suv",pt:"ev",d5:0.60,kwh:0.40,trims:[["Light RWD",56000,null,0.37],["Wind AWD",66000,null,0.40],["GT-Line AWD",75000,null,0.42]]},
 
   // ---- Ford ----
   {mk:"Ford",md:"Escape",cls:"compact_suv",pt:"gas",d5:0.52,mpg:27,trims:[["Active",31000,27],["ST-Line",34000,26],["Platinum AWD",39000,26]]},
@@ -315,6 +365,14 @@ const CATALOG = [
   {mk:"Ford",md:"F-150",cls:"pickup",pt:"gas",d5:0.45,mpg:20,trims:[["XL 4WD",40000,20],["XLT 4WD",45000,20],["Lariat 4WD",58000,19],["Platinum 4WD",72000,18]]},
   {mk:"Ford",md:"F-150 Lightning",cls:"pickup",pt:"ev",d5:0.58,kwh:0.49,trims:[["Pro",55000,null,0.48],["XLT",63000,null,0.49],["Lariat",77000,null,0.50]]},
   {mk:"Ford",md:"Mustang Mach-E",cls:"compact_suv",pt:"ev",d5:0.55,kwh:0.30,trims:[["Select",43000,null,0.30],["Premium AWD",48000,null,0.30],["GT AWD",55000,null,0.34]]},
+  {nw:1,mk:"Ford",md:"F-150 Hybrid (PowerBoost)",cls:"pickup",pt:"hybrid",d5:0.45,mpg:23,trims:[["XLT 4WD",52000,23],["Lariat 4WD",64000,23],["Platinum 4WD",76000,22]]},
+  {nw:1,mk:"Ford",md:"F-250 Super Duty",cls:"pickup",pt:"gas",d5:0.38,mpg:15,trims:[["XL 4WD",50000,15],["XLT 4WD",56000,15],["Lariat 4WD",70000,14]]},
+  {nw:1,mk:"Ford",md:"Maverick Hybrid",cls:"pickup",pt:"hybrid",d5:0.25,mpg:37,trims:[["XL",26000,37],["XLT",29000,37],["Lariat",37000,36]]},
+  {nw:1,mk:"Ford",md:"Maverick EcoBoost",cls:"pickup",pt:"gas",d5:0.27,mpg:25,trims:[["XLT AWD",33000,25],["Tremor AWD",37000,22]]},
+  {nw:1,mk:"Ford",md:"Ranger",cls:"pickup",pt:"gas",d5:0.40,mpg:21,trims:[["XL 4WD",35000,21],["XLT 4WD",38000,21],["Lariat 4WD",48000,20]]},
+  {nw:1,mk:"Ford",md:"Bronco Sport",cls:"compact_suv",pt:"gas",d5:0.40,mpg:26,trims:[["Big Bend",33000,26],["Outer Banks",37000,26],["Badlands",41000,24]]},
+  {nw:1,mk:"Ford",md:"Expedition",cls:"fullsize_suv",pt:"gas",d5:0.52,mpg:17,trims:[["Active 4WD",63000,17],["Platinum 4WD",80000,16]]},
+  {nw:1,mk:"Ford",md:"Mustang",cls:"sports",pt:"gas",d5:0.38,mpg:22,trims:[["EcoBoost",33000,25],["GT",45000,18],["Dark Horse",63000,17]]},
 
   // ---- GM (Chevrolet / GMC / Cadillac) ----
   {mk:"Chevrolet",md:"Equinox",cls:"compact_suv",pt:"gas",d5:0.52,mpg:26,trims:[["LT AWD",30000,26],["RS AWD",33000,26],["Premier AWD",36000,25]]},
@@ -327,6 +385,19 @@ const CATALOG = [
   {mk:"Cadillac",md:"CT5",cls:"luxury_car",pt:"gas",d5:0.58,mpg:23,trims:[["Luxury AWD",42000,23],["Premium Luxury AWD",48000,23],["Sport AWD",52000,22]]},
   {mk:"Cadillac",md:"Escalade",cls:"fullsize_suv",pt:"gas",d5:0.55,mpg:16,trims:[["Luxury 4WD",88000,16],["Premium Luxury 4WD",97000,16],["Sport Platinum 4WD",110000,15]]},
   {mk:"Cadillac",md:"Lyriq",cls:"midsize_suv",pt:"ev",d5:0.60,kwh:0.34,trims:[["Tech AWD",61000,null,0.34],["Luxury AWD",65000,null,0.34],["Sport AWD",69000,null,0.35]]},
+  {nw:1,mk:"Chevrolet",md:"Trax",cls:"compact_suv",pt:"gas",d5:0.48,mpg:30,trims:[["LS",21500,30],["1RS",24500,30],["ACTIV",25000,30]]},
+  {nw:1,mk:"Chevrolet",md:"Malibu (2021–25)",cls:"midsize_car",pt:"gas",d5:0.55,mpg:31,trims:[["LS",26000,31],["RS",27000,31],["LT",29000,30]]},
+  {nw:1,mk:"Chevrolet",md:"Bolt EV (2021–23)",cls:"compact_car",pt:"ev",d5:0.58,kwh:0.28,trims:[["1LT",28000,null,0.28],["2LT",31000,null,0.28]]},
+  {nw:1,mk:"Chevrolet",md:"Bolt EUV (2022–23)",cls:"compact_suv",pt:"ev",d5:0.58,kwh:0.29,trims:[["LT",29000,null,0.29],["Premier",33000,null,0.29]]},
+  {nw:1,mk:"Chevrolet",md:"Blazer",cls:"midsize_suv",pt:"gas",d5:0.52,mpg:24,trims:[["2LT",38000,24],["RS AWD",45000,22]]},
+  {nw:1,mk:"Chevrolet",md:"Blazer EV",cls:"midsize_suv",pt:"ev",d5:0.60,kwh:0.35,trims:[["LT AWD",49000,null,0.35],["RS AWD",54000,null,0.36]]},
+  {nw:1,mk:"Chevrolet",md:"Traverse",cls:"midsize_suv",pt:"gas",d5:0.50,mpg:21,trims:[["LT",43000,21],["Z71 AWD",50000,20],["RS AWD",56000,20]]},
+  {nw:1,mk:"Chevrolet",md:"Suburban",cls:"fullsize_suv",pt:"gas",d5:0.52,mpg:16,trims:[["LS 4WD",62000,16],["LT 4WD",67000,16],["High Country 4WD",80000,15]]},
+  {nw:1,mk:"Chevrolet",md:"Colorado",cls:"pickup",pt:"gas",d5:0.40,mpg:20,trims:[["WT",32000,20],["LT",36000,20],["Trail Boss 4WD",41000,19],["Z71 4WD",42000,19]]},
+  {nw:1,mk:"Chevrolet",md:"Silverado EV",cls:"pickup",pt:"ev",d5:0.60,kwh:0.48,trims:[["WT",74000,null,0.48],["LT",76000,null,0.48],["RST",90000,null,0.50]]},
+  {nw:1,mk:"GMC",md:"Terrain",cls:"compact_suv",pt:"gas",d5:0.50,mpg:26,trims:[["SLE AWD",34000,26],["Denali AWD",40000,25]]},
+  {nw:1,mk:"GMC",md:"Yukon",cls:"fullsize_suv",pt:"gas",d5:0.50,mpg:16,trims:[["SLE 4WD",64000,16],["SLT 4WD",72000,16],["Denali 4WD",82000,15]]},
+  {nw:1,mk:"GMC",md:"Hummer EV",cls:"pickup",pt:"ev",d5:0.55,kwh:0.63,trims:[["2X",98000,null,0.63],["3X",105000,null,0.65]]},
 
   // ---- Chrysler / Jeep ----
   {mk:"Chrysler",md:"Pacifica",cls:"minivan",pt:"gas",d5:0.55,mpg:22,trims:[["Touring",40000,22],["Touring L",42000,22],["Limited",50000,21]]},
@@ -334,11 +405,20 @@ const CATALOG = [
   {mk:"Jeep",md:"Grand Cherokee",cls:"midsize_suv",pt:"gas",d5:0.52,mpg:22,trims:[["Laredo 4WD",40000,22],["Limited 4WD",47000,21],["Overland 4WD",55000,21],["Summit 4WD",62000,20]]},
   {mk:"Jeep",md:"Wrangler",cls:"compact_suv",pt:"gas",d5:0.32,mpg:22,trims:[["Sport 4WD",35000,22],["Sport S 4WD",38000,22],["Sahara 4WD",45000,21],["Rubicon 4WD",52000,20]]},
   {mk:"Jeep",md:"Wrangler 4xe",cls:"compact_suv",pt:"phev",d5:0.42,mpg:20,kwh:0.42,trims:[["Sahara",50000,20,0.42],["Rubicon",57000,20,0.42]]},
+  {nw:1,mk:"Jeep",md:"Grand Cherokee 4xe",cls:"midsize_suv",pt:"phev",d5:0.55,mpg:23,kwh:0.55,trims:[["4xe",61000,23,0.55],["Summit 4xe",72000,23,0.55]]},
+  {nw:1,mk:"Jeep",md:"Compass",cls:"compact_suv",pt:"gas",d5:0.50,mpg:26,trims:[["Sport 4WD",29000,26],["Latitude 4WD",32000,26],["Limited 4WD",36000,25]]},
+  {nw:1,mk:"Jeep",md:"Cherokee (2021–23)",cls:"compact_suv",pt:"gas",d5:0.52,mpg:25,trims:[["Latitude Lux 4WD",32000,25],["Trailhawk 4WD",37000,23]]},
+  {nw:1,mk:"Jeep",md:"Gladiator",cls:"pickup",pt:"gas",d5:0.35,mpg:19,trims:[["Sport 4WD",40000,19],["Mojave 4WD",50000,18],["Rubicon 4WD",53000,18]]},
+  {nw:1,mk:"Ram",md:"1500",cls:"pickup",pt:"gas",d5:0.48,mpg:20,trims:[["Tradesman 4WD",45000,20],["Big Horn 4WD",50000,20],["Laramie 4WD",60000,19],["Limited 4WD",75000,18]]},
+  {nw:1,mk:"Dodge",md:"Durango",cls:"midsize_suv",pt:"gas",d5:0.50,mpg:19,trims:[["GT AWD",42000,21],["R/T AWD",50000,17]]},
+  {nw:1,mk:"Dodge",md:"Charger gas (2021–23)",cls:"midsize_car",pt:"gas",d5:0.48,mpg:23,trims:[["SXT",33000,23],["R/T",41000,19],["Scat Pack",48000,18]]},
 
   // ---- Tesla ----
   {mk:"Tesla",md:"Model 3",cls:"midsize_car",pt:"ev",d5:0.48,kwh:0.25,trims:[["RWD",42000,null,0.24],["Long Range AWD",47000,null,0.25],["Performance AWD",54000,null,0.28]]},
   {mk:"Tesla",md:"Model Y",cls:"compact_suv",pt:"ev",d5:0.48,kwh:0.28,trims:[["RWD",45000,null,0.27],["Long Range AWD",49000,null,0.28],["Performance AWD",53000,null,0.30]]},
   {mk:"Tesla",md:"Model S",cls:"luxury_car",pt:"ev",d5:0.55,kwh:0.30,trims:[["AWD",75000,null,0.30],["Plaid",90000,null,0.34]]},
+  {nw:1,mk:"Tesla",md:"Model X",cls:"fullsize_suv",pt:"ev",d5:0.55,kwh:0.36,trims:[["AWD",82000,null,0.36],["Plaid",97000,null,0.38]]},
+  {nw:1,mk:"Tesla",md:"Cybertruck",cls:"pickup",pt:"ev",d5:0.50,kwh:0.48,trims:[["AWD",82000,null,0.48],["Cyberbeast",102000,null,0.52]]},
 
   // ---- Subaru / Mazda / Nissan (strong value: Subaru/Mazda) ----
   {mk:"Subaru",md:"Crosstrek",cls:"compact_suv",pt:"gas",d5:0.40,mpg:30,trims:[["Base AWD",26000,30],["Premium AWD",28000,30],["Limited AWD",32000,29]]},
@@ -348,18 +428,67 @@ const CATALOG = [
   {mk:"Mazda",md:"CX-5",cls:"compact_suv",pt:"gas",d5:0.44,mpg:26,trims:[["S Select AWD",31000,26],["S Preferred AWD",33000,26],["Turbo Premium AWD",40000,24]]},
   {mk:"Nissan",md:"Altima",cls:"midsize_car",pt:"gas",d5:0.55,mpg:32,trims:[["S",27000,32],["SV",29000,32],["SR",31000,31]]},
   {mk:"Nissan",md:"Rogue",cls:"compact_suv",pt:"gas",d5:0.52,mpg:30,trims:[["S AWD",30000,30],["SV AWD",33000,30],["SL AWD",38000,29]]},
+  {nw:1,mk:"Subaru",md:"Impreza",cls:"compact_car",pt:"gas",d5:0.43,mpg:30,trims:[["Base",24000,30],["Sport",27000,30],["RS",29000,29]]},
+  {nw:1,mk:"Subaru",md:"Legacy",cls:"midsize_car",pt:"gas",d5:0.45,mpg:30,trims:[["Base",25500,30],["Premium",28000,30],["Limited",33000,29]]},
+  {nw:1,mk:"Subaru",md:"WRX",cls:"sports",pt:"gas",d5:0.32,mpg:22,trims:[["Base",34000,22],["Premium",36000,22],["Limited",40000,22]]},
+  {nw:1,mk:"Subaru",md:"Ascent",cls:"midsize_suv",pt:"gas",d5:0.42,mpg:22,trims:[["Premium",39000,22],["Onyx",45000,22],["Limited",46000,22],["Touring",50000,21]]},
+  {nw:1,mk:"Subaru",md:"Solterra",cls:"compact_suv",pt:"ev",d5:0.62,kwh:0.33,trims:[["Premium",39000,null,0.33],["Limited",45000,null,0.33],["Touring",50000,null,0.34]]},
+  {nw:1,mk:"Mazda",md:"CX-30",cls:"compact_suv",pt:"gas",d5:0.45,mpg:28,trims:[["2.5 S",26000,28],["Select",27500,28],["Turbo Premium Plus",37000,25]]},
+  {nw:1,mk:"Mazda",md:"CX-50",cls:"compact_suv",pt:"gas",d5:0.42,mpg:27,trims:[["2.5 S Select",32000,27],["Premium",36000,27],["Turbo Premium Plus",43000,25]]},
+  {nw:1,mk:"Mazda",md:"CX-90",cls:"midsize_suv",pt:"gas",d5:0.50,mpg:25,trims:[["3.3 Turbo Select",40000,25],["Preferred",44000,25],["S Premium Plus",59000,24]]},
+  {nw:1,mk:"Mazda",md:"CX-90 PHEV",cls:"midsize_suv",pt:"phev",d5:0.55,mpg:25,kwh:0.47,trims:[["Preferred",50000,25,0.47],["Premium Plus",58000,25,0.47]]},
+  {nw:1,mk:"Mazda",md:"MX-5 Miata",cls:"sports",pt:"gas",d5:0.30,mpg:30,trims:[["Sport",30000,30],["Club",34000,29],["Grand Touring",35000,30]]},
+  {nw:1,mk:"Nissan",md:"Sentra",cls:"compact_car",pt:"gas",d5:0.52,mpg:34,trims:[["S",21500,34],["SV",23000,34],["SR",25500,33]]},
+  {nw:1,mk:"Nissan",md:"Kicks",cls:"compact_suv",pt:"gas",d5:0.48,mpg:31,trims:[["S",22000,31],["SV",24000,31],["SR",25500,30]]},
+  {nw:1,mk:"Nissan",md:"Murano",cls:"midsize_suv",pt:"gas",d5:0.55,mpg:23,trims:[["SV AWD",42000,23],["Platinum AWD",51000,23]]},
+  {nw:1,mk:"Nissan",md:"Pathfinder",cls:"midsize_suv",pt:"gas",d5:0.52,mpg:23,trims:[["S",38000,23],["SV",41000,23],["Platinum 4WD",51000,22]]},
+  {nw:1,mk:"Nissan",md:"Frontier",cls:"pickup",pt:"gas",d5:0.42,mpg:20,trims:[["S",32000,20],["SV",36000,20],["PRO-4X 4WD",42000,19]]},
+  {nw:1,mk:"Nissan",md:"Leaf",cls:"compact_car",pt:"ev",d5:0.65,kwh:0.30,trims:[["S",29000,null,0.30],["SV Plus",38000,null,0.31]]},
+  {nw:1,mk:"Nissan",md:"Ariya",cls:"compact_suv",pt:"ev",d5:0.65,kwh:0.34,trims:[["Engage FWD",40000,null,0.33],["Evolve+ e-4ORCE",51000,null,0.36],["Platinum+ e-4ORCE",56000,null,0.37]]},
+
+  // ---- Volkswagen ----
+  {nw:1,mk:"Volkswagen",md:"Jetta",cls:"compact_car",pt:"gas",d5:0.48,mpg:34,trims:[["S",23000,34],["SE",26000,34],["GLI",33000,29]]},
+  {nw:1,mk:"Volkswagen",md:"Golf GTI",cls:"compact_car",pt:"gas",d5:0.42,mpg:28,trims:[["S",33000,28],["SE",38000,28],["Autobahn",41000,27]]},
+  {nw:1,mk:"Volkswagen",md:"Tiguan",cls:"compact_suv",pt:"gas",d5:0.52,mpg:26,trims:[["S",30000,26],["SE",34000,26],["SEL R-Line",40000,25]]},
+  {nw:1,mk:"Volkswagen",md:"Atlas",cls:"midsize_suv",pt:"gas",d5:0.52,mpg:22,trims:[["SE",41000,22],["Peak Edition",48000,21],["SEL Premium R-Line",54000,21]]},
+  {nw:1,mk:"Volkswagen",md:"Atlas Cross Sport",cls:"midsize_suv",pt:"gas",d5:0.52,mpg:22,trims:[["SE",40000,22],["SEL",49000,22]]},
+  {nw:1,mk:"Volkswagen",md:"ID.4",cls:"compact_suv",pt:"ev",d5:0.62,kwh:0.31,trims:[["Standard",41000,null,0.30],["Pro S",47000,null,0.31],["Pro S AWD",52000,null,0.33]]},
 
   // ---- Luxury / EV / exotic ----
   {mk:"BMW",md:"3 Series",cls:"luxury_car",pt:"gas",d5:0.58,mpg:30,trims:[["330i",46000,30],["330i xDrive",48000,29],["M340i xDrive",60000,26]]},
   {mk:"BMW",md:"X5",cls:"fullsize_suv",pt:"gas",d5:0.60,mpg:24,trims:[["xDrive40i",66000,24],["M60i xDrive",90000,20]]},
   {mk:"Mercedes-Benz",md:"C-Class",cls:"luxury_car",pt:"gas",d5:0.58,mpg:28,trims:[["C300",47000,28],["C300 4MATIC",49000,27],["AMG C43",62000,23]]},
+  {nw:1,mk:"BMW",md:"X1",cls:"compact_suv",pt:"gas",d5:0.52,mpg:28,trims:[["xDrive28i",43000,28]]},
+  {nw:1,mk:"BMW",md:"X3",cls:"midsize_suv",pt:"gas",d5:0.55,mpg:27,trims:[["30 xDrive",51000,27],["M50 xDrive",66000,24]]},
+  {nw:1,mk:"BMW",md:"5 Series",cls:"luxury_car",pt:"gas",d5:0.60,mpg:30,trims:[["530i",59000,30],["540i xDrive",67000,27]]},
+  {nw:1,mk:"BMW",md:"i4",cls:"luxury_car",pt:"ev",d5:0.58,kwh:0.29,trims:[["eDrive35",54000,null,0.28],["eDrive40",59000,null,0.29],["M50",70000,null,0.33]]},
+  {nw:1,mk:"BMW",md:"iX",cls:"midsize_suv",pt:"ev",d5:0.60,kwh:0.38,trims:[["xDrive50",88000,null,0.38]]},
+  {nw:1,mk:"Mercedes-Benz",md:"E-Class",cls:"luxury_car",pt:"gas",d5:0.60,mpg:28,trims:[["E350",63000,28],["E450 4MATIC",68000,26]]},
+  {nw:1,mk:"Mercedes-Benz",md:"GLC",cls:"midsize_suv",pt:"gas",d5:0.56,mpg:26,trims:[["GLC 300 4MATIC",50000,26],["AMG GLC 43",66000,21]]},
+  {nw:1,mk:"Mercedes-Benz",md:"GLE",cls:"fullsize_suv",pt:"gas",d5:0.58,mpg:23,trims:[["GLE 350",63000,23],["GLE 450 4MATIC",71000,22]]},
+  {nw:1,mk:"Mercedes-Benz",md:"EQE Sedan",cls:"luxury_car",pt:"ev",d5:0.65,kwh:0.34,trims:[["350+",76000,null,0.33],["350 4MATIC",79000,null,0.36]]},
+  {nw:1,mk:"Audi",md:"A4",cls:"luxury_car",pt:"gas",d5:0.55,mpg:29,trims:[["Premium quattro",42000,29],["Premium Plus quattro",46000,29]]},
+  {nw:1,mk:"Audi",md:"Q5",cls:"midsize_suv",pt:"gas",d5:0.54,mpg:25,trims:[["Premium",46000,25],["Premium Plus",51000,25],["SQ5",62000,21]]},
+  {nw:1,mk:"Audi",md:"Q7",cls:"fullsize_suv",pt:"gas",d5:0.56,mpg:21,trims:[["Premium",62000,21],["Premium Plus",67000,21],["Prestige",76000,20]]},
+  {nw:1,mk:"Audi",md:"Q4 e-tron",cls:"compact_suv",pt:"ev",d5:0.60,kwh:0.33,trims:[["Premium",50000,null,0.32],["Premium Plus quattro",57000,null,0.35]]},
+  {nw:1,mk:"Acura",md:"Integra",cls:"compact_car",pt:"gas",d5:0.42,mpg:32,trims:[["Base",33000,32],["A-Spec Tech",37000,31],["Type S",52000,24]]},
+  {nw:1,mk:"Acura",md:"TLX",cls:"luxury_car",pt:"gas",d5:0.52,mpg:25,trims:[["Base",46000,25],["Type S",58000,21]]},
+  {nw:1,mk:"Acura",md:"RDX",cls:"compact_suv",pt:"gas",d5:0.48,mpg:23,trims:[["Base SH-AWD",46000,23],["Technology",49000,23],["A-Spec Advance",54000,22]]},
+  {nw:1,mk:"Acura",md:"MDX",cls:"midsize_suv",pt:"gas",d5:0.48,mpg:22,trims:[["Base SH-AWD",52000,22],["Technology",57000,22],["A-Spec",60000,21],["Type S",76000,19]]},
+  {nw:1,mk:"Genesis",md:"GV70",cls:"midsize_suv",pt:"gas",d5:0.52,mpg:22,trims:[["2.5T AWD",47000,22],["3.5T Sport AWD",60000,20]]},
+  {nw:1,mk:"Volvo",md:"XC60",cls:"midsize_suv",pt:"gas",d5:0.55,mpg:25,trims:[["B5 Core",48000,25],["B5 Plus",53000,25]]},
+  {nw:1,mk:"Volvo",md:"XC90",cls:"fullsize_suv",pt:"gas",d5:0.58,mpg:22,trims:[["B6 Core",58000,22],["B6 Plus",64000,22]]},
+  {nw:1,mk:"Polestar",md:"Polestar 2",cls:"midsize_car",pt:"ev",d5:0.65,kwh:0.30,trims:[["Long Range Single Motor",50000,null,0.29],["Long Range Dual Motor",58000,null,0.33]]},
+  {nw:1,mk:"Rivian",md:"R1S",cls:"fullsize_suv",pt:"ev",d5:0.55,kwh:0.50,trims:[["Dual Standard",77000,null,0.49],["Dual Large",84000,null,0.50],["Tri Max",100000,null,0.52]]},
   {mk:"Rivian",md:"R1T",cls:"pickup",pt:"ev",d5:0.55,kwh:0.48,trims:[["Adventure",72000,null,0.48],["Adventure Max Pack",79000,null,0.46]]},
   {mk:"Porsche",md:"911",cls:"sports",pt:"gas",d5:0.22,mpg:20,trims:[["Carrera",116000,20],["Carrera S",132000,19],["Carrera 4S",140000,19]]}
 ];
 
-/* Flatten the catalog into row records the rest of the app consumes. */
+/* Flatten the catalog into row records the rest of the app consumes.
+   Saved/shared links store a row's index, so models added later (nw:1) are
+   flattened after the originals to keep existing links pointing at the same car. */
 const DATASET = [];
-CATALOG.forEach(m=>{
+[...CATALOG.filter(m=>!m.nw), ...CATALOG.filter(m=>m.nw)].forEach(m=>{
   m.trims.forEach(tr=>{
     DATASET.push({
       year: 2026, make: m.mk, model: m.md, config: tr[0], class: m.cls, powertrain: m.pt,
