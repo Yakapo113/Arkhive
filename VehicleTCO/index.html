@@ -146,6 +146,94 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+<style id="ah-guide-css">
+.ah-guide{--ah-ink:var(--ink);--ah-muted:var(--muted);--ah-panel:var(--panel);--ah-line:var(--line);--ah-accent:var(--accent);--ahw:none;--ahp:0}
+.ah-guide{max-width:var(--ahw,1100px);margin:28px auto 40px;padding:0 var(--ahp,20px);color:var(--ah-ink);font-size:15px;line-height:1.65;text-align:left;box-sizing:border-box}
+.ah-guide *{box-sizing:border-box}
+.ah-guide .ah-card{background:var(--ah-panel);border:1px solid var(--ah-line);border-radius:14px;padding:22px 24px}
+.ah-guide h2{font-size:1.2rem;line-height:1.3;margin:28px 0 10px;color:var(--ah-ink);letter-spacing:0;text-transform:none}
+.ah-guide .ah-card>h2:first-child,.ah-guide.ah-plain>h2:first-child{margin-top:0}
+.ah-guide p{margin:0 0 12px}
+.ah-guide ol,.ah-guide ul{margin:0 0 12px;padding-left:1.3em}
+.ah-guide li{margin:0 0 6px}
+.ah-guide a{color:var(--ah-accent);text-decoration:underline;text-underline-offset:2px}
+.ah-guide .ah-tw{overflow-x:auto;margin:4px 0 14px;-webkit-overflow-scrolling:touch}
+.ah-guide .ah-t{border-collapse:collapse;width:100%;min-width:440px;font-size:14px}
+.ah-guide .ah-t th,.ah-guide .ah-t td{border-bottom:1px solid var(--ah-line);padding:8px 10px;text-align:left;vertical-align:top}
+.ah-guide .ah-t th{font-weight:600;color:var(--ah-muted);font-size:13px}
+.ah-guide .ah-faq{margin:0 0 6px}
+.ah-guide details{border-top:1px solid var(--ah-line);padding:11px 0}
+.ah-guide details:last-child{border-bottom:1px solid var(--ah-line)}
+.ah-guide summary{cursor:pointer;font-weight:600}
+.ah-guide details p{margin:8px 0 2px;color:var(--ah-muted)}
+.ah-guide .ah-rel{margin:18px 0 0;color:var(--ah-muted)}
+.ah-guide.ah-plain{max-width:none;margin:0;padding:0;font-size:inherit}
+@media (max-width:600px){.ah-guide .ah-card{padding:18px 16px}}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "WebApplication",
+ "name": "Vehicle Cost of Ownership Calculator",
+ "url": "https://arkhive.us/VehicleTCO/",
+ "applicationCategory": "FinanceApplication",
+ "operatingSystem": "Any (web browser)",
+ "description": "Free car cost-of-ownership calculator. Compare up to 4 vehicles on true cost — depreciation, fuel, insurance, maintenance, financing and resale.",
+ "offers": {
+  "@type": "Offer",
+  "price": "0",
+  "priceCurrency": "USD"
+ }
+}
+</script>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "What is total cost of ownership for a car?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Total cost of ownership is everything you spend to own a vehicle over a period, including depreciation, loan interest, fuel or electricity, insurance, maintenance, tires, sales tax, and registration, minus what you get back when you sell it. It is a better comparison than sticker price because a cheaper car can cost more to own."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What is the biggest cost of owning a new car?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "For most new vehicles, depreciation is the largest single cost over the first five years, often more than fuel and insurance combined. Models with strong resale value, such as many Toyota trucks and SUVs, can cost less to own than cheaper vehicles that depreciate quickly."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Is an electric car cheaper to own than a gas car?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Often, but not always. EVs usually save on fuel and maintenance but may cost more to insure and can depreciate faster. Results depend on your electricity and gas prices, how many miles you drive, the price you pay, and any incentives you qualify for. Compare the specific vehicles with your own numbers."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How accurate are the depreciation estimates?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Depreciation is estimated from each model's typical 5-year value retention. Actual resale depends on mileage, condition, trim, color, region, and market swings, so treat it as an informed estimate. You can change the annual depreciation rate in Advanced mode."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Does a longer loan term cost more?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes. A longer term lowers the monthly payment but increases total interest paid, and it raises the chance you owe more than the car is worth. Change the loan term in the shared assumptions to see the difference in total cost."
+   }
+  }
+ ]
+}
+</script>
 </head>
 <body>
 <div style="max-width:1200px;margin:0 auto;padding:14px 16px 0">
@@ -228,6 +316,54 @@
     match real quotes. EV federal tax credit rules change frequently — leave incentives at $0 unless you've confirmed
     current eligibility.
   </div>
+
+<section class="ah-guide" aria-label="Guide">
+<div class="ah-card">
+<h2>How to Use the Vehicle Cost of Ownership Calculator</h2>
+<p>The sticker price is only part of what a car costs. This calculator compares up to four new or used
+vehicles (model years 2016–2026, 27 brands) on what you'll actually spend over the years you own them.</p>
+<ol>
+<li><strong>Set shared assumptions</strong>: how long you'll keep the car, miles per year, gas and electricity prices, down payment, loan APR and term, sales tax, and registration.</li>
+<li><strong>Pick each vehicle</strong> by year, make, model, and trim, and enter the price you're actually being quoted. In <em>Simplified</em> mode everything else is estimated. Switch to <em>Advanced</em> to enter your own insurance quote, fuel economy, maintenance, depreciation rate, tire costs, or incentives.</li>
+<li><strong>Compare the results.</strong> Each card shows total cost, cost per year, cost per mile, the monthly loan payment, and estimated resale value. The breakdown chart shows where the money goes, and the cumulative chart shows the year a more expensive but cheaper-to-run vehicle pulls ahead.</li>
+<li><strong>Share or shop.</strong> Copy a shareable link to send the comparison to someone, or use the listing links to search KSL Cars, Facebook Marketplace, or Autotrader for that exact model.</li>
+</ol>
+<h2>What Counts as Total Cost of Ownership</h2>
+<p>Total cost of ownership (TCO) is everything you pay to own the vehicle minus what you get back when you sell it:</p>
+<ul>
+<li><strong>Depreciation</strong>: purchase price minus estimated resale value. For new cars this is usually the largest cost. It's based on each model's typical 5-year value retention, which is why trucks like the Tacoma lose far less than luxury sedans.</li>
+<li><strong>Loan interest</strong> on the amount financed at your APR and term.</li>
+<li><strong>Fuel or electricity</strong> from miles driven, fuel economy, and your local prices. Plug-in hybrids assume 55% of miles are electric by default.</li>
+<li><strong>Insurance, maintenance, and tires</strong>, estimated by vehicle class and powertrain. Insurance varies most from driver to driver, so replace it with a real quote.</li>
+<li><strong>Sales tax and registration.</strong></li>
+</ul>
+<h2>Worked Example: Hybrid SUV vs. Electric SUV</h2>
+<p>The calculator opens comparing a 2026 Toyota Grand Highlander Hybrid XLE AWD at $47,000 with a 2026 Tesla
+Model Y RWD at $45,000, both driven 15,000 miles a year for five years with $10,000 down on a 48-month loan at 5.5%:</p>
+<div class="ah-tw"><table class="ah-t">
+<thead><tr><th></th><th>Grand Highlander Hybrid</th><th>Model Y RWD</th></tr></thead>
+<tbody>
+<tr><td>5-year total cost</td><td>$45,722</td><td>$43,838</td></tr>
+<tr><td>Per year / per mile</td><td>$9,144 / $0.61</td><td>$8,768 / $0.58</td></tr>
+<tr><td>Loan payment</td><td>$941/mo</td><td>$891/mo</td></tr>
+<tr><td>Est. resale after 5 years</td><td>$30,087</td><td>$23,406</td></tr>
+<tr><td>Depreciation</td><td>≈ $16,900</td><td>≈ $21,600</td></tr>
+</tbody></table></div>
+<p>The Model Y loses about $4,700 more to depreciation, but cheaper electricity and a lower price more than
+make up for it. It comes out about <strong>$1,900 cheaper over five years</strong>, roughly $32 a month. A gap
+that small is within the range a real insurance quote or a different resale market could reverse, so enter
+your own numbers before deciding. The two are also different sizes: the Grand Highlander has a third row.</p>
+<h2>Frequently Asked Questions</h2>
+<div class="ah-faq">
+<details><summary>What is total cost of ownership for a car?</summary><p>Total cost of ownership is everything you spend to own a vehicle over a period, including depreciation, loan interest, fuel or electricity, insurance, maintenance, tires, sales tax, and registration, minus what you get back when you sell it. It is a better comparison than sticker price because a cheaper car can cost more to own.</p></details>
+<details><summary>What is the biggest cost of owning a new car?</summary><p>For most new vehicles, depreciation is the largest single cost over the first five years, often more than fuel and insurance combined. Models with strong resale value, such as many Toyota trucks and SUVs, can cost less to own than cheaper vehicles that depreciate quickly.</p></details>
+<details><summary>Is an electric car cheaper to own than a gas car?</summary><p>Often, but not always. EVs usually save on fuel and maintenance but may cost more to insure and can depreciate faster. Results depend on your electricity and gas prices, how many miles you drive, the price you pay, and any incentives you qualify for. Compare the specific vehicles with your own numbers.</p></details>
+<details><summary>How accurate are the depreciation estimates?</summary><p>Depreciation is estimated from each model&#x27;s typical 5-year value retention. Actual resale depends on mileage, condition, trim, color, region, and market swings, so treat it as an informed estimate. You can change the annual depreciation rate in Advanced mode.</p></details>
+<details><summary>Does a longer loan term cost more?</summary><p>Yes. A longer term lowers the monthly payment but increases total interest paid, and it raises the chance you owe more than the car is worth. Change the loan term in the shared assumptions to see the difference in total cost.</p></details>
+</div>
+<p class="ah-rel">Related: <a href="/RealEstateCalc/">Rental Property Analyzer</a>: run the numbers on a rental before you buy.</p>
+</div>
+</section>
 </div>
 
 <div class="toast" id="toast"></div>

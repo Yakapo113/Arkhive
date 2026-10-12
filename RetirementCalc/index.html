@@ -100,6 +100,94 @@
     .xlink:hover{background:#e2ecff}
     .xlink .arrow{float:right}
   </style>
+<style id="ah-guide-css">
+.ah-guide{--ah-ink:var(--ink);--ah-muted:var(--muted);--ah-panel:var(--bg-1);--ah-line:var(--line);--ah-accent:var(--accent);--ahw:1100px;--ahp:20px}
+.ah-guide{max-width:var(--ahw,1100px);margin:28px auto 40px;padding:0 var(--ahp,20px);color:var(--ah-ink);font-size:15px;line-height:1.65;text-align:left;box-sizing:border-box}
+.ah-guide *{box-sizing:border-box}
+.ah-guide .ah-card{background:var(--ah-panel);border:1px solid var(--ah-line);border-radius:14px;padding:22px 24px}
+.ah-guide h2{font-size:1.2rem;line-height:1.3;margin:28px 0 10px;color:var(--ah-ink);letter-spacing:0;text-transform:none}
+.ah-guide .ah-card>h2:first-child,.ah-guide.ah-plain>h2:first-child{margin-top:0}
+.ah-guide p{margin:0 0 12px}
+.ah-guide ol,.ah-guide ul{margin:0 0 12px;padding-left:1.3em}
+.ah-guide li{margin:0 0 6px}
+.ah-guide a{color:var(--ah-accent);text-decoration:underline;text-underline-offset:2px}
+.ah-guide .ah-tw{overflow-x:auto;margin:4px 0 14px;-webkit-overflow-scrolling:touch}
+.ah-guide .ah-t{border-collapse:collapse;width:100%;min-width:440px;font-size:14px}
+.ah-guide .ah-t th,.ah-guide .ah-t td{border-bottom:1px solid var(--ah-line);padding:8px 10px;text-align:left;vertical-align:top}
+.ah-guide .ah-t th{font-weight:600;color:var(--ah-muted);font-size:13px}
+.ah-guide .ah-faq{margin:0 0 6px}
+.ah-guide details{border-top:1px solid var(--ah-line);padding:11px 0}
+.ah-guide details:last-child{border-bottom:1px solid var(--ah-line)}
+.ah-guide summary{cursor:pointer;font-weight:600}
+.ah-guide details p{margin:8px 0 2px;color:var(--ah-muted)}
+.ah-guide .ah-rel{margin:18px 0 0;color:var(--ah-muted)}
+.ah-guide.ah-plain{max-width:none;margin:0;padding:0;font-size:inherit}
+@media (max-width:600px){.ah-guide .ah-card{padding:18px 16px}}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "WebApplication",
+ "name": "Retirement Simulator",
+ "url": "https://arkhive.us/RetirementCalc/",
+ "applicationCategory": "FinanceApplication",
+ "operatingSystem": "Any (web browser)",
+ "description": "Free retirement simulator: will your money last? Model accounts, RMDs, Social Security, pensions and asset sales, and compare retiring early vs. later.",
+ "offers": {
+  "@type": "Offer",
+  "price": "0",
+  "priceCurrency": "USD"
+ }
+}
+</script>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "How much money do I need to retire?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "A common rule of thumb is about 25 times your annual spending after Social Security and pensions (the 4% rule). That is only a starting point. Taxes, the order you draw accounts, early-withdrawal penalties, and when you claim Social Security change the answer, and the simulator models each of those."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What investment return should I assume for retirement planning?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Historically US stocks have returned about 10% a year before inflation and a 60/40 stock/bond mix about 7–8%. Many planners use a more cautious 5–7% nominal return. Pair it with an inflation assumption of 2.5–3%."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What is the difference between Monte Carlo and historical simulation?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Historical simulation replays real market sequences since 1928, so it shows how your plan would have fared through the Depression, 1970s inflation, or 2008. Monte Carlo generates hundreds of random return sequences from your average return and volatility, including bad sequences that haven't happened yet. Using both gives a fuller picture of sequence-of-returns risk."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Can I retire before 59½ without paying the 10% penalty?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes, with a bridge: live on taxable brokerage savings, cash, or rental income until 59½. Other options include the Rule of 55 (penalty-free withdrawals from the 401(k) of an employer you leave in or after the year you turn 55) and 72(t) substantially equal periodic payments. The simulator applies the penalty to early retirement-account withdrawals but does not model Rule of 55 or 72(t)."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "When do Required Minimum Distributions start?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Under SECURE 2.0, RMDs from traditional 401(k)s and IRAs start at age 73, rising to 75 for people born in 1960 or later. Roth IRAs have no RMDs for the original owner."
+   }
+  }
+ ]
+}
+</script>
 </head>
 <body>
   <div class="container">
@@ -238,6 +326,58 @@
       </div>
     </div>
   </div>
+
+<section class="ah-guide" aria-label="Guide">
+<div class="ah-card">
+<h2>How to Use the Retirement Simulator</h2>
+<p>This free retirement calculator answers one question: <strong>will my money last?</strong> It models each
+account separately, so it can show when to draw from what, how taxes and penalties hit each type, and how
+Social Security, pensions, and real estate fit in.</p>
+<ol>
+<li><strong>Set your age, plan-to age, return, and inflation.</strong> Everything is shown in today's dollars, so $6,000/month means $6,000 of today's purchasing power.</li>
+<li><strong>Pick a retirement age and a Social Security claim age</strong> for Plan A. Turn on Plan B to compare, for example, retiring at 55 vs. 62.</li>
+<li><strong>Enter your desired after-tax spending</strong> per month in retirement.</li>
+<li><strong>Add each account or asset</strong>: 401(k)/IRA, Roth, brokerage, cash, real estate, or a business. Set the balance, monthly contribution, and the age you'll start drawing from it.</li>
+<li><strong>Add Social Security and other income</strong>, such as pensions, annuities, rental income, or part-time work.</li>
+<li><strong>Read the result.</strong> The plan card shows whether money lasts to your plan age, the chance it lasts under real market history and Monte Carlo simulation, and the typical balance left. The coverage chart shows any year your income falls short of your spending.</li>
+</ol>
+<h2>What the Simulator Models</h2>
+<ul>
+<li><strong>Taxes by account type.</strong> 401(k) and IRA withdrawals are taxed at your retirement income-tax rate. Brokerage and real-estate sales pay capital-gains tax on the gain portion only. Roth withdrawals are tax-free.</li>
+<li><strong>Early-withdrawal penalty.</strong> Retirement-account withdrawals before age 59½ include the 10% IRS penalty. Early retirees need a taxable "bridge," and the <em>Draw from</em> age lets you build one: spend the brokerage first and let the 401(k) and Roth keep growing.</li>
+<li><strong>Required Minimum Distributions.</strong> RMDs start at 73 (75 if you were born in 1960 or later). Any amount you don't need to spend is reinvested in a taxable account.</li>
+<li><strong>Real estate and business assets.</strong> These count toward net worth as equity (value minus loan). They can pay monthly net income while you own them, and the sale proceeds, after loan payoff and capital-gains tax, move into your portfolio at the age you choose.</li>
+<li><strong>Two ways to test risk.</strong> <em>History</em> replays every actual stock, bond, and inflation sequence since 1928 using your stock/bond mix. <em>Monte Carlo</em> runs 300 random futures based on your return and volatility. History shows how your plan would have done in real markets like 1929 or 1966. Monte Carlo explores bad sequences that haven't happened yet.</li>
+</ul>
+<h2>Worked Example: Retire at 62 or at 55?</h2>
+<p>The default example is a 45-year-old with $450,000 in a 401(k), $120,000 in a Roth IRA, $180,000 in a
+brokerage account, $40,000 cash, and a $250,000 rental with $150,000 owed that nets $800/month and is sold at 70.
+Contributions are $2,500/month combined, the expected Social Security benefit is $2,400/month at full
+retirement age, and the spending target is $6,000/month after tax.</p>
+<div class="ah-tw"><table class="ah-t">
+<thead><tr><th></th><th>Plan A: retire 62, claim SS at 67</th><th>Plan B: retire 55, claim SS at 62</th></tr></thead>
+<tbody>
+<tr><td>Money lasts to 95?</td><td>Yes</td><td>Yes, on the expected path</td></tr>
+<tr><td>Historical success</td><td>100%</td><td>100%</td></tr>
+<tr><td>Monte Carlo success</td><td>≈ 85%</td><td>≈ 50%</td></tr>
+<tr><td>Typical money left at 95</td><td>≈ $3.6 million</td><td>≈ $1.1 million</td></tr>
+</tbody></table></div>
+<p>Retiring seven years earlier costs seven years of contributions and compounding, adds seven years of
+withdrawals, and locks in a smaller Social Security check. The expected path still works, but the
+Monte Carlo odds drop to roughly a coin flip. That gap is what the Monte Carlo test is for: it shows a plan
+that works on average but has little room for a bad decade early in retirement. Monte Carlo results vary
+slightly each run because the futures are random.</p>
+<h2>Frequently Asked Questions</h2>
+<div class="ah-faq">
+<details><summary>How much money do I need to retire?</summary><p>A common rule of thumb is about 25 times your annual spending after Social Security and pensions (the 4% rule). That is only a starting point. Taxes, the order you draw accounts, early-withdrawal penalties, and when you claim Social Security change the answer, and the simulator models each of those.</p></details>
+<details><summary>What investment return should I assume for retirement planning?</summary><p>Historically US stocks have returned about 10% a year before inflation and a 60/40 stock/bond mix about 7–8%. Many planners use a more cautious 5–7% nominal return. Pair it with an inflation assumption of 2.5–3%.</p></details>
+<details><summary>What is the difference between Monte Carlo and historical simulation?</summary><p>Historical simulation replays real market sequences since 1928, so it shows how your plan would have fared through the Depression, 1970s inflation, or 2008. Monte Carlo generates hundreds of random return sequences from your average return and volatility, including bad sequences that haven&#x27;t happened yet. Using both gives a fuller picture of sequence-of-returns risk.</p></details>
+<details><summary>Can I retire before 59½ without paying the 10% penalty?</summary><p>Yes, with a bridge: live on taxable brokerage savings, cash, or rental income until 59½. Other options include the Rule of 55 (penalty-free withdrawals from the 401(k) of an employer you leave in or after the year you turn 55) and 72(t) substantially equal periodic payments. The simulator applies the penalty to early retirement-account withdrawals but does not model Rule of 55 or 72(t).</p></details>
+<details><summary>When do Required Minimum Distributions start?</summary><p>Under SECURE 2.0, RMDs from traditional 401(k)s and IRAs start at age 73, rising to 75 for people born in 1960 or later. Roth IRAs have no RMDs for the original owner.</p></details>
+</div>
+<p class="ah-rel">Related: <a href="/RetirementCalc/index2.html">Social Security Break-Even Calculator</a>: compare claiming at 62, 67, and 70 before you set your claim age; <a href="/RealEstateCalc/">Rental Property Analyzer</a>: check whether a rental adds enough income to your plan.</p>
+</div>
+</section>
 
 <script>
 /* ============================================================

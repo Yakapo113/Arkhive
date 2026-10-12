@@ -132,6 +132,94 @@ body.show-report{overflow:hidden}
   .ritem .rph img{width:180px;height:135px}
 }
 </style>
+<style id="ah-guide-css">
+.ah-guide{--ah-ink:var(--ink);--ah-muted:var(--muted);--ah-panel:var(--paper);--ah-line:var(--line);--ah-accent:var(--ink);--ahw:760px;--ahp:16px}
+.ah-guide{max-width:var(--ahw,1100px);margin:28px auto 40px;padding:0 var(--ahp,20px);color:var(--ah-ink);font-size:15px;line-height:1.65;text-align:left;box-sizing:border-box}
+.ah-guide *{box-sizing:border-box}
+.ah-guide .ah-card{background:var(--ah-panel);border:1px solid var(--ah-line);border-radius:14px;padding:22px 24px}
+.ah-guide h2{font-size:1.2rem;line-height:1.3;margin:28px 0 10px;color:var(--ah-ink);letter-spacing:0;text-transform:none}
+.ah-guide .ah-card>h2:first-child,.ah-guide.ah-plain>h2:first-child{margin-top:0}
+.ah-guide p{margin:0 0 12px}
+.ah-guide ol,.ah-guide ul{margin:0 0 12px;padding-left:1.3em}
+.ah-guide li{margin:0 0 6px}
+.ah-guide a{color:var(--ah-accent);text-decoration:underline;text-underline-offset:2px}
+.ah-guide .ah-tw{overflow-x:auto;margin:4px 0 14px;-webkit-overflow-scrolling:touch}
+.ah-guide .ah-t{border-collapse:collapse;width:100%;min-width:440px;font-size:14px}
+.ah-guide .ah-t th,.ah-guide .ah-t td{border-bottom:1px solid var(--ah-line);padding:8px 10px;text-align:left;vertical-align:top}
+.ah-guide .ah-t th{font-weight:600;color:var(--ah-muted);font-size:13px}
+.ah-guide .ah-faq{margin:0 0 6px}
+.ah-guide details{border-top:1px solid var(--ah-line);padding:11px 0}
+.ah-guide details:last-child{border-bottom:1px solid var(--ah-line)}
+.ah-guide summary{cursor:pointer;font-weight:600}
+.ah-guide details p{margin:8px 0 2px;color:var(--ah-muted)}
+.ah-guide .ah-rel{margin:18px 0 0;color:var(--ah-muted)}
+.ah-guide.ah-plain{max-width:none;margin:0;padding:0;font-size:inherit}
+@media (max-width:600px){.ah-guide .ah-card{padding:18px 16px}}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "WebApplication",
+ "name": "New Construction Home Inspection Checklist",
+ "url": "https://arkhive.us/HomeInspection/",
+ "applicationCategory": "UtilitiesApplication",
+ "operatingSystem": "Any (web browser)",
+ "description": "Free, private checklist for a new-construction home walkthrough before closing. Mark checks pass/fail, add notes and photos, and build a builder punch list.",
+ "offers": {
+  "@type": "Offer",
+  "price": "0",
+  "priceCurrency": "USD"
+ }
+}
+</script>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "Do I need a home inspection on a new construction home?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes. City inspections confirm minimum code compliance, not quality of work, and new homes commonly have issues like missing insulation, grading problems, unsealed penetrations, or reversed hot and cold water. A walkthrough with a checklist, and ideally a licensed home inspector, catches these before closing, when the builder is most responsive."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "When should I do the final walkthrough on a new build?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Schedule it a few days to a week before closing, after cleaning is done and utilities are on, so you can run every faucet, appliance, and HVAC system. That leaves time for the builder to fix items before you sign."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What is a punch list?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "A punch list is a written list of defects or unfinished items the builder agrees to fix, usually before closing or by a set date. This checklist builds one automatically from every item you mark as failed, with your notes and photos."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What if the builder doesn't finish the punch list before closing?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Get unfinished items in writing with completion dates. Some buyers negotiate an escrow holdback for larger items. Anything missed can also be raised under the builder warranty, often at an 11-month walkthrough."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Is my inspection data uploaded anywhere?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No. Everything, including photos, is stored only in your browser on your device. Clearing your browser data deletes it, so build and save the punch list as a PDF when you finish."
+   }
+  }
+ ]
+}
+</script>
 </head>
 <body>
 <header class="top">
@@ -165,6 +253,48 @@ body.show-report{overflow:hidden}
     <button class="btn primary" id="reportBtn">Build punch list</button>
   </div>
 </footer>
+
+<section class="ah-guide" aria-label="Guide">
+<div class="ah-card">
+<h2>A New Construction Walkthrough Checklist</h2>
+<p>A new home passes city inspections, but those check code minimums, not workmanship. The final
+walkthrough before closing is your best chance to get the builder to fix things while they still have
+leverage and their trades are on site. This free checklist covers <strong>84 checks across 12 areas</strong>:
+exterior and grading, roof and gutters, garage, attic, basement and structure, plumbing, electrical,
+heating and cooling, kitchen, bathrooms, interior finishes, and closing paperwork.</p>
+<h2>How to Use the Checklist</h2>
+<ol>
+<li><strong>Enter the address, builder, and date</strong> so they appear on your punch list.</li>
+<li><strong>Walk the house one section at a time</strong> and mark each check <em>Pass</em>, <em>Fail</em>, or <em>N/A</em>. Each check says what to look for.</li>
+<li><strong>Add a note and a photo to every failure</strong> so the builder knows exactly what and where to fix.</li>
+<li><strong>Filter to "Not checked"</strong> before you leave to make sure you didn't skip anything.</li>
+<li><strong>Build the punch list</strong>, then copy it as text to email the builder, or print or save it as a PDF.</li>
+</ol>
+<p>Your notes and photos are saved only in this browser on this device. Nothing is uploaded, and you don't need an account.</p>
+<h2>What to Bring to a Final Walkthrough</h2>
+<ul>
+<li>A phone charger or plug-in outlet tester to check every outlet</li>
+<li>A flashlight for the attic, under sinks, and the water heater</li>
+<li>Painter's tape to mark drywall and paint touch-ups</li>
+<li>A marble or small level for floors, and binoculars or a phone zoom for the roof</li>
+<li>A 2×4 to test the garage door's auto-reverse</li>
+<li>Two to three hours. Don't let it get rushed.</li>
+</ul>
+<p>In Utah, check grading and window wells carefully because snowmelt finds every low spot. Attic
+insulation should be around R-49. Utah County homes often test high for radon, so note whether a mitigation
+system was installed and test after move-in. Keep your punch list for the builder's 11-month warranty
+walkthrough.</p>
+<h2>Frequently Asked Questions</h2>
+<div class="ah-faq">
+<details><summary>Do I need a home inspection on a new construction home?</summary><p>Yes. City inspections confirm minimum code compliance, not quality of work, and new homes commonly have issues like missing insulation, grading problems, unsealed penetrations, or reversed hot and cold water. A walkthrough with a checklist, and ideally a licensed home inspector, catches these before closing, when the builder is most responsive.</p></details>
+<details><summary>When should I do the final walkthrough on a new build?</summary><p>Schedule it a few days to a week before closing, after cleaning is done and utilities are on, so you can run every faucet, appliance, and HVAC system. That leaves time for the builder to fix items before you sign.</p></details>
+<details><summary>What is a punch list?</summary><p>A punch list is a written list of defects or unfinished items the builder agrees to fix, usually before closing or by a set date. This checklist builds one automatically from every item you mark as failed, with your notes and photos.</p></details>
+<details><summary>What if the builder doesn&#x27;t finish the punch list before closing?</summary><p>Get unfinished items in writing with completion dates. Some buyers negotiate an escrow holdback for larger items. Anything missed can also be raised under the builder warranty, often at an 11-month walkthrough.</p></details>
+<details><summary>Is my inspection data uploaded anywhere?</summary><p>No. Everything, including photos, is stored only in your browser on your device. Clearing your browser data deletes it, so build and save the punch list as a PDF when you finish.</p></details>
+</div>
+<p class="ah-rel">Related: <a href="/RealEstateCalc/">Real Estate Investment Calculator</a>: if the house is an investment, run the rental numbers.</p>
+</div>
+</section>
 
 <div id="report" role="dialog" aria-modal="true" aria-label="Punch list">
   <div class="rhead"><div class="wrap">

@@ -169,6 +169,86 @@
     table thead {position: sticky;top: 0;background: var(--bg-1);z-index: 1}
     tbody tr:hover {background: rgba(37, 99, 235, 0.05)}
   </style>
+<style id="ah-guide-css">
+.ah-guide{--ah-ink:#0b1220;--ah-muted:#52606a;--ah-panel:#fff;--ah-line:rgba(9,30,66,.14);--ah-accent:#2563eb}
+.ah-guide{max-width:var(--ahw,1100px);margin:28px auto 40px;padding:0 var(--ahp,20px);color:var(--ah-ink);font-size:15px;line-height:1.65;text-align:left;box-sizing:border-box}
+.ah-guide *{box-sizing:border-box}
+.ah-guide .ah-card{background:var(--ah-panel);border:1px solid var(--ah-line);border-radius:14px;padding:22px 24px}
+.ah-guide h2{font-size:1.2rem;line-height:1.3;margin:28px 0 10px;color:var(--ah-ink);letter-spacing:0;text-transform:none}
+.ah-guide .ah-card>h2:first-child,.ah-guide.ah-plain>h2:first-child{margin-top:0}
+.ah-guide p{margin:0 0 12px}
+.ah-guide ol,.ah-guide ul{margin:0 0 12px;padding-left:1.3em}
+.ah-guide li{margin:0 0 6px}
+.ah-guide a{color:var(--ah-accent);text-decoration:underline;text-underline-offset:2px}
+.ah-guide .ah-tw{overflow-x:auto;margin:4px 0 14px;-webkit-overflow-scrolling:touch}
+.ah-guide .ah-t{border-collapse:collapse;width:100%;min-width:440px;font-size:14px}
+.ah-guide .ah-t th,.ah-guide .ah-t td{border-bottom:1px solid var(--ah-line);padding:8px 10px;text-align:left;vertical-align:top}
+.ah-guide .ah-t th{font-weight:600;color:var(--ah-muted);font-size:13px}
+.ah-guide .ah-faq{margin:0 0 6px}
+.ah-guide details{border-top:1px solid var(--ah-line);padding:11px 0}
+.ah-guide details:last-child{border-bottom:1px solid var(--ah-line)}
+.ah-guide summary{cursor:pointer;font-weight:600}
+.ah-guide details p{margin:8px 0 2px;color:var(--ah-muted)}
+.ah-guide .ah-rel{margin:18px 0 0;color:var(--ah-muted)}
+.ah-guide.ah-plain{max-width:none;margin:0;padding:0;font-size:inherit}
+@media (max-width:600px){.ah-guide .ah-card{padding:18px 16px}}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "What is a good cap rate for a rental property?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Many investors treat 8% or higher as strong, 5–8% as moderate, and under 5% as thin. What counts as good depends heavily on the market: expensive, fast-appreciating areas often trade at 4–6% cap rates, while cheaper markets may offer 8–10% with more risk or less appreciation."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What is the difference between cap rate and cash-on-cash return?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Cap rate measures the property's return before financing (NOI ÷ price), so it lets you compare properties regardless of how they are paid for. Cash-on-cash return measures your return on the cash you actually put in (annual cash flow after the mortgage ÷ down payment plus closing costs), so it reflects your loan terms."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Does the 1% rule still work?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "As a quick filter, yes: if monthly rent is at least 1% of the purchase price, the property is more likely to cash flow. With mortgage rates in the 6–7% range many properties fail it. A property under 1% can still work with a larger down payment or strong appreciation, which is why the calculator scores several metrics instead of one."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How is depreciation calculated on a rental property?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Residential rental buildings are depreciated over 27.5 years. Only the building is depreciable, not the land, so the calculator uses (purchase price − land value) ÷ 27.5. The county assessor's land vs. improvement split is a common starting point for the land value. The calculator simplifies the first-year mid-month convention."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What is depreciation recapture?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "When you sell a rental, the depreciation you took (or were allowed to take) is taxed at up to 25% federally as unrecaptured Section 1250 gain, separate from the capital gains rate on the rest of your profit. The simulator applies your recapture rate at sale so the after-tax return isn't overstated."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What DSCR do lenders require?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Most lenders want a debt service coverage ratio of at least 1.20–1.25, meaning NOI covers the mortgage with a 20–25% cushion. Some DSCR loan programs go down to 1.0 at higher rates. Below 1.0, the rent does not cover the loan payment."
+   }
+  }
+ ]
+}
+</script>
 </head>
 <body>
   <div class="container">
@@ -415,6 +495,54 @@
             flow plus loan paydown plus appreciation, minus taxes and selling costs — measured against your
             initial investment. Annualized ROI expresses that as an average compounded yearly return.
           </p>
+
+          <div class="ah-guide ah-plain">
+<h2>Worked Example: A $300,000 Single-Family Rental</h2>
+<p>The calculator opens with a real-world style example so you can see how the numbers fit together:
+a <strong>$300,000</strong> house bought with <strong>20% down ($60,000)</strong> on a 6.5%, 30-year loan,
+$6,000 of closing costs ($1,500 paid by the seller), <strong>$2,400/month rent</strong>, 5% vacancy,
+$3,000/yr property tax, $2,000/yr insurance, and 8% each for maintenance and management.</p>
+<div class="ah-tw"><table class="ah-t">
+<thead><tr><th>Step</th><th>Math</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>Effective rent</td><td>$2,400 × 12 × 95% occupancy</td><td>$27,360/yr</td></tr>
+<tr><td>Operating expenses</td><td>Taxes + insurance + maintenance + management</td><td>≈ $9,490/yr</td></tr>
+<tr><td>Net operating income (NOI)</td><td>$27,360 − $9,490</td><td>≈ $17,870/yr</td></tr>
+<tr><td>Cap rate</td><td>$17,870 ÷ $300,000</td><td>5.96%</td></tr>
+<tr><td>Mortgage (P&amp;I)</td><td>$240,000 at 6.5% for 30 years</td><td>$1,516.96/mo</td></tr>
+<tr><td>DSCR</td><td>$17,870 ÷ $18,204 debt service</td><td>0.98</td></tr>
+<tr><td>Cash flow</td><td>NOI − debt service</td><td>≈ −$28/mo</td></tr>
+<tr><td>Cash-on-cash</td><td>−$336 ÷ $64,500 cash invested</td><td>−0.52%</td></tr>
+</tbody></table></div>
+<p>The Quick Deal Screen flags this as a <strong>weak deal</strong>: the rent is only 0.80% of the price, and the
+property doesn't quite cover its own mortgage. Change one number, rent to <strong>$2,700</strong>, and it moves
+to "mixed signals": about <strong>+$210/month</strong> cash flow, a 6.91% cap rate, DSCR of 1.14, and 3.91%
+cash-on-cash. That's the main use of the tool: find out which input (price, rent, down payment, or rate)
+has to change before an offer makes sense.</p>
+<p>Cash flow isn't the whole return. In the same example the building (price minus the $15,000 land value)
+is depreciated over 27.5 years, a deduction of about <strong>$10,364 a year</strong> that shelters the rental
+income from tax. Add loan paydown and appreciation and a deal that barely breaks even monthly can still
+produce a solid long-term return. Open the Advanced simulator to see each year's numbers.</p>
+<h2>Cost Segregation and Bonus Depreciation</h2>
+<p>A cost segregation study splits the building into parts that depreciate faster. Appliances, carpet, and
+fixtures are 5-year property; fences, driveways, and landscaping are 15-year property. Everything else stays
+on the 27.5-year schedule. Combined with bonus depreciation, that can move a large deduction into year one.
+The 2025 tax law (the "One Big Beautiful Bill Act") made <strong>100% bonus depreciation</strong> permanent
+for qualifying property acquired after January 19, 2025, so enter the rate that applies to your purchase
+date. The trade-off: larger early deductions mean more <strong>depreciation recapture</strong> when you sell,
+unless you do a 1031 exchange. Turn on the cost segregation option to compare both paths, and confirm the
+details with a CPA. Whether you can use the losses against W-2 income depends on the passive activity rules.</p>
+<h2>Frequently Asked Questions</h2>
+<div class="ah-faq">
+<details><summary>What is a good cap rate for a rental property?</summary><p>Many investors treat 8% or higher as strong, 5–8% as moderate, and under 5% as thin. What counts as good depends heavily on the market: expensive, fast-appreciating areas often trade at 4–6% cap rates, while cheaper markets may offer 8–10% with more risk or less appreciation.</p></details>
+<details><summary>What is the difference between cap rate and cash-on-cash return?</summary><p>Cap rate measures the property&#x27;s return before financing (NOI ÷ price), so it lets you compare properties regardless of how they are paid for. Cash-on-cash return measures your return on the cash you actually put in (annual cash flow after the mortgage ÷ down payment plus closing costs), so it reflects your loan terms.</p></details>
+<details><summary>Does the 1% rule still work?</summary><p>As a quick filter, yes: if monthly rent is at least 1% of the purchase price, the property is more likely to cash flow. With mortgage rates in the 6–7% range many properties fail it. A property under 1% can still work with a larger down payment or strong appreciation, which is why the calculator scores several metrics instead of one.</p></details>
+<details><summary>How is depreciation calculated on a rental property?</summary><p>Residential rental buildings are depreciated over 27.5 years. Only the building is depreciable, not the land, so the calculator uses (purchase price − land value) ÷ 27.5. The county assessor&#x27;s land vs. improvement split is a common starting point for the land value. The calculator simplifies the first-year mid-month convention.</p></details>
+<details><summary>What is depreciation recapture?</summary><p>When you sell a rental, the depreciation you took (or were allowed to take) is taxed at up to 25% federally as unrecaptured Section 1250 gain, separate from the capital gains rate on the rest of your profit. The simulator applies your recapture rate at sale so the after-tax return isn&#x27;t overstated.</p></details>
+<details><summary>What DSCR do lenders require?</summary><p>Most lenders want a debt service coverage ratio of at least 1.20–1.25, meaning NOI covers the mortgage with a 20–25% cushion. Some DSCR loan programs go down to 1.0 at higher rates. Below 1.0, the rent does not cover the loan payment.</p></details>
+</div>
+<p class="ah-rel">Related: <a href="/RetirementCalc/">Retirement Simulator</a>: see how rental income and a future sale fit into your retirement plan.</p>
+</div>
 
           <h2>Good to Know</h2>
           <p class="note">

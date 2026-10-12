@@ -122,6 +122,94 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<style id="ah-guide-css">
+.ah-guide{--ah-ink:var(--ink);--ah-muted:var(--muted);--ah-panel:var(--panel);--ah-line:var(--line);--ah-accent:var(--accent);--ahw:none;--ahp:0}
+.ah-guide{max-width:var(--ahw,1100px);margin:28px auto 40px;padding:0 var(--ahp,20px);color:var(--ah-ink);font-size:15px;line-height:1.65;text-align:left;box-sizing:border-box}
+.ah-guide *{box-sizing:border-box}
+.ah-guide .ah-card{background:var(--ah-panel);border:1px solid var(--ah-line);border-radius:14px;padding:22px 24px}
+.ah-guide h2{font-size:1.2rem;line-height:1.3;margin:28px 0 10px;color:var(--ah-ink);letter-spacing:0;text-transform:none}
+.ah-guide .ah-card>h2:first-child,.ah-guide.ah-plain>h2:first-child{margin-top:0}
+.ah-guide p{margin:0 0 12px}
+.ah-guide ol,.ah-guide ul{margin:0 0 12px;padding-left:1.3em}
+.ah-guide li{margin:0 0 6px}
+.ah-guide a{color:var(--ah-accent);text-decoration:underline;text-underline-offset:2px}
+.ah-guide .ah-tw{overflow-x:auto;margin:4px 0 14px;-webkit-overflow-scrolling:touch}
+.ah-guide .ah-t{border-collapse:collapse;width:100%;min-width:440px;font-size:14px}
+.ah-guide .ah-t th,.ah-guide .ah-t td{border-bottom:1px solid var(--ah-line);padding:8px 10px;text-align:left;vertical-align:top}
+.ah-guide .ah-t th{font-weight:600;color:var(--ah-muted);font-size:13px}
+.ah-guide .ah-faq{margin:0 0 6px}
+.ah-guide details{border-top:1px solid var(--ah-line);padding:11px 0}
+.ah-guide details:last-child{border-bottom:1px solid var(--ah-line)}
+.ah-guide summary{cursor:pointer;font-weight:600}
+.ah-guide details p{margin:8px 0 2px;color:var(--ah-muted)}
+.ah-guide .ah-rel{margin:18px 0 0;color:var(--ah-muted)}
+.ah-guide.ah-plain{max-width:none;margin:0;padding:0;font-size:inherit}
+@media (max-width:600px){.ah-guide .ah-card{padding:18px 16px}}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "WebApplication",
+ "name": "Basketball Stat Tracker",
+ "url": "https://arkhive.us/BasketballStats/",
+ "applicationCategory": "SportsApplication",
+ "operatingSystem": "Any (web browser)",
+ "description": "Free basketball stat tracker for parents. Tap to log points, rebounds, assists, steals, blocks and fouls from your phone, see makes and misses, and export the game to a spreadsheet.",
+ "offers": {
+  "@type": "Offer",
+  "price": "0",
+  "priceCurrency": "USD"
+ }
+}
+</script>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "How do you calculate field goal percentage in basketball?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Field goal percentage is field goals made divided by field goals attempted, including both 2-pointers and 3-pointers but not free throws. For example, 5 made shots on 11 attempts is 45.5%."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What basketball stats should a parent track?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Points, shots made and attempted by type, rebounds, assists, steals, blocks, turnovers, and fouls cover what most coaches look at. Tracking attempts as well as makes is what lets you see shooting percentage trends over a season."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Can I track more than one player?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "The tracker follows one player per game. To track two players at once, use a second phone."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Is my game data saved?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes, the current game auto-saves in your phone's browser, so it survives an accidental refresh. Nothing is uploaded. Export to CSV or copy the row to a spreadsheet to keep a permanent record."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Is the stat tracker free?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes. It's free, needs no account or app download, and runs in any phone browser."
+   }
+  }
+ ]
+}
+</script>
 </head>
 <body>
 <div class="topbar">
@@ -213,6 +301,46 @@
     <p class="note">Everything stays on your phone (and is auto-saved in this browser). Use <b>Copy row for Sheets</b> to paste the game under existing headers in Google Sheets or Excel — tap <a href="#" id="copyHeaders">copy the header row</a> first for a new sheet.</p>
     <button class="btn primary" id="imgBtn" style="width:100%;margin-top:6px">📸 Save dashboard as image</button>
   </div>
+
+<section class="ah-guide" aria-label="Guide">
+<div class="ah-card">
+<h2>How to Track Basketball Stats From the Stands</h2>
+<p>This free basketball stat tracker is built for parents and coaches keeping one player's stats from the bleachers.
+It needs no app or account and works on your phone's browser.</p>
+<ol>
+<li><strong>Enter the player, venue, and date</strong>, then tap the quarter you're tracking.</li>
+<li><strong>Tap each shot</strong> as it happens: made or missed 2-pointers, 3-pointers, and free throws.</li>
+<li><strong>Tap the other stats</strong>: offensive and defensive rebounds, assists, steals, blocks, turnovers, and fouls committed.</li>
+<li><strong>Fix mistakes with Undo last.</strong> The shot log lists every attempt in order.</li>
+<li><strong>Enter the final score</strong> after the game to record the result.</li>
+<li><strong>Save it</strong> as a CSV, copy one row into Google Sheets or Excel, or save the summary as an image to text to family.</li>
+</ol>
+<h2>How the Stats Are Calculated</h2>
+<ul>
+<li><strong>Points</strong> = 2 × made 2s + 3 × made 3s + made free throws.</li>
+<li><strong>Field goal % (FG%)</strong> = all made 2s and 3s ÷ all 2- and 3-point attempts. Free throws aren't included.</li>
+<li><strong>3P%</strong> and <strong>FT%</strong> are made shots divided by attempts of that type.</li>
+<li><strong>Rebounds</strong> = offensive + defensive.</li>
+</ul>
+<p><strong>Example:</strong> a player who goes 4-for-8 on 2s, 1-for-3 on 3s, and 3-for-4 at the line scores
+4×2 + 1×3 + 3 = <strong>14 points</strong> on 5-of-11 field goals (<strong>45.5% FG</strong>), 33.3% from three,
+and 75% from the free-throw line.</p>
+<h2>Build a Season Spreadsheet</h2>
+<p>Each export is one row with the same 31 columns: date, player, teams and scores, result, points by
+quarter, made and attempted 2s, 3s, and free throws, FG%, rebounds (offensive and defensive),
+assists, steals, blocks, turnovers, fouls, and venue. For a season log, tap <em>copy the header row</em>
+once into a new Google Sheet, then after each game tap <em>Copy row for Sheets</em> and paste it under the
+last game. You'll have season averages, shooting trends, and game-by-game totals in one place.</p>
+<h2>Frequently Asked Questions</h2>
+<div class="ah-faq">
+<details><summary>How do you calculate field goal percentage in basketball?</summary><p>Field goal percentage is field goals made divided by field goals attempted, including both 2-pointers and 3-pointers but not free throws. For example, 5 made shots on 11 attempts is 45.5%.</p></details>
+<details><summary>What basketball stats should a parent track?</summary><p>Points, shots made and attempted by type, rebounds, assists, steals, blocks, turnovers, and fouls cover what most coaches look at. Tracking attempts as well as makes is what lets you see shooting percentage trends over a season.</p></details>
+<details><summary>Can I track more than one player?</summary><p>The tracker follows one player per game. To track two players at once, use a second phone.</p></details>
+<details><summary>Is my game data saved?</summary><p>Yes, the current game auto-saves in your phone&#x27;s browser, so it survives an accidental refresh. Nothing is uploaded. Export to CSV or copy the row to a spreadsheet to keep a permanent record.</p></details>
+<details><summary>Is the stat tracker free?</summary><p>Yes. It&#x27;s free, needs no account or app download, and runs in any phone browser.</p></details>
+</div>
+</div>
+</section>
 
 </div>
 

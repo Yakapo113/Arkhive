@@ -80,6 +80,94 @@
     .xlink:hover{background:#e2ecff}
     .xlink .arrow{float:right}
   </style>
+<style id="ah-guide-css">
+.ah-guide{--ah-ink:var(--ink);--ah-muted:var(--muted);--ah-panel:var(--bg-1);--ah-line:var(--line);--ah-accent:var(--accent);--ahw:1100px;--ahp:20px}
+.ah-guide{max-width:var(--ahw,1100px);margin:28px auto 40px;padding:0 var(--ahp,20px);color:var(--ah-ink);font-size:15px;line-height:1.65;text-align:left;box-sizing:border-box}
+.ah-guide *{box-sizing:border-box}
+.ah-guide .ah-card{background:var(--ah-panel);border:1px solid var(--ah-line);border-radius:14px;padding:22px 24px}
+.ah-guide h2{font-size:1.2rem;line-height:1.3;margin:28px 0 10px;color:var(--ah-ink);letter-spacing:0;text-transform:none}
+.ah-guide .ah-card>h2:first-child,.ah-guide.ah-plain>h2:first-child{margin-top:0}
+.ah-guide p{margin:0 0 12px}
+.ah-guide ol,.ah-guide ul{margin:0 0 12px;padding-left:1.3em}
+.ah-guide li{margin:0 0 6px}
+.ah-guide a{color:var(--ah-accent);text-decoration:underline;text-underline-offset:2px}
+.ah-guide .ah-tw{overflow-x:auto;margin:4px 0 14px;-webkit-overflow-scrolling:touch}
+.ah-guide .ah-t{border-collapse:collapse;width:100%;min-width:440px;font-size:14px}
+.ah-guide .ah-t th,.ah-guide .ah-t td{border-bottom:1px solid var(--ah-line);padding:8px 10px;text-align:left;vertical-align:top}
+.ah-guide .ah-t th{font-weight:600;color:var(--ah-muted);font-size:13px}
+.ah-guide .ah-faq{margin:0 0 6px}
+.ah-guide details{border-top:1px solid var(--ah-line);padding:11px 0}
+.ah-guide details:last-child{border-bottom:1px solid var(--ah-line)}
+.ah-guide summary{cursor:pointer;font-weight:600}
+.ah-guide details p{margin:8px 0 2px;color:var(--ah-muted)}
+.ah-guide .ah-rel{margin:18px 0 0;color:var(--ah-muted)}
+.ah-guide.ah-plain{max-width:none;margin:0;padding:0;font-size:inherit}
+@media (max-width:600px){.ah-guide .ah-card{padding:18px 16px}}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "WebApplication",
+ "name": "Social Security Break-Even Calculator",
+ "url": "https://arkhive.us/RetirementCalc/index2.html",
+ "applicationCategory": "FinanceApplication",
+ "operatingSystem": "Any (web browser)",
+ "description": "Free Social Security break-even calculator: compare claiming at 62, 67 or 70 and find your break-even age, including when you invest the early checks.",
+ "offers": {
+  "@type": "Offer",
+  "price": "0",
+  "priceCurrency": "USD"
+ }
+}
+</script>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "Is it better to take Social Security at 62 or 70?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "If you live past roughly age 80, claiming at 70 pays more in lifetime checks than claiming at 62. Claiming early can make sense with poor health, a need for income, or if you would invest the early checks. Delaying is often better for the higher earner in a married couple because it also raises the survivor benefit."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What is my full retirement age?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Full retirement age is 67 for anyone born in 1960 or later and 66 for people born 1943–1954, rising by two months per birth year from 1955 to 1959."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How much is Social Security reduced if I claim at 62?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "With a full retirement age of 67, claiming at 62 reduces your monthly benefit by 30% permanently, to 70% of your FRA amount. The reduction is 5/9 of 1% per month for the first 36 months early and 5/12 of 1% for each additional month."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Does waiting past 70 increase Social Security?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No. Delayed retirement credits stop at age 70, so there is no benefit to waiting longer. Claim by 70."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Are Social Security benefits taxable?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Up to 85% of your benefits can be subject to federal income tax, depending on your combined income (adjusted gross income plus nontaxable interest plus half of your benefits). The calculator's tax field is a flat simplification of that."
+   }
+  }
+ ]
+}
+</script>
 </head>
 <body>
   <div class="container">
@@ -175,6 +263,57 @@
       </div>
     </div>
   </div>
+
+<section class="ah-guide" aria-label="Guide">
+<div class="ah-card">
+<h2>How to Use the Social Security Break-Even Calculator</h2>
+<ol>
+<li><strong>Enter your benefit at full retirement age (FRA)</strong> from your statement at ssa.gov, plus your birth year. The calculator sets your FRA using SSA rules.</li>
+<li><strong>Click "Auto-fill the 3 strategies"</strong> to fill in claiming at 62, your FRA, and 70, or type exact amounts from your statement.</li>
+<li><strong>Choose a comparison mode.</strong> <em>Just the checks</em> is the classic lifetime-total break-even. <em>Invest early checks</em> assumes you invest the checks you collect earlier, which is the fairer comparison if you would actually save them.</li>
+<li><strong>Read the break-even ages.</strong> If you live past the age shown, waiting to claim pays more in total. The chart marks each crossover with a dashed line.</li>
+</ol>
+<h2>How Claiming Age Changes Your Check</h2>
+<p>Your full retirement age is 67 if you were born in 1960 or later (66 for 1943–1954, phasing up for
+1955–1959). Claim before FRA and Social Security permanently reduces your benefit by 5/9 of 1% per month for
+the first 36 months and 5/12 of 1% for each month beyond that. Wait past FRA and you earn delayed retirement
+credits of 2/3 of 1% per month (8% a year) up to age 70.</p>
+<div class="ah-tw"><table class="ah-t">
+<thead><tr><th>Claim at</th><th>% of FRA benefit (FRA 67)</th><th>On a $2,400 FRA benefit</th></tr></thead>
+<tbody>
+<tr><td>62</td><td>70%</td><td>$1,680/mo</td></tr>
+<tr><td>67</td><td>100%</td><td>$2,400/mo</td></tr>
+<tr><td>70</td><td>124%</td><td>$2,976/mo</td></tr>
+</tbody></table></div>
+<h2>Worked Example: 62 vs. 67 vs. 70</h2>
+<p>With the $2,400 example and no cost-of-living raises, the claim-at-62 path collects $1,680 × 12 = $20,160 a
+year for five years, about $100,800, before the claim-at-67 path starts. After that, the age-67 check is
+$720 a month larger, so it takes about 11½ more years to catch up:</p>
+<ul>
+<li><strong>67 beats 62</strong> if you live past about <strong>79</strong>.</li>
+<li><strong>70 beats 62</strong> if you live past about <strong>80</strong>.</li>
+<li><strong>70 beats 67</strong> if you live past about <strong>82–83</strong>.</li>
+</ul>
+<p>Switch to <em>Invest early checks</em> and the break-even moves later, often into the late 80s or beyond.
+Money collected at 62 has years to grow before the larger checks catch up. The higher your assumed return,
+the more claiming early is helped.</p>
+<p>Break-even age is only one input. Things the calculator doesn't model can matter more:</p>
+<ul>
+<li><strong>Survivor benefits.</strong> If you're the higher earner in a marriage, delaying also raises the survivor benefit your spouse keeps after you die.</li>
+<li><strong>Working while claiming.</strong> Before FRA, the earnings test temporarily withholds benefits if your wages exceed the annual limit.</li>
+<li><strong>Your other income.</strong> Claiming early can let your portfolio grow untouched, and delaying can be a cheap way to buy inflation-protected lifetime income.</li>
+</ul>
+<h2>Frequently Asked Questions</h2>
+<div class="ah-faq">
+<details><summary>Is it better to take Social Security at 62 or 70?</summary><p>If you live past roughly age 80, claiming at 70 pays more in lifetime checks than claiming at 62. Claiming early can make sense with poor health, a need for income, or if you would invest the early checks. Delaying is often better for the higher earner in a married couple because it also raises the survivor benefit.</p></details>
+<details><summary>What is my full retirement age?</summary><p>Full retirement age is 67 for anyone born in 1960 or later and 66 for people born 1943–1954, rising by two months per birth year from 1955 to 1959.</p></details>
+<details><summary>How much is Social Security reduced if I claim at 62?</summary><p>With a full retirement age of 67, claiming at 62 reduces your monthly benefit by 30% permanently, to 70% of your FRA amount. The reduction is 5/9 of 1% per month for the first 36 months early and 5/12 of 1% for each additional month.</p></details>
+<details><summary>Does waiting past 70 increase Social Security?</summary><p>No. Delayed retirement credits stop at age 70, so there is no benefit to waiting longer. Claim by 70.</p></details>
+<details><summary>Are Social Security benefits taxable?</summary><p>Up to 85% of your benefits can be subject to federal income tax, depending on your combined income (adjusted gross income plus nontaxable interest plus half of your benefits). The calculator&#x27;s tax field is a flat simplification of that.</p></details>
+</div>
+<p class="ah-rel">Related: <a href="/RetirementCalc/">Retirement Simulator</a>: plug your claim age into a full retirement plan and see whether your money lasts.</p>
+</div>
+</section>
 
 <script>
 /* ============================================================
