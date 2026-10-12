@@ -967,9 +967,12 @@ function renderTotals(data){
    site's own search, pre-filtered by year/make/model. Catalog names carry
    powertrain/year suffixes ("RAV4 Hybrid", "Venza (2021–24)") that the
    sites file under the base model, so strip those for the search. */
+// Prius Prime is its own model on the sites; RAV4 Prime is filed as a RAV4.
+const SEARCH_MODEL_ALIASES = {"RAV4 Prime / Plug-in Hybrid":"RAV4"};
 function searchModel(md){
+  if(SEARCH_MODEL_ALIASES[md]) return SEARCH_MODEL_ALIASES[md];
   return md.replace(/\s*\(.*?\)/g,"").split(" / ")[0]
-    .replace(/\s+(gas|Hybrid|Plug-in Hybrid|PHEV|Prime|4xe|EcoBoost)$/i,"").trim();
+    .replace(/\s+(gas|Hybrid|Plug-in Hybrid|PHEV|4xe|EcoBoost)$/i,"").trim();
 }
 // Sites name trims without the drivetrain ("XLE", not "XLE AWD").
 function searchTrim(cfg){
@@ -983,11 +986,22 @@ function listingUrls(row, year, withTrim){
   const enc = encodeURIComponent;
   // KSL: /trim/Make:Model:Trim. Autotrader: trimCode=MODELCODE|Trim, and it
   // ignores codes it doesn't recognize, so a guessed model code is harmless.
+  // KSL fuel filter is a trailing /fuel/<value>; only "Hybrid" is confirmed
+  // (EV models need no filter; PHEV value unknown, so left unfiltered).
   const ksl = `https://cars.ksl.com/search/make/${enc(mk)}/model/${enc(md)}`
-    + (tr ? `/trim/${enc(`${mk}:${md}:${tr}`)}` : "") + `/yearFrom/${year}/yearTo/${year}`;
+    + (tr ? `/trim/${enc(`${mk}:${md}:${tr}`)}` : "") + `/yearFrom/${year}/yearTo/${year}`
+    + (row.powertrain==="hybrid" ? "/fuel/Hybrid" : "");
   const fbq = `${year} ${mk} ${row.model.replace(/\s*\(.*?\)/g,"").split(" / ")[0]}` + (tr ? ` ${tr}` : "");
+  // searchModel() folds hybrids/PHEVs into the base model, so restore the
+  // powertrain with Autotrader's fuel filter. Gas is left unfiltered so
+  // flex-fuel listings still show.
+  const atFuel = {hybrid:"HYB", phev:"PIH", ev:"ELE"}[row.powertrain];
+  const atQ = [
+    tr ? `trimCode=${enc(`${md.toUpperCase().replace(/[\s-]/g,"")}|${tr}`)}` : "",
+    atFuel ? `fuelTypeGroup=${atFuel}` : ""
+  ].filter(Boolean).join("&");
   const at = `https://www.autotrader.com/cars-for-sale/all-cars/${year}/${slug(mk)}/${slug(md)}`
-    + (tr ? `?trimCode=${enc(`${md.toUpperCase().replace(/[\s-]/g,"")}|${tr}`)}` : "");
+    + (atQ ? `?${atQ}` : "");
   return [
     ["KSL Cars", ksl],
     ["Marketplace", `https://www.facebook.com/marketplace/search/?query=${enc(fbq)}`],
