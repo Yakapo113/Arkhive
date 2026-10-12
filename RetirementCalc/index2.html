@@ -256,7 +256,7 @@
 
         <div class="card">
           <div class="foot" style="font-size:12px">
-            Planning model, not financial advice. Amounts grow with the COLA you set; the "invest" mode compounds each check at your return rate (nominal). Real Social Security taxation depends on your total income (up to 85% of benefits taxable) — the tax field here is a flat simplification. Spousal/survivor benefits and earnings-test rules aren't modeled. Confirm your numbers at ssa.gov.
+            Planning model, not financial advice. Amounts are in today's dollars and grow with the COLA you set from age 62 (SSA applies cost-of-living raises from 62 even if you haven't claimed yet); the "invest" mode compounds each check at your return rate (nominal). Real Social Security taxation depends on your total income (up to 85% of benefits taxable) — the tax field here is a flat simplification. Spousal/survivor benefits and earnings-test rules aren't modeled. Confirm your numbers at ssa.gov.
           </div>
           <a class="xlink" href="index.html">Got your claim age? Model your whole retirement — savings, spending &amp; whether it lasts <span class="arrow">→</span></a>
         </div>
@@ -294,9 +294,11 @@ $720 a month larger, so it takes about 11½ more years to catch up:</p>
 <li><strong>70 beats 62</strong> if you live past about <strong>80</strong>.</li>
 <li><strong>70 beats 67</strong> if you live past about <strong>82–83</strong>.</li>
 </ul>
-<p>Switch to <em>Invest early checks</em> and the break-even moves later, often into the late 80s or beyond.
-Money collected at 62 has years to grow before the larger checks catch up. The higher your assumed return,
-the more claiming early is helped.</p>
+<p>Turn on the default 2.5% cost-of-living raise and the break-evens come about two years earlier
+(roughly 76, 77, and 80), because each raise is a percentage and bigger checks get bigger raises.
+Then switch to <em>Invest early checks</em> at a 5% return and they move back out to about
+<strong>81, 82, and 85</strong>. Money collected at 62 has years to grow before the larger checks catch up,
+so the higher your assumed return, the more claiming early is helped.</p>
 <p>Break-even age is only one input. Things the calculator doesn't model can matter more:</p>
 <ul>
 <li><strong>Survivor benefits.</strong> If you're the higher earner in a marriage, delaying also raises the survivor benefit your spouse keeps after you die.</li>
@@ -389,8 +391,10 @@ function buildSeries(strat, ages, g){
   for(const age of ages){
     let b=0;
     if(age>=strat.claim){
-      const yrsSince = age-strat.claim;
-      b = strat.amt*12*Math.pow(1+g.cola, yrsSince)*(1-g.tax);
+      // Amounts are in today's dollars. SSA applies COLAs to your benefit from
+      // age 62 onward whether or not you've claimed, so grow from 62, not claim age.
+      const yrsOfCola = age-62;
+      b = strat.amt*12*Math.pow(1+g.cola, yrsOfCola)*(1-g.tax);
     }
     acc = acc*(1+ret) + b;
     out.push(acc);
@@ -497,7 +501,7 @@ function renderTotals(strats, series, ages, g){
   // monthly benefit step lines (with COLA)
   const ds = strats.map(s=>({
     label:`Claim at ${s.claim}`, borderColor:s.color, borderWidth:2, pointRadius:0, stepped:true,
-    data: ages.map(age=> age>=s.claim ? Math.round(s.amt*Math.pow(1+g.cola, age-s.claim)) : null), spanGaps:false
+    data: ages.map(age=> age>=s.claim ? Math.round(s.amt*Math.pow(1+g.cola, age-62)) : null), spanGaps:false
   }));
   if(monthlyChart) monthlyChart.destroy();
   monthlyChart = new Chart($('monthlyChart').getContext('2d'),{
