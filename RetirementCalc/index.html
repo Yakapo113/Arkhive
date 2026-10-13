@@ -50,6 +50,7 @@
     .acct{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:9px;background:linear-gradient(180deg,rgba(37,99,235,.02),transparent)}
     .acctTop{display:flex;gap:8px;align-items:center;margin-bottom:8px}
     .acctTop .a-label{font-weight:600}
+    .acctTop .a-max{width:auto;flex:0 0 auto;font-size:11.5px;padding:5px 6px;color:var(--accent);font-weight:600;border-color:rgba(37,99,235,.3);cursor:pointer}
     .del{width:26px;height:26px;flex:0 0 auto;border:none;border-radius:6px;background:#fee2e2;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1}
     .acctGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
     .acctGrid .mini label{font-size:10px;margin-bottom:2px;line-height:1.2;min-height:22px}
@@ -99,6 +100,15 @@
     .xlink{display:block;margin-top:10px;padding:10px 12px;border-radius:9px;background:#eef4ff;border:1px solid rgba(37,99,235,.25);color:#1d4ed8;font-size:12.5px;text-decoration:none;font-weight:600;line-height:1.4}
     .xlink:hover{background:#e2ecff}
     .xlink .arrow{float:right}
+    .incStatus{font-size:12.5px;color:var(--muted);margin-top:3px}
+    .incStatus .st{font-weight:700;margin-right:4px}
+    .incStatus .st.good{color:#15803d} .incStatus .st.bad{color:#b91c1c}
+    .incLegend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--ink);margin:4px 0 10px}
+    .lg{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+    .lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+    .lg b{color:var(--muted);font-weight:600;margin-left:2px}
+    .lg .lgLine{height:2px;width:14px;border-radius:1px;background:#0b1220}
+    .lg .lgShort{background:repeating-linear-gradient(45deg,rgba(220,38,38,.6) 0 2px,rgba(220,38,38,.12) 2px 4px)}
     .pb{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
     .pbShortLine{font-size:13px;line-height:1.5;margin-bottom:10px;color:var(--ink)}
     .pbArrow{color:var(--muted);margin:0 2px}
@@ -289,11 +299,7 @@
         <div class="card">
           <h2>Accounts &amp; assets</h2>
           <div id="assetList"></div>
-          <div class="switchRow">
-            <button id="addAsset" class="btn ghost sm">+ Add account / asset</button>
-            <button id="maxOut" class="btn ghost sm">Max out 401(k) + Roth</button>
-            <span class="tip" tabindex="0">i<span class="tipbox">Sets your first <b>401(k)</b> and <b>Roth</b> to the 2026 IRS limits — 401(k) <b>$24,500</b>/yr, IRA <b>$7,500</b>/yr, plus catch-up if you're 50+ (+$8,000 / +$1,100) — contributing from now until you retire. Adds the account if you don't have one. Roth IRA eligibility phases out at higher incomes (a backdoor Roth works around it).</span></span>
-          </div>
+          <button id="addAsset" class="btn ghost sm">+ Add account / asset</button>
           <div id="saveSummary" class="saveSummary"></div>
           <div class="hint">Set what each holds today, monthly contributions (and when they stop), and the age you start drawing. <b>Real estate</b> &amp; <b>business</b> show a <b>loan owed</b> (net worth counts only your <b>equity</b> = value − loan; selling pays off the remaining loan), a <b>net income $/mo</b> they pay you while you own them, and a <b>Sell at age</b> whose net proceeds drop into your portfolio. <b>Draw from</b> builds an early-retirement bridge (spend brokerage first, let the 401k &amp; Roth grow).</div>
         </div>
@@ -349,14 +355,18 @@
 
         <div class="chartCard">
           <div class="top">
-            <div class="chartTitle">Is your spending covered each year?</div>
+            <div>
+              <div class="chartTitle">Where your spending money comes from</div>
+              <div class="incStatus" id="incStatus"></div>
+            </div>
             <div class="seg" id="focusSeg" style="display:none">
               <button data-f="A" class="on">Plan A</button>
               <button data-f="B">Plan B</button>
             </div>
           </div>
-          <canvas id="incomeChart" height="180"></canvas>
-          <div class="foot">Each bar stacks your income that year — Social Security, pensions, property income, and withdrawals from each account (same colours as the balance chart) — against the dashed line you want to spend. Red = shortfall, a year that's underfunded. (Different view from the balances above: this is income &amp; coverage, not account value.)</div>
+          <div class="incLegend" id="incLegend"></div>
+          <canvas id="incomeChart" height="190"></canvas>
+          <div class="foot">Monthly income in retirement (today's dollars, after tax), stacked by source — guaranteed income at the bottom, then the accounts you draw down. The black line is your spending target; any red hatching above the stack is a shortfall. Percentages show each source's share of your lifetime retirement spending.</div>
         </div>
 
         <div class="card">
@@ -836,33 +846,106 @@ function portfolioSeries(detA, detB){
 function acctColors(sim){
   const m={}; Object.keys(sim.years[0].bals).forEach((l,i)=> m[l]=ACCT_PALETTE[i%ACCT_PALETTE.length]); return m;
 }
-const SS_COLOR='#16a34a', OTHER_COLOR='#b45309', PROP_COLOR='#0d9488', SHORT_COLOR='#dc2626';
+/* Funding sources, grouped by what kind of money they are. Stacked bottom → top in
+   this order (guaranteed income at the base). Palette validated for CVD separation. */
+const SRC_GROUPS = [
+  {k:'guar', name:'Social Security & pensions', color:'#1baf7a'},
+  {k:'prop', name:'Property / business income', color:'#eda100'},
+  {k:'tax',  name:'Brokerage & cash',           color:'#2a78d6'},
+  {k:'k401', name:'401(k) / IRA',               color:'#eb6834'},
+  {k:'roth', name:'Roth',                       color:'#4a3aa7'},
+];
+const SRC_COLOR = Object.fromEntries(SRC_GROUPS.map(x=>[x.k,x.color]));
+const SHORT_COLOR='#dc2626';
+const groupOfType = t => t==='Roth' ? 'roth' : t.startsWith('401') ? 'k401' : 'tax';
+function typeMap(accounts, sim){ const m={}; accounts.forEach(a=>m[a.label]=a.type); if(!m[sim.reinvestLabel]) m[sim.reinvestLabel]='Cash'; return m; }
 
-function renderIncome(sim){
+let shortPattern=null;
+function hatch(){
+  if(shortPattern) return shortPattern;
+  const c=document.createElement('canvas'); c.width=c.height=8; const x=c.getContext('2d');
+  x.fillStyle='rgba(220,38,38,.10)'; x.fillRect(0,0,8,8);
+  x.strokeStyle='rgba(220,38,38,.55)'; x.lineWidth=1.5; x.beginPath(); x.moveTo(0,8); x.lineTo(8,0); x.moveTo(-2,2); x.lineTo(2,-2); x.moveTo(6,10); x.lineTo(10,6); x.stroke();
+  return shortPattern=x.createPattern(c,'repeat');
+}
+// vertical milestone markers with staggered labels so close ages don't collide
+const milestonePlugin = {
+  id:'milestones',
+  afterDatasetsDraw(chart){
+    const ms=chart.options.plugins.milestones?.items||[]; if(!ms.length) return;
+    const {ctx, chartArea:ca, scales:{x}} = chart;
+    ctx.save(); ctx.font='600 11px Inter,system-ui,sans-serif'; ctx.textBaseline='top';
+    const rowsEnd=[-1e9,-1e9];
+    ms.forEach(m=>{
+      const i=chart.data.labels.indexOf(m.age); if(i<0) return;
+      const px=x.getPixelForValue(i);
+      ctx.strokeStyle=m.bad?'rgba(185,28,28,.7)':'rgba(11,18,32,.35)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(px, ca.top-2); ctx.lineTo(px, ca.bottom); ctx.stroke(); ctx.setLineDash([]);
+      const w=ctx.measureText(m.text).width;
+      let lx=Math.min(Math.max(px-w/2, ca.left), ca.right-w);
+      let row=rowsEnd.findIndex(e=>lx>e+8); if(row<0) row=1;
+      rowsEnd[row]=lx+w;
+      const ly=ca.top-30+row*14;
+      ctx.fillStyle='rgba(255,255,255,.9)'; ctx.fillRect(lx-3, ly-1, w+6, 13);
+      ctx.fillStyle=m.bad?'#b91c1c':'#334155'; ctx.fillText(m.text, lx, ly);
+    });
+    ctx.restore();
+  }
+};
+
+function renderIncome(sim, g, scen, accounts){
   const rows=sim.years.filter(y=>y.retired);
+  if(!rows.length){ if(incomeChart) incomeChart.destroy(); incomeChart=null; $('incLegend').innerHTML=''; $('incStatus').textContent=''; return; }
   const labels=rows.map(y=>y.age);
-  const pick=k=>rows.map(y=>Math.round(y[k]/12));
-  const colors=acctColors(sim);
-  // withdrawals broken out per account so you can see which one is being drawn down
-  const drawn=[...new Set(rows.flatMap(y=>Object.keys(y.wdBy).filter(k=>y.wdBy[k]>1)))];
-  const wdSets=drawn.map(l=>({label:l+' withdrawals',data:rows.map(y=>Math.round((y.wdBy[l]||0)/12)),backgroundColor:hexA(colors[l]||'#64748b',.85),stack:'s',order:1}));
-  const sets=[
-    {type:'line',label:'Desired spending',data:pick('desired'),borderColor:'#334155',borderDash:[6,4],borderWidth:2,pointRadius:0,tension:.2,order:0},
-    {label:'Social Security',data:pick('ss'),backgroundColor:SS_COLOR,stack:'s',order:1},
-    {label:'Other income',data:pick('other'),backgroundColor:OTHER_COLOR,stack:'s',order:1},
-    {label:'Property/business income',data:pick('propInc'),backgroundColor:PROP_COLOR,stack:'s',order:1},
-    ...wdSets,
-    {label:'Shortfall',data:pick('shortfall'),backgroundColor:hexA(SHORT_COLOR,.25),borderColor:SHORT_COLOR,borderWidth:1,stack:'s',order:1},
-  ].filter(d=>d.type==='line' || d.data.some(v=>v>0));
+  const tmap=typeMap(accounts, sim);
+  const grp = y => { const v={guar:y.ss+y.other, prop:y.propInc, tax:0, k401:0, roth:0};
+    for(const l in y.wdBy) v[groupOfType(tmap[l]||'Cash')] += y.wdBy[l]; return v; };
+  const per=rows.map(grp);
+  const groups=SRC_GROUPS.filter(G=>per.some(v=>v[G.k]>1));
+  const anyShort=rows.some(y=>y.shortfall>1);
+  const area=(label,data,bg,i)=>({type:'line',label,data,backgroundColor:bg,borderColor:'#ffffff',borderWidth:1.5,
+    fill:i===0?'origin':'-1',pointRadius:0,pointHoverRadius:0,stepped:'middle',stack:'inc',order:2});
+  const sets=groups.map((G,i)=>area(G.name, per.map(v=>Math.round(v[G.k]/12)), hexA(G.color,.82), i));
+  if(anyShort) sets.push(area('Shortfall', rows.map(y=>Math.round(y.shortfall/12)), hatch(), sets.length));
+  sets.push({type:'line',label:'Spending target',data:rows.map(y=>Math.round(y.desired/12)),borderColor:'#0b1220',borderWidth:2,
+    pointRadius:0,pointHoverRadius:0,stepped:'middle',fill:false,stack:'target',order:1});
+
+  // the story in one line, plus a legend that doubles as "share of lifetime spending"
+  const totals={}; groups.forEach(G=>totals[G.k]=per.reduce((s,v)=>s+v[G.k],0));
+  const shortTot=rows.reduce((s,y)=>s+y.shortfall,0);
+  const all=Object.values(totals).reduce((s,v)=>s+v,0)+shortTot || 1;
+  $('incLegend').innerHTML = groups.map(G=>`<span class="lg"><i style="background:${G.color}"></i>${G.name}<b>${Math.round(100*totals[G.k]/all)}%</b></span>`).join('')
+    + (anyShort?`<span class="lg"><i class="lgShort"></i>Shortfall<b>${Math.round(100*shortTot/all)}%</b></span>`:'')
+    + `<span class="lg"><i class="lgLine"></i>Spending target</span>`;
+  const shortYrs=rows.filter(y=>y.shortfall>0.01*y.desired);
+  $('incStatus').innerHTML = shortYrs.length
+    ? `<span class="st bad">✕ Short in ${shortYrs.length} of ${rows.length} years</span> from age ${shortYrs[0].age}`
+    : `<span class="st good">✓ Fully covered</span> every year from ${rows[0].age} to ${rows[rows.length-1].age}`;
+
+  const ms=[];
+  if(scen.retire<PENALTY_AGE && accounts.some(a=>a.type.startsWith('401')||a.type==='Roth')) ms.push({age:60,text:'59½ unlock'});
+  if(g.ssFRA>0) ms.push({age:Math.max(scen.claim,scen.retire), text:'Social Security'});
+  rows.forEach(y=>{ for(const l in y.saleBy) ms.push({age:y.age, text:'Sell '+l}); });
+  const firstRmd=rows.find(y=>y.rmd>0); if(firstRmd) ms.push({age:firstRmd.age, text:'RMDs'});
+  if(sim.ranOut!==null) ms.push({age:sim.ranOut, text:'Runs out', bad:true});
+  ms.sort((a,b)=>a.age-b.age);
+
   if(incomeChart) incomeChart.destroy();
   incomeChart = new Chart($('incomeChart').getContext('2d'),{
-    type:'bar',
-    data:{labels, datasets:sets},
-    options:{responsive:true, animation:false, interaction:{mode:'index',intersect:false},
-      plugins:{legend:{labels:{usePointStyle:true,boxWidth:8,font:{size:12}}},
-        tooltip:{filter:i=>i.parsed.y>0,callbacks:{title:i=>'Age '+i[0].label,label:c=>c.dataset.label+': '+money(c.parsed.y)+'/mo'}}},
-      scales:{x:{stacked:true,title:{display:true,text:'Age'},grid:{display:false}},
-        y:{stacked:true,title:{display:true,text:'$ / month'},ticks:{callback:v=>moneyK(v)},grid:{color:'rgba(9,30,66,.06)'}}}}
+    type:'line', data:{labels, datasets:sets}, plugins:[milestonePlugin],
+    options:{responsive:true, animation:false, layout:{padding:{top:ms.length?34:6}},
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false}, milestones:{items:ms},
+        tooltip:{backgroundColor:'#0f172a',padding:10,boxPadding:4,usePointStyle:true,
+          itemSort:(a,b)=>b.datasetIndex-a.datasetIndex,
+          filter:i=>i.parsed.y>0 && i.dataset.stack==='inc',
+          callbacks:{title:i=>'Age '+i[0].label,
+            label:c=>' '+c.dataset.label+': '+money(c.parsed.y)+'/mo',
+            labelPointStyle:()=>({pointStyle:'rectRounded',rotation:0}),
+            labelColor:c=>({backgroundColor:c.dataset.label==='Shortfall'?SHORT_COLOR:(groups.find(G=>G.name===c.dataset.label)||{}).color,borderColor:'transparent'}),
+            footer:i=>{ const y=rows[i[0].dataIndex]; return 'Target '+money(y.desired/12)+'/mo'; }}}},
+      scales:{x:{grid:{display:false},border:{display:false},ticks:{color:'#64748b',maxRotation:0,autoSkipPadding:14}},
+        y:{stacked:true,beginAtZero:true,grace:'8%',border:{display:false},ticks:{color:'#64748b',callback:v=>moneyK(v)+'/mo',maxTicksLimit:6},grid:{color:'rgba(9,30,66,.06)'}}}}
   });
 }
 
@@ -873,9 +956,9 @@ function renderIncome(sim){
 const moK = n => { const a=Math.abs(n); return a<1000 ? money(n) : a<1e4 ? (n<0?'-':'')+'$'+(a/1e3).toFixed(1).replace(/\.0$/,'')+'k' : moneyK(n); };
 const kName = k => k==='ss' ? 'Social Security' : k.startsWith('p:') ? k.slice(2)+' income' : k.slice(2);
 function buildPlaybook(sim, g, scen, accounts){
-  const desired=g.desiredMonthly*12, colors=acctColors(sim);
+  const desired=g.desiredMonthly*12;
   const typeOf={}; accounts.forEach(a=> typeOf[a.label]=a.type); if(!typeOf[sim.reinvestLabel]) typeOf[sim.reinvestLabel]='Cash';
-  const kColor = k => k==='ss'?SS_COLOR : k.startsWith('o:')?OTHER_COLOR : k.startsWith('p:')?PROP_COLOR : (colors[k.slice(2)]||'#64748b');
+  const kColor = k => (k==='ss'||k.startsWith('o:')) ? SRC_COLOR.guar : k.startsWith('p:') ? SRC_COLOR.prop : SRC_COLOR[groupOfType(typeOf[k.slice(2)]||'Cash')];
   const srcOf = y => { const m={};
     if(y.ss>0) m.ss=y.ss;
     for(const k in y.otherBy) if(y.otherBy[k]>0) m['o:'+k]=y.otherBy[k];
@@ -1126,14 +1209,14 @@ function recompute(){
       renderVerdict($('verdictA'),'A',A_COLOR,classify(detA,Math.min(histA.successPct,mcA.successPct),detA.ending,g),false,mcA.successPct,histA);
       renderVerdict($('verdictB'),'B',B_COLOR,classify(detB,Math.min(histB.successPct,mcB.successPct),detB.ending,g),false,mcB.successPct,histB);
       renderPortfolio(labels, portfolioSeries(detA, detB), focus==='A'?bandOf(mcA,histA):bandOf(mcB,histB));
-      renderIncome(focus==='A'?detA:detB);
+      renderIncome(focus==='A'?detA:detB, g, focus==='A'?sA:sB, accounts);
       if(focus==='B'){ pDet=detB; pScen=sB; }
     } else {
       focus='A';
       $('verdictB').style.display='none';
       renderVerdict($('verdictA'),'A',A_COLOR,classify(detA,Math.min(histA.successPct,mcA.successPct),detA.ending,g),true,mcA.successPct,histA);
       renderPortfolio(labels, portfolioSeries(detA, null), bandOf(mcA,histA));
-      renderIncome(detA);
+      renderIncome(detA, g, sA, accounts);
     }
     // the playbook lives inside the plan card; when comparing it gets its own card for the focused plan
     const pbHTML=playbookHTML(buildPlaybook(pDet,g,pScen,accounts));
@@ -1176,12 +1259,15 @@ function updateCardType(el){
   el.querySelectorAll('.f-fin').forEach(f=> f.style.display = prop?'none':'');
   el.querySelectorAll('.f-prop').forEach(f=> f.style.display = prop?'':'none');
   el.querySelector('.lbl-value').textContent = prop?'Market value $':'Value $';
+  const type=el.querySelector('.a-type').value, mx=el.querySelector('.a-max');
+  mx.innerHTML=maxOptions(type); mx.style.display = mx.options.length>1 ? '' : 'none';
 }
 function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until='',draw='',sell='',loan='',loanpay='',income='',basis=''}={}){
   const el=document.createElement('div'); el.className='acct';
   el.innerHTML=`
     <div class="acctTop">
       <input class="a-label" type="text" value="${label}" placeholder="Account or asset name" style="flex:1">
+      <select class="a-max" title="Fill in the IRS maximum contribution, from now until you retire"></select>
       <button class="del" title="Remove">×</button>
     </div>
     <div class="acctGrid">
@@ -1200,6 +1286,7 @@ function accountCard({label='',value='',type=TYPES[0],ret='',contrib='',until=''
   el.querySelector('.del').onclick=()=>{el.remove();recompute();};
   el.querySelectorAll('input,select').forEach(i=>i.addEventListener('input',recompute));
   el.querySelector('.a-type').addEventListener('change',()=>updateCardType(el));
+  el.querySelector('.a-max').addEventListener('change',e=>{ e.stopPropagation(); const v=e.target.value; e.target.value=''; if(v) applyMax(el,v); });
   $('assetList').appendChild(el);
   attachCurrency(el.querySelector('.a-value'));
   attachCurrency(el.querySelector('.a-contrib'));
@@ -1222,20 +1309,27 @@ function otherRow(label='',monthly='',start='',end=''){
   attachCurrency(row.querySelector('.o-monthly'));
 }
 
-/* ---------- max out tax-advantaged accounts (2026 IRS limits) ---------- */
-const LIMITS = {k401:24500, k401Catch:8000, ira:7500, iraCatch:1100};
-function maxOutContributions(){
-  const age=Math.round(num('currentAge',45)), over50=age>=50;
-  const targets=[
-    {type:'401(k) / IRA', label:'401(k)',   yr:LIMITS.k401+(over50?LIMITS.k401Catch:0)},
-    {type:'Roth',         label:'Roth IRA', yr:LIMITS.ira +(over50?LIMITS.iraCatch:0)},
-  ];
-  targets.forEach(t=>{
-    let el=Array.from($('assetList').children).find(c=>c.querySelector('.a-type').value===t.type);
-    if(!el){ accountCard({label:t.label, value:0, type:t.type}); el=$('assetList').lastElementChild; }
-    const c=el.querySelector('.a-contrib'); c.value=Math.round(t.yr/12); formatCurrency(c);
-    el.querySelector('.a-until').value='';   // blank = contribute until retirement
-  });
+/* ---------- max out contributions (2026 IRS limits) ----------
+   Catch-up uses your current age: 50+ adds the standard catch-up, and 401(k)-type
+   plans get the larger "super catch-up" at ages 60–63. */
+const MAX_PLANS = {
+  '401k':  {name:'401(k) / 403(b)', base:24500, catch50:8000, catch60:11250, types:['401(k) / IRA']},
+  'tira':  {name:'Traditional IRA', base:7500,  catch50:1100, types:['401(k) / IRA']},
+  'rira':  {name:'Roth IRA',        base:7500,  catch50:1100, types:['Roth']},
+  'r401k': {name:'Roth 401(k)',     base:24500, catch50:8000, catch60:11250, types:['Roth']},
+};
+function maxYearly(plan, age){
+  const p=MAX_PLANS[plan]; if(age<50) return p.base;
+  return p.base + ((age>=60 && age<=63 && p.catch60) ? p.catch60 : p.catch50);
+}
+function maxOptions(type){
+  const age=Math.round(num('currentAge',45));
+  return `<option value="">Max out…</option>` + Object.entries(MAX_PLANS).filter(([,p])=>p.types.includes(type))
+    .map(([k,p])=>`<option value="${k}">${p.name} — ${money(maxYearly(k,age))}/yr</option>`).join('');
+}
+function applyMax(el, plan){
+  const c=el.querySelector('.a-contrib'); c.value=Math.round(maxYearly(plan, Math.round(num('currentAge',45)))/12); formatCurrency(c);
+  el.querySelector('.a-until').value='';   // blank = contribute until retirement
   recompute();
 }
 
@@ -1265,7 +1359,6 @@ function loadDemo(){
 $('addAsset').onclick=()=>{accountCard();recompute();};
 $('addOther').onclick=()=>{otherRow();recompute();};
 $('loadDemo').onclick=loadDemo;
-$('maxOut').onclick=maxOutContributions;
 document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{
   rangeMode=b.dataset.r;
   document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.toggle('on',x===b));
@@ -1278,6 +1371,7 @@ document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{ focus=b.dataset
  .forEach(id=>$(id).addEventListener('input',recompute));
 
 ['desiredMonthly','ssFRA','capLossCarry'].forEach(id=>attachCurrency($(id)));
+$('currentAge').addEventListener('change',()=>Array.from($('assetList').children).forEach(updateCardType));
 
 loadDemo();
 </script>
