@@ -289,7 +289,11 @@
         <div class="card">
           <h2>Accounts &amp; assets</h2>
           <div id="assetList"></div>
-          <button id="addAsset" class="btn ghost sm">+ Add account / asset</button>
+          <div class="switchRow">
+            <button id="addAsset" class="btn ghost sm">+ Add account / asset</button>
+            <button id="maxOut" class="btn ghost sm">Max out 401(k) + Roth</button>
+            <span class="tip" tabindex="0">i<span class="tipbox">Sets your first <b>401(k)</b> and <b>Roth</b> to the 2026 IRS limits — 401(k) <b>$24,500</b>/yr, IRA <b>$7,500</b>/yr, plus catch-up if you're 50+ (+$8,000 / +$1,100) — contributing from now until you retire. Adds the account if you don't have one. Roth IRA eligibility phases out at higher incomes (a backdoor Roth works around it).</span></span>
+          </div>
           <div id="saveSummary" class="saveSummary"></div>
           <div class="hint">Set what each holds today, monthly contributions (and when they stop), and the age you start drawing. <b>Real estate</b> &amp; <b>business</b> show a <b>loan owed</b> (net worth counts only your <b>equity</b> = value − loan; selling pays off the remaining loan), a <b>net income $/mo</b> they pay you while you own them, and a <b>Sell at age</b> whose net proceeds drop into your portfolio. <b>Draw from</b> builds an early-retirement bridge (spend brokerage first, let the 401k &amp; Roth grow).</div>
         </div>
@@ -1218,6 +1222,23 @@ function otherRow(label='',monthly='',start='',end=''){
   attachCurrency(row.querySelector('.o-monthly'));
 }
 
+/* ---------- max out tax-advantaged accounts (2026 IRS limits) ---------- */
+const LIMITS = {k401:24500, k401Catch:8000, ira:7500, iraCatch:1100};
+function maxOutContributions(){
+  const age=Math.round(num('currentAge',45)), over50=age>=50;
+  const targets=[
+    {type:'401(k) / IRA', label:'401(k)',   yr:LIMITS.k401+(over50?LIMITS.k401Catch:0)},
+    {type:'Roth',         label:'Roth IRA', yr:LIMITS.ira +(over50?LIMITS.iraCatch:0)},
+  ];
+  targets.forEach(t=>{
+    let el=Array.from($('assetList').children).find(c=>c.querySelector('.a-type').value===t.type);
+    if(!el){ accountCard({label:t.label, value:0, type:t.type}); el=$('assetList').lastElementChild; }
+    const c=el.querySelector('.a-contrib'); c.value=Math.round(t.yr/12); formatCurrency(c);
+    el.querySelector('.a-until').value='';   // blank = contribute until retirement
+  });
+  recompute();
+}
+
 /* ---------- demo ---------- */
 function loadDemo(){
   $('assetList').innerHTML=''; $('otherList').innerHTML='';
@@ -1244,6 +1265,7 @@ function loadDemo(){
 $('addAsset').onclick=()=>{accountCard();recompute();};
 $('addOther').onclick=()=>{otherRow();recompute();};
 $('loadDemo').onclick=loadDemo;
+$('maxOut').onclick=maxOutContributions;
 document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{
   rangeMode=b.dataset.r;
   document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.toggle('on',x===b));
