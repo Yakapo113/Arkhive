@@ -623,7 +623,10 @@ const CATALOG = [
   {nw:1,mk:"Polestar",md:"Polestar 2",cls:"midsize_car",pt:"ev",d5:0.65,kwh:0.30,trims:[["Long Range Single Motor",50000,null,0.29],["Long Range Dual Motor",58000,null,0.33]]},
   {nw:1,mk:"Rivian",md:"R1S",cls:"fullsize_suv",pt:"ev",d5:0.55,kwh:0.50,trims:[["Dual Standard",77000,null,0.49],["Dual Large",84000,null,0.50],["Tri Max",100000,null,0.52]]},
   {mk:"Rivian",md:"R1T",cls:"pickup",pt:"ev",d5:0.55,kwh:0.48,trims:[["Adventure",72000,null,0.48],["Adventure Max Pack",79000,null,0.46]]},
-  {mk:"Porsche",md:"911",cls:"sports",pt:"gas",d5:0.22,mpg:20,trims:[["Carrera",116000,20],["Carrera S",132000,19],["Carrera 4S",140000,19]]}
+  {mk:"Porsche",md:"911",cls:"sports",pt:"gas",d5:0.22,mpg:20,trims:[["Carrera",116000,20],["Carrera S",132000,19],["Carrera 4S",140000,19]]},
+  // Appended (not grouped with Mercedes above) so existing shared-link row indices don't shift.
+  {nw:1,mk:"Mercedes-Benz",md:"EQS Sedan",cls:"luxury_car",pt:"ev",d5:0.70,kwh:0.36,trims:[["450+",101000,null,0.34],["450 4MATIC",104000,null,0.37],["580 4MATIC",125000,null,0.36]]},
+  {nw:1,mk:"Mercedes-Benz",md:"EQS SUV",cls:"fullsize_suv",pt:"ev",d5:0.70,kwh:0.42,trims:[["450+",100000,null,0.41],["450 4MATIC",103000,null,0.42],["580 4MATIC",124000,null,0.43]]}
 ];
 
 /* Flatten the catalog into row records the rest of the app consumes.
