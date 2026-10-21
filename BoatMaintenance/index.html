@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Boat Maintenance Log — Parts, Engine Hours &amp; Winterizing Checklists</title>
+<meta name="description" content="Free boat maintenance tracker. Log engine hours, track parts and fluids with part numbers and where to buy, and check off winterize, summerize and service checklists that record date and hours.">
+<link rel="canonical" href="https://arkhive.us/BoatMaintenance/">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Boat Maintenance Log">
+<meta property="og:description" content="Track engine hours, parts inventory and winterize/summerize checklists for your boat. Free, no signup.">
+<meta property="og:url" content="https://arkhive.us/BoatMaintenance/">
+<meta name="twitter:card" content="summary">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one centered column — boat header with a Hobbs-style hour meter and service-due strip, sticky tabs, then the active view. */
+:root{
+  --bg:#EDF1F3; --surface:#FFFFFF; --surface-2:#F4F7F8; --ink:#13212B; --muted:#5A6B76; --line:#D6DEE3;
+  --accent:#0C6A85; --accent-soft:#DCEDF2; --accent-ink:#FFFFFF;
+  --brass:#9C6B1C; --meter-bg:#15232D; --meter-fg:#F2E6C8; --meter-tick:#C9472F;
+  --ok:#2C7A4B; --ok-soft:#DFF0E5; --warn:#9A6411; --warn-soft:#F6EAD2; --bad:#B23A2E; --bad-soft:#F6DEDB;
+  --shadow:0 1px 2px rgba(19,33,43,.06),0 4px 14px rgba(19,33,43,.06);
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E171D; --surface:#15222A; --surface-2:#1A2A33; --ink:#E3EBEE; --muted:#8EA1AC; --line:#27373F;
+  --accent:#55B6D1; --accent-soft:#16323C; --accent-ink:#06141A;
+  --brass:#D4A24C; --meter-bg:#081015; --meter-fg:#F2E6C8; --meter-tick:#E0624A;
+  --ok:#62BD87; --ok-soft:#173226; --warn:#E2AA4C; --warn-soft:#342812; --bad:#E86F61; --bad-soft:#3A1A17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E171D; --surface:#15222A; --surface-2:#1A2A33; --ink:#E3EBEE; --muted:#8EA1AC; --line:#27373F;
+  --accent:#55B6D1; --accent-soft:#16323C; --accent-ink:#06141A;
+  --brass:#D4A24C; --meter-bg:#081015; --meter-fg:#F2E6C8; --meter-tick:#E0624A;
+  --ok:#62BD87; --ok-soft:#173226; --warn:#E2AA4C; --warn-soft:#342812; --bad:#E86F61; --bad-soft:#3A1A17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;letter-spacing:.01em;text-wrap:balance;margin:0;line-height:1.1}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+@media (max-width:520px){.services{grid-template-columns:1fr 1fr;gap:6px}.svc{padding:7px 10px;gap:2px}.svc .pill{font-size:10px;padding:1px 6px}.svc .n{font-size:13px}.svc .v{font-size:12px}}
+.home{display:inline-block;font-size:13px;font-weight:600;color:var(--accent);text-decoration:none;margin-bottom:10px}
+.home:hover{text-decoration:underline}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.unitpick select{appearance:none;border:0;background:transparent;font:inherit;letter-spacing:inherit;text-transform:inherit;color:var(--muted);cursor:pointer;padding:0 16px 0 0;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 7px) 55%,calc(100% - 3px) 55%;background-size:4px 4px;background-repeat:no-repeat}
+.unitpick select:hover{color:var(--ink)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad)}
+.btn.danger.solid{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.sm{padding:4px 9px;font-size:13px}
+.icon-btn{border:0;background:transparent;cursor:pointer;color:var(--muted);padding:6px;border-radius:6px;line-height:0}
+.icon-btn:hover{color:var(--ink);background:var(--surface-2)}
+svg.i{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* header */
+.top{padding-block:22px 18px}
+.boatline{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.boatline h1{font-size:30px;font-weight:700}
+.boatline .sub{color:var(--muted);font-size:14px;margin-top:2px}
+.dash{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:14px;margin-top:18px}
+@media (max-width:760px){.dash{grid-template-columns:minmax(0,1fr)}}
+.meter{background:var(--meter-bg);color:var(--meter-fg);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.meter .lbl{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.7;font-weight:600;display:flex;justify-content:space-between}
+.digits{display:flex;gap:4px;align-items:flex-end}
+.digit{font-family:var(--f-mono);font-size:34px;line-height:1;width:30px;height:46px;display:grid;place-items:center;border-radius:4px;background:rgba(255,255,255,.06);box-shadow:inset 0 -10px 14px rgba(0,0,0,.25),inset 0 8px 10px rgba(0,0,0,.25)}
+.digit.tenth{background:var(--meter-tick);color:#fff}
+.digit.dot{width:8px;background:none;box-shadow:none}
+.digits .unit{font-family:var(--f-display);font-size:18px;margin-left:6px;opacity:.75;padding-bottom:4px}
+.meter .empty{font-size:14px;opacity:.85}
+.meter form{display:flex;gap:6px;flex-wrap:wrap}
+.meter input{width:120px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:6px 10px;color:var(--meter-fg)}
+.meter .btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:var(--meter-fg)}
+.meter .btn.primary{background:var(--meter-fg);color:var(--meter-bg);border-color:var(--meter-fg)}
+.meter .foot{font-size:12.5px;opacity:.7}
+
+.services{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;align-content:start}
+.svc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.svc .n{font-weight:600;font-size:13.5px;line-height:1.25}
+.svc .v{font-size:12.5px;color:var(--muted)}
+.bar{height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin-top:2px}
+.bar > i{display:block;height:100%;background:var(--ok);border-radius:3px}
+.svc.soon .bar>i{background:var(--warn)} .svc.over .bar>i{background:var(--bad)}
+.pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted);align-self:flex-start}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.soon{background:var(--warn-soft);color:var(--warn)} .pill.over{background:var(--bad-soft);color:var(--bad)}
+
+/* tabs */
+.tabs-band{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:4px}
+.tab{border:0;background:none;padding:12px 14px 11px;font-family:var(--f-display);font-size:19px;font-weight:600;letter-spacing:.02em;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .c{font-family:var(--f-mono);font-size:12px;font-weight:400;margin-left:4px;opacity:.7}
+main{padding-block:20px 60px}
+
+/* checklists */
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;display:inline-flex;gap:7px;align-items:center}
+.chip .c{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip[aria-pressed="true"] .c{color:inherit;opacity:.7}
+.chip.add{border-style:dashed;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-top:14px;box-shadow:var(--shadow)}
+.panel-head{padding:18px 20px 14px;display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--line)}
+.panel-head h2{font-size:26px}
+.panel-head p{margin:4px 0 0;color:var(--muted);font-size:14px;max-width:60ch}
+.progress{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:13px;color:var(--muted)}
+.progress .bar{width:180px;height:6px;margin:0}
+.progress .bar>i{background:var(--accent)}
+.actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.section-h{padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.section-h h3{font-size:15px;font-family:var(--f-body);font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.items{list-style:none;margin:0;padding:0 8px 8px}
+.item{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;padding:10px 12px;border-radius:10px;align-items:start}
+.item:hover{background:var(--surface-2)}
+.item input[type=checkbox]{appearance:none;width:22px;height:22px;border:2px solid var(--line);border-radius:6px;margin:1px 0 0;cursor:pointer;display:grid;place-items:center;background:var(--surface)}
+.item input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent)}
+.item input[type=checkbox]:checked::after{content:"";width:6px;height:11px;border:solid var(--accent-ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
+.item .t{font-weight:500}
+.item.done .t{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+.item .d{font-size:13.5px;color:var(--muted);margin-top:2px;max-width:70ch}
+.item .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:12px;border-radius:6px;padding:1px 7px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.tag.part{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.tag.part.low{background:var(--warn-soft);color:var(--warn)}
+.tag.svc-t{border-style:dashed}
+.stamp{font-family:var(--f-mono);font-size:12.5px;color:var(--ok);margin-top:5px}
+.item-tools{display:flex;gap:0;align-items:center}
+.addrow{padding:4px 20px 16px}
+.empty-state{padding:30px 20px;text-align:center;color:var(--muted)}
+.confirm{display:inline-flex;gap:6px;align-items:center;font-size:13.5px;flex-wrap:wrap}
+
+/* parts */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toolbar input[type=search]{flex:1 1 220px;min-width:0;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.toolbar select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.cat-h{margin:22px 0 8px;font-size:20px;display:flex;align-items:baseline;gap:8px}
+.cat-h .c{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-weight:400}
+.parts{display:flex;flex-direction:column;gap:8px}
+.part{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:10px 18px;align-items:start}
+@media (max-width:700px){.part{grid-template-columns:minmax(0,1fr) auto}.part .pns{grid-column:1 / -1;order:3}.part .buy{grid-column:1 / -1;order:4}}
+.part .nm{font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.part .spec{font-size:13.5px;color:var(--muted);margin-top:2px}
+.part .note{font-size:12.5px;color:var(--muted);margin-top:6px;font-style:italic;max-width:70ch}
+.pns{font-size:13px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.pns .pn{font-family:var(--f-mono);font-weight:500;word-break:break-word}
+.pns .alt{font-family:var(--f-mono);color:var(--muted);font-size:12.5px;word-break:break-word}
+.stock{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.stepper button{border:0;background:var(--surface-2);width:30px;height:30px;cursor:pointer;font-size:17px;line-height:1}
+.stepper button:hover{background:var(--accent-soft)}
+.stepper .q{min-width:54px;text-align:center;font-family:var(--f-mono);font-size:14px;padding:0 6px}
+.stock .u{font-size:12px;color:var(--muted)}
+.buy{display:flex;flex-wrap:wrap;gap:6px;grid-column:1 / 3;font-size:13px;align-items:center}
+.buy .src{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);text-decoration:none;color:var(--ink);max-width:100%;overflow-wrap:anywhere}
+.buy a.src{color:var(--accent)}
+.part-edit{grid-column:3;grid-row:2;justify-self:end;align-self:end}
+@media (max-width:700px){.part-edit{grid-column:2;grid-row:1;align-self:start}.stock{grid-column:2;grid-row:2;}}
+
+/* history */
+.table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface-2);position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td .sub{font-size:12.5px;color:var(--muted)}
+.kind{font-size:12px;color:var(--muted)}
+
+/* sheet / modal */
+.scrim{position:fixed;inset:0;background:rgba(8,16,21,.5);z-index:20;display:flex;align-items:flex-start;justify-content:center;padding:max(24px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));overflow-y:auto}
+.sheet{background:var(--surface);border-radius:14px;width:100%;max-width:560px;box-shadow:0 20px 50px rgba(0,0,0,.3);border:1px solid var(--line)}
+.sheet header{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.sheet header h2{font-size:22px}
+.sheet .body{padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.sheet footer{padding:12px 20px 16px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line)}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:12.5px;font-weight:600;color:var(--muted)}
+.field input,.field select,.field textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface-2);width:100%}
+.field textarea{min-height:70px;resize:vertical}
+.field .hint{font-size:12px;color:var(--muted)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media (max-width:480px){.row3{grid-template-columns:1fr 1fr}}
+.srcrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto;gap:6px;align-items:center}
+.backup textarea{font-family:var(--f-mono);font-size:12px;min-height:110px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;z-index:30;box-shadow:var(--shadow)}
+@media (prefers-reduced-motion:no-preference){.item,.chip,.btn{transition:background .12s,border-color .12s,color .12s}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+const KEY = "arkhive.boatlog.v1";
+const $ = (s, r=document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Math.random().toString(36).slice(2, 9);
+const today = () => { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+const fmtDate = iso => { if(!iso) return "—"; const [y,m,d] = iso.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}); };
+const fmtH = h => (h==null || h==="" || isNaN(h)) ? "—" : (Math.round(h*10)/10).toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1});
+const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+const ICON = {
+  edit:'<svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+  trash:'<svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+  up:'<svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+  down:'<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
+  gear:'<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>',
+  plus:'<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  x:'<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  link:'<svg class="i" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg>',
+  pin:'<svg class="i" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>'
+};
+
+/* ---------- template data (2012 MasterCraft, Ilmor MV8 6.0L, ZF 63 IV) ---------- */
+function seed(){
+  const P = (id,cat,name,o) => Object.assign({id,cat,name,spec:"",capacity:"",pn:"",alt:[],qty:0,unit:"ea",min:null,sources:[],notes:""},o);
+  const parts = [
+    P("p-oil","Engine","Engine oil",{spec:"Pennzoil Platinum 5W-30 full synthetic",capacity:"5 L",unit:"L",notes:"Ilmor lists 5 qt for the MV8 (2011 manual) and 4.5 qt / 4.3 L for the 6.0L (2013 manual). Fill to the dipstick, not to a number."}),
+    P("p-oilf","Engine","Oil filter",{pn:"MasterCraft MV8V1021",alt:["Wix 51372","NAPA Gold 1372"],notes:"Hand-tighten ¼–½ turn after the gasket contacts. No filter wrench."}),
+    P("p-plug","Engine","Spark plugs",{pn:"AC Delco 41-110",capacity:"8 per set",notes:"Replace every 300 hours or annually."}),
+    P("p-belt","Engine","Serpentine belt",{pn:"Ilmor PV06493",notes:"Part number for the 6.0L, from the Ilmor 2013 spec table."}),
+    P("p-air","Engine","Flame arrestor / air filter",{pn:"Ilmor 94PE01163",alt:["PE01908 (2013 manual)"],notes:"Clean with Ilmor air filter cleaner and re-oil. Never run it dry or use WD-40."}),
+    P("p-tfl","Transmission","Transmission oil",{spec:"Shell Rotella T6 15W-40",capacity:"4 L",unit:"L",notes:"Hurth ZF 63 IV. The 2011 Ilmor manual lists ATF, 4.6 qt for the V-drive. Confirm against the ZF tag or the ZF manual."}),
+    P("p-tfilt","Transmission","Transmission filter",{pn:"ZF 3312199031",alt:["5500-50467"]}),
+    P("p-imp","Cooling","Raw water impeller",{pn:"Ilmor PV06764",alt:["Kit MV8V-1178 (open-cooled)"],notes:"Replace yearly. Keep a spare cover gasket in the glovebox."}),
+    P("p-af","Cooling","Marine/RV antifreeze",{spec:"Non-toxic, −50 °F (propylene glycol)",capacity:"~6 gal engine (open-cooled) + 1 gal ballast",unit:"gal"}),
+    P("p-tape","Supplies","Low-tack tape",{spec:"For exhaust outlets and flaps over winter",unit:"roll"}),
+    P("p-damp","Supplies","Moisture absorber",{spec:"DampRid or desiccant bag for the bilge",unit:"ea"}),
+    P("p-bfluid","Trailer","Brake fluid",{spec:"Check the UFP actuator cap for DOT type",unit:"bottle"}),
+    P("p-bgrease","Trailer","Wheel bearing grease",{spec:"Use the same grease every year. Don't mix types.",unit:"tube"}),
+    P("p-bimp","Ballast","Ballast pump impeller",{pn:"Jabsco 6303-0007-P",capacity:"6 pumps on board"}),
+    P("p-drain","Hull","Drain plugs",{pn:"202014",alt:["202015"]}),
+    P("p-stab","Supplies","Fuel stabilizer",{spec:"STA-BIL",unit:"bottle"}),
+    P("p-bio","Supplies","Fuel biocide",{spec:"Valvtect BioGuard or equivalent",unit:"bottle"}),
+    P("p-fog","Supplies","Fogging oil",{spec:"STA-BIL Engine Fogging Oil",unit:"can"}),
+    P("p-lith","Supplies","White lithium grease",{spec:"Steering cable end, rudder and pivot fittings",unit:"tube"}),
+    P("p-mgrease","Supplies","Marine multi-purpose grease",{spec:"Shift/throttle cables, prop shaft splines",unit:"tube"}),
+    P("p-brake","Trailer","Trailer disc brakes",{pn:"UFP DB-35"})
+  ];
+  const I = (section,title,detail,src,o) => Object.assign({id:uid(),section,title,detail,src,partId:"",use:0,service:""},o||{});
+  const lists = [
+    {id:"l-summer",name:"Summerize",blurb:"Re-commission after storage. Ilmor p.41 and MasterCraft 4-22.",items:[
+      I("Hull & bay","Remove tape from exhaust flaps","","MC 4-22"),
+      I("Hull & bay","Check engine bay and bilge for nests","Clean out anything that moved in over winter.","MC 4-22"),
+      I("Hull & bay","Install all drain plugs","Bilge plug and rear ballast drain plug.","MC 4-22",{partId:"p-drain"}),
+      I("Hull & bay","Reconnect heater and shower hoses","If you disconnected them to blow out the lines.","MC 4-22"),
+      I("Hull & bay","Check hose clamps for tightness","","MC 4-22"),
+      I("Battery","Charge and install battery","Positive first, then negative. Use a 3-stage charger and never its “start” setting: it can damage the ballast control modules. Should read 12–14 V.","Ilmor p.41 · MC 4-22"),
+      I("Engine","Install new raw water impeller and gasket","Ilmor: replace once a year. Remove the serpentine belt for access. Lube the vanes with soap; the arms should bend the same way. Keep the old one as a spare.","Ilmor p.32, 41",{partId:"p-imp",use:1,service:"impeller"}),
+      I("Engine","Check engine oil and transmission levels","","Ilmor p.41"),
+      I("Engine","Inspect engine for freeze cracks or leaks","","MC 4-22"),
+      I("Engine","Visually inspect the fuel system","Do not start the engine if anything leaks.","Ilmor p.41"),
+      I("Engine","Clean and re-oil the flame arrestor","Best done at the start of the season. Engine cool, nothing falls into the throttle body.","Ilmor p.31",{partId:"p-air",service:"air"}),
+      I("Drivetrain","Grease prop shaft taper and install propeller","Torque nut to 50 ft-lb, new cotter pin.","MC 4-22, 4-23",{partId:"p-mgrease"}),
+      I("Drivetrain","Check shaft alignment","Feeler gauge between flange faces; 0.003″ max. Dealer job.","MC 4-22"),
+      I("First start","Flush out antifreeze on the hose","Collect it in buckets at the exhaust and recycle it.","Ilmor p.41"),
+      I("First start","Prime fuel: key on/off 2–3 times, 10 s apart","Then crank. Rest 2 min per 30 s of cranking.","MC 4-22"),
+      I("First start","Run 15 min at low speed, watch gauges","Check for leaks and unusual noises.","MC 4-22"),
+      I("Trailer","Check trailer brakes, brake fluid and bearings","","Owner",{partId:"p-brake"}),
+      I("Trailer","Set tire pressure to the sidewall spec","Check after the trailer comes off the jack stands.","Owner")
+    ]},
+    {id:"l-pre",name:"Before each use",blurb:"Every outing. MasterCraft 4-11 to 4-15.",items:[
+      I("Before starting","Drain plugs installed","","MC 4-12",{partId:"p-drain"}),
+      I("Before starting","Check engine oil level","","Ilmor"),
+      I("Before starting","Check transmission fluid level","","Ilmor"),
+      I("Before starting","Inspect raw water strainer for blockage","If blocked, also check the transmission cooler.","MC 4-11"),
+      I("Before starting","Inspect battery connections and hold-downs","","MC 4-12"),
+      I("Before starting","Inspect throttle and shift cables","Kinks, wear, interference.","MC 4-13"),
+      I("Before starting","Inspect fuel and exhaust systems for leaks","","MC 4-13, 4-14"),
+      I("Before starting","Check bilge for fuel odor, run blower 4 min","Smell gas? Don't start the engine.","MC 4-19"),
+      I("Running","Voltmeter reads 12.4–14.5 V on start","","MC 4-14"),
+      I("Running","After 3–5 min: check shaft log, fuel and exhaust","Dripless shaft log should not drip.","MC 4-15")
+    ]},
+    {id:"l-after",name:"After each use",blurb:"Before it goes back in the garage.",items:[
+      I("After","Clean and dry the boat","","MC 4-16"),
+      I("After","Clean the strainer while debris is still wet","","MC 4-16"),
+      I("After","Flush the raw water system","For salt or brackish water, and before storage.","Ilmor"),
+      I("After","Check for leaks, wipe up residue","","Ilmor")
+    ]},
+    {id:"l-50",name:"50-hour",blurb:"Every 50 hours (oil every 25 if used hard). Ilmor p.27, MasterCraft 4-16.",items:[
+      I("Engine","Change engine oil and filter","Warm the engine to 140 °F first. Drain via the brass cap on the port-side drain hose.","Ilmor p.28–29",{partId:"p-oilf",use:1,service:"oil"}),
+      I("Engine","Refill engine oil","","Ilmor p.29",{partId:"p-oil",use:5}),
+      I("Engine","Inspect raw water impeller","","Ilmor p.27",{partId:"p-imp"}),
+      I("Engine","Inspect zinc anodes","","Ilmor p.27",{service:"zinc"}),
+      I("Boat","Check safety equipment and PFDs","","MC 4-16")
+    ]},
+    {id:"l-annual",name:"Annual / 100-hour",blurb:"100 hours or yearly, whichever comes first. Good time is right before winterizing.",items:[
+      I("Engine","Inspect serpentine belt","","Ilmor p.27",{partId:"p-belt"}),
+      I("Engine","Replace spark plugs","300 hours or annually.","Ilmor p.27",{partId:"p-plug",use:8,service:"plugs"}),
+      I("Engine","Inspect spark plug wires","","Ilmor p.27"),
+      I("Engine","Inspect and clean the oil/trans heat exchanger","Open-cooled MV8 has one heat exchanger: engine oil and transmission.","Ilmor p.27"),
+      I("Engine","Check engine mounts (4)","Tighten loose hardware and lock-nuts.","MC 4-17"),
+      I("Engine","Replace fuel filter","Dealer only: pressurized fuel lines.","MC 4-11",{service:"fuel"}),
+      I("Transmission","Change transmission oil and filter","300 hours or annually. Warm 5 min first; suction out through the dipstick tube. Measure what comes out, refill the same amount, then confirm on the dipstick.","Ilmor p.30",{partId:"p-tfilt",use:1,service:"trans"}),
+      I("Transmission","Refill transmission oil","","Ilmor p.30",{partId:"p-tfl",use:4}),
+      I("Drivetrain","Check prop shaft coupler alignment","Dealer.","MC 4-17"),
+      I("Drivetrain","Lubricate steering","Clean cable end; 2 shots of white lithium grease on rudder shaft and pivot fittings.","MC 4-18",{partId:"p-lith"}),
+      I("Drivetrain","Lubricate throttle and shift cables","Full-throttle forward, grease the ends, cycle forward to reverse.","MC 4-18",{partId:"p-mgrease"}),
+      I("Ballast","Inspect ballast pump impellers","Paddles all angle counter-clockwise when reinstalled.","MC 4-18",{partId:"p-bimp"}),
+      I("Boat","Inspect exhaust flaps","","MC 4-18"),
+      I("Boat","Check fire extinguisher","","MC 4-19")
+    ]},
+    {id:"l-winter",name:"Winterize",blurb:"Open-cooled MV8 6.0L. Fuel first, then oil, then water out. Ilmor p.37–40, MasterCraft 4-20 to 4-22.",items:[
+      I("Fuel","Add fuel stabilizer, then fill tank to 90–95%","Add stabilizer before filling so it mixes on the drive home. Top-tier gas, not 100% full: fuel needs room to expand.","Ilmor p.37",{partId:"p-stab",use:1}),
+      I("Fuel","Add fuel biocide","","Ilmor p.37",{partId:"p-bio",use:1}),
+      I("Fuel","Run 15 min on the water or a flush kit","Circulates the additives. Watch for fuel leaks while it warms up.","Ilmor p.38"),
+      I("Oil","Change engine oil and filter","Warm to at least 140 °F first. Old oil contaminants damage the engine in storage.","Ilmor p.28, 38",{partId:"p-oilf",use:1,service:"oil"}),
+      I("Oil","Refill engine oil, run to temperature","Check the filter and drain hose for leaks.","Ilmor p.38",{partId:"p-oil",use:5}),
+      I("Fog","Fog the engine","Air filter off, idle, spray into the throttle body until it starts to choke, then shut off. Don't let it stall.","Ilmor p.40",{partId:"p-fog",use:1}),
+      I("Fog","Reinstall the air filter","","Ilmor p.40"),
+      I("Drain water","Check the transmission cooler screen","Pull the hoses on both sides of the cooler, clear any debris, reconnect.","Ilmor · Owner"),
+      I("Drain water","Close the raw water intake","Seacock, if equipped.","Ilmor p.39"),
+      I("Drain water","Drain both exhaust manifolds","Remove the ½″ NPT pipe plugs.","Ilmor p.39"),
+      I("Drain water","Drain the engine block","6.0L: 17 mm Allen heater plug on the raw-water-pump side, 10 mm Allen plug on the starter side.","Ilmor p.39"),
+      I("Drain water","Drain the oil/trans heat exchanger","Remove the ⅛″ NPT drain plug.","Ilmor p.39"),
+      I("Drain water","Drain the sea strainer, reinstall every plug","","Ilmor p.39"),
+      I("Antifreeze","Fill the raw water side with −50 °F antifreeze","About 6 gal. Engine running on a flush kit (Ilmor method 2): pull the thermostat first, or the antifreeze bypasses the block. Feed 4 gal from a bucket, add the last 2 as it draws; takes about a minute. Engine off (method 1): fill the block through the thermostat housing hoses, then each manifold.","Ilmor p.39–40",{partId:"p-af",use:6}),
+      I("Antifreeze","Tape the exhaust outlets closed","Keeps moisture and rodents out.","Ilmor p.40 · MC 4-21",{partId:"p-tape"}),
+      I("Antifreeze","Blow out heater core and shower lines","If equipped. Disconnect the hoses and use low-pressure air. Idle pressure may not push antifreeze all the way through.","MC 4-21 · Owner"),
+      I("Antifreeze","Pump antifreeze through the ballast system","Hose on the starboard rear-seat ballast fitting into a gallon jug. Run empty until antifreeze exits the thru-hull, then run fill to pull it back into the jug.","MC 4-22",{partId:"p-af",use:1}),
+      I("Antifreeze","Pull the raw water impeller for storage (optional)","Keeps the vanes from taking a set. Reinstall the cover. Keep the new impeller and the drain plug together for spring.","Owner",{partId:"p-imp"}),
+      I("Battery","Remove battery and store it on a tender","Negative first, then positive. Keep it somewhere cool and dry; check charge every 30–45 days.","Ilmor p.40 · MC 4-21"),
+      I("Battery","Clean the battery tray and cable corrosion","","MC 4-12"),
+      I("Hull & interior","Pull bilge drain plug, bow up to drain","Put it in the cup holder with the new impeller so it's there in spring.","MC 4-21",{partId:"p-drain"}),
+      I("Hull & interior","Wash, dry and wax the boat","Let it air dry a few days before covering.","MC 4-21"),
+      I("Hull & interior","Clean and dry the bilge and engine","Touch up paint on any bare spots.","Owner"),
+      I("Hull & interior","Clean lockers, vacuum carpet, treat vinyl","","Owner"),
+      I("Hull & interior","Grease steering, throttle and shift linkages","Use the same marine grease every time. Don't mix types.","MC 4-18, 4-21",{partId:"p-mgrease"}),
+      I("Trailer","Grease wheel bearings","","Owner",{partId:"p-bgrease"}),
+      I("Trailer","Top off brake fluid in the actuator","UFP DB-35 disc brakes.","Owner",{partId:"p-bfluid"}),
+      I("Trailer","Lube winch, springs and rollers","","Owner"),
+      I("Trailer","Set tire pressure; put the trailer on jack stands","Takes the weight off the tires for the winter.","Owner"),
+      I("Storage","Prop the engine box open about 2″","","MC 4-21"),
+      I("Storage","Put a moisture absorber in the bilge","","Owner",{partId:"p-damp",use:1}),
+      I("Storage","Keep gear off the seats; tower off the upholstery","Weight dents the foam and vinyl.","MC 4-21 · Owner"),
+      I("Storage","Cover the boat","Outside: support the cover with 2″ PVC so snow can't pool. Inside: ease the strap tension so the cover doesn't stretch.","MC 4-21 · Owner")
+    ]}
+  ];
+  lists.forEach(l => l.checks = {});
+  return {
+    v:1, tpl:2,
+    boat:{name:"2012 MasterCraft",engine:"Ilmor MV8 6.0L open-cooled · mfg Aug 2011 · family BLMRM06.20H1",trans:"Hurth ZF 63 IV V-drive",notes:""},
+    hours:null, parts, lists, log:[],
+    services:[
+      {key:"oil",name:"Oil & filter",hours:50,months:12},
+      {key:"impeller",name:"Raw water impeller",hours:null,months:12},
+      {key:"trans",name:"Trans oil & filter",hours:300,months:12},
+      {key:"plugs",name:"Spark plugs",hours:300,months:12},
+      {key:"fuel",name:"Fuel filter",hours:100,months:12},
+      {key:"air",name:"Flame arrestor",hours:100,months:12},
+      {key:"zinc",name:"Zinc anodes",hours:50,months:null}
+    ],
+    ui:{tab:"checklists",list:"l-winter"}
+  };
+}
+
+/* ---------- state ---------- */
+/* Root holds several pieces of equipment (boat, mower, …); S is the active one. */
+let R, S;
+try { const raw = localStorage.getItem(KEY); R = raw ? JSON.parse(raw) : null; } catch(e) { R = null; }
+if (R && R.v === 1 && R.lists) R = {v:2, active:"u-boat", units:[Object.assign({id:"u-boat"}, R)]};
+if (!R || R.v !== 2 || !R.units || !R.units.length) R = {v:2, active:"u-boat", units:[Object.assign({id:"u-boat"}, seed())]};
+/* Template upgrade: if the boat has no history yet, swap in the newer checklists but keep hours, counts, stores and part edits. */
+R.units.forEach((u, ix) => {
+  if (u.id !== "u-boat" || (u.tpl || 1) >= 2 || (u.log || []).some(e => e.listId !== "hours")) return;
+  const t = Object.assign(seed(), {id:u.id, hours:u.hours, hoursAt:u.hoursAt, log:u.log || [], ui:u.ui || {}});
+  t.parts = t.parts.map(p => { const old = (u.parts || []).find(o => o.id === p.id); return old ? Object.assign(p, {qty:old.qty, min:old.min, sources:old.sources || []}) : p; })
+    .concat((u.parts || []).filter(o => !t.parts.some(p => p.id === o.id)));
+  R.units[ix] = t;
+});
+S = R.units.find(u => u.id === R.active) || R.units[0];
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(R)); } catch(e) {} };
+function replaceUnit(next){ next.id = S.id; R.units[R.units.indexOf(S)] = next; S = next; }
+function blankUnit(name){
+  const t = seed();
+  return Object.assign(t, {id:"u-"+uid(), boat:{name, engine:"", trans:"", notes:""}, parts:[],
+    lists:[{id:"l-"+uid(), name:"Routine service", blurb:"", items:[], checks:{}}],
+    services:[{key:"oil",name:"Oil change",hours:50,months:12}], ui:{tab:"checklists", list:null}});
+}
+const ui = { edit:false, confirm:null, q:"", cat:"", hist:"" , hoursOpen:false };
+const hashTab = (location.hash||"").slice(1);
+if (["checklists","parts","history"].includes(hashTab)) S.ui.tab = hashTab;
+
+const part = id => S.parts.find(p => p.id === id);
+const list = id => S.lists.find(l => l.id === id);
+const curList = () => list(S.ui.list) || S.lists[0];
+
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true,2200); }
+
+/* ---------- service status ---------- */
+function addMonths(iso, m){ const [y,mo,d]=iso.split("-").map(Number); const dt=new Date(y,mo-1+m,d); return dt; }
+function svcStatus(s){
+  const last = S.log.filter(e => e.service === s.key).sort((a,b) => (b.date||"").localeCompare(a.date||"") || (b.hours||0)-(a.hours||0))[0];
+  if (!last) return {state:"none",line:"No record yet",pct:0};
+  let pct = 0, parts = [], state = "ok";
+  if (s.hours && last.hours != null && S.hours != null){
+    const due = last.hours + s.hours, left = due - S.hours;
+    pct = Math.max(pct, (S.hours - last.hours) / s.hours);
+    parts.push(left <= 0 ? `${fmtH(-left)} h over` : `due at ${fmtH(due)} h`);
+  }
+  if (s.months && last.date){
+    const due = addMonths(last.date, s.months), now = new Date();
+    const total = due - addMonths(last.date,0), used = now - addMonths(last.date,0);
+    pct = Math.max(pct, used/total);
+    parts.push(due < now ? "past due date" : "by " + due.toLocaleDateString(undefined,{month:"short",year:"numeric"}));
+  }
+  if (pct >= 1) state = "over"; else if (pct >= .85) state = "soon";
+  return {state, pct:Math.min(1,pct), line: parts.join(" or ") || "Logged " + fmtDate(last.date), last};
+}
+
+/* ---------- render ---------- */
+function render(){
+  const tab = S.ui.tab;
+  const totalItems = S.lists.reduce((n,l)=>n+l.items.length,0);
+  $("#app").innerHTML = `
+  <header class="top"><div class="wrap">
+    <div class="boatline">
+      <div style="min-width:0">
+        <a class="home" href="/">← ArkHive</a>
+        <label class="eyebrow unitpick"><span class="sr">Equipment</span><select id="unit-pick" aria-label="Switch equipment">${R.units.map(u=>`<option value="${u.id}" ${u.id===S.id?"selected":""}>${esc(u.boat.name)}</option>`).join("")}<option value="__new">+ Add equipment…</option></select></label>
+        <h1>${esc(S.boat.name)}</h1>
+        <div class="sub">${esc(S.boat.engine)}${S.boat.trans ? " · " + esc(S.boat.trans) : ""}</div>
+      </div>
+      <button class="btn ghost" data-act="settings" aria-label="Boat settings and backup">${ICON.gear}<span>Settings</span></button>
+    </div>
+    <div class="dash">${meterHTML()}<div class="services" aria-label="Service due">${S.services.map(s=>{
+      const st = svcStatus(s);
+      const label = {none:"No record",ok:"OK",soon:"Due soon",over:"Overdue"}[st.state];
+      return `<div class="svc ${st.state}"><span class="pill ${st.state==='none'?'':st.state}">${label}</span><div class="n">${esc(s.name)}</div><div class="v">${esc(st.line)}</div><div class="bar"><i style="width:${Math.round(st.pct*100)}%"></i></div></div>`;
+    }).join("")}</div></div>
+  </div></header>
+  <div class="tabs-band"><div class="wrap"><nav class="tabs" role="tablist">
+    ${[["checklists","Checklists",totalItems],["parts","Parts",S.parts.length],["history","History",S.log.length]].map(([k,n,c])=>`<button class="tab" role="tab" aria-selected="${tab===k}" data-act="tab" data-id="${k}">${n}<span class="c">${c}</span></button>`).join("")}
+  </nav></div></div>
+  <main><div class="wrap">${tab==="parts"?partsHTML():tab==="history"?historyHTML():checklistHTML()}</div></main>`;
+}
+
+function meterHTML(){
+  const h = S.hours;
+  let body;
+  if (ui.hoursOpen || h == null){
+    body = `<form data-form="hours"><input id="hours-in" type="number" step="0.1" min="0" inputmode="decimal" placeholder="Hours" value="${h??""}" aria-label="Engine hours from the dash"><button class="btn primary" type="submit">Save</button>${h!=null?'<button class="btn" type="button" data-act="hours-cancel">Cancel</button>':""}</form>
+    ${h==null?'<div class="empty">Enter the hour meter reading from the dash. Each checked task records it.</div>':""}`;
+  } else {
+    const s = (Math.round(h*10)/10).toFixed(1).padStart(6,"0");
+    const [whole, tenth] = s.split(".");
+    body = `<div class="digits" aria-label="${fmtH(h)} engine hours">${[...whole].map(c=>`<span class="digit">${c}</span>`).join("")}<span class="digit dot">.</span><span class="digit tenth">${tenth}</span><span class="unit">HRS</span></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn sm primary" data-act="hours-open">Update hours</button><span class="foot">${S.hoursAt ? "Updated " + fmtDate(S.hoursAt) : ""}</span></div>`;
+  }
+  return `<section class="meter"><div class="lbl"><span>Engine hours</span></div>${body}</section>`;
+}
+
+function checklistHTML(){
+  const L = curList();
+  const done = L.items.filter(i => L.checks[i.id]).length;
+  const pct = L.items.length ? done / L.items.length : 0;
+  const chips = S.lists.map(l => {
+    const d = l.items.filter(i => l.checks[i.id]).length;
+    return `<button class="chip" aria-pressed="${l.id===L.id}" data-act="list" data-id="${l.id}">${esc(l.name)}<span class="c">${d}/${l.items.length}</span></button>`;
+  }).join("") + (ui.edit ? `<button class="chip add" data-act="list-new">${ICON.plus} New checklist</button>` : "");
+  const sections = [];
+  L.items.forEach(i => { let s = sections.find(x => x.name === i.section); if(!s){ s={name:i.section,items:[]}; sections.push(s);} s.items.push(i); });
+  const resetBtn = ui.confirm === "reset"
+    ? `<span class="confirm">Uncheck all ${done}? History stays. <button class="btn sm danger solid" data-act="reset-yes">Start over</button><button class="btn sm" data-act="confirm-no">Cancel</button></span>`
+    : `<button class="btn" data-act="reset" ${done?"":"disabled"}>New round</button>`;
+  return `
+  <div class="chips" role="group" aria-label="Checklists">${chips}</div>
+  <section class="panel">
+    <div class="panel-head">
+      <div style="min-width:0;flex:1 1 280px">
+        <h2>${esc(L.name)}</h2>${L.blurb?`<p>${esc(L.blurb)}</p>`:""}
+        <div class="progress"><div class="bar"><i style="width:${Math.round(pct*100)}%"></i></div><span class="mono">${done} of ${L.items.length} done</span></div>
+      </div>
+      <div class="actions">
+        ${ui.edit ? `<button class="btn" data-act="list-edit">Rename / delete list</button>` : resetBtn}
+        <button class="btn ${ui.edit?"primary":""}" data-act="edit-toggle">${ui.edit?"Done editing":ICON.edit+" Edit items"}</button>
+      </div>
+    </div>
+    ${sections.length ? sections.map(sec => `
+      <div class="section-h"><h3>${esc(sec.name||"General")}</h3>${ui.edit?`<button class="btn sm ghost" data-act="item-new" data-id="${esc(sec.name)}">${ICON.plus} Add</button>`:""}</div>
+      <ul class="items">${sec.items.map(it => itemHTML(L,it)).join("")}</ul>`).join("")
+      : `<div class="empty-state">This checklist has no items yet.${ui.edit?"":" Tap Edit items to add some."}</div>`}
+    ${ui.edit ? `<div class="addrow"><button class="btn" data-act="item-new" data-id="">${ICON.plus} Add item</button></div>` : ""}
+  </section>`;
+}
+
+function itemHTML(L,it){
+  const logId = L.checks[it.id];
+  const entry = logId && S.log.find(e => e.id === logId);
+  const p = it.partId && part(it.partId);
+  const low = p && p.min != null && p.qty <= p.min;
+  const partTag = p ? `<span class="tag part ${low?"low":""}">${it.use?`Uses ${it.use} ${esc(p.unit)} · `:""}${esc(p.name)}${p.pn?" "+esc(p.pn.replace(/^(MasterCraft|Ilmor|ZF|Jabsco|AC Delco|UFP)\s+/,"")):""} · ${fmtQty(p.qty)} on hand</span>` : "";
+  const svc = it.service && S.services.find(s => s.key === it.service);
+  const meta = `${it.src?`<span class="tag">${esc(it.src)}</span>`:""}${partTag}${svc?`<span class="tag svc-t">Resets ${esc(svc.name)}</span>`:""}`;
+  if (ui.edit){
+    return `<li class="item" style="grid-template-columns:minmax(0,1fr) auto"><div style="min-width:0"><div class="t">${esc(it.title)}</div>${it.detail?`<div class="d">${esc(it.detail)}</div>`:""}${meta?`<div class="meta">${meta}</div>`:""}</div>
+      <div class="item-tools">
+        ${ui.confirm==="del:"+it.id ? `<span class="confirm"><button class="btn sm danger solid" data-act="item-del-yes" data-id="${it.id}">Delete</button><button class="btn sm" data-act="confirm-no">Keep</button></span>` :
+        `<button class="icon-btn" data-act="item-up" data-id="${it.id}" aria-label="Move up">${ICON.up}</button><button class="icon-btn" data-act="item-down" data-id="${it.id}" aria-label="Move down">${ICON.down}</button><button class="icon-btn" data-act="item-edit" data-id="${it.id}" aria-label="Edit">${ICON.edit}</button><button class="icon-btn" data-act="item-del" data-id="${it.id}" aria-label="Delete">${ICON.trash}</button>`}
+      </div></li>`;
+  }
+  return `<li class="item ${entry?"done":""}"><input type="checkbox" id="ck-${it.id}" data-check="${it.id}" ${entry?"checked":""}>
+    <label for="ck-${it.id}" style="min-width:0;cursor:pointer"><div class="t">${esc(it.title)}</div>${it.detail?`<div class="d">${esc(it.detail)}</div>`:""}${meta?`<div class="meta">${meta}</div>`:""}
+    ${entry?`<div class="stamp">✓ ${fmtDate(entry.date)} · ${fmtH(entry.hours)} h${entry.parts&&entry.parts.length?" · used "+entry.parts.map(x=>`${fmtQty(x.qty)} ${esc(x.unit)} ${esc(x.name)}`).join(", "):""}</div>`:""}</label><span></span></li>`;
+}
+const fmtQty = q => (Math.round((q||0)*100)/100).toLocaleString();
+
+function partsHTML(){
+  const q = ui.q.trim().toLowerCase();
+  const cats = [...new Set(S.parts.map(p => p.cat || "Other"))];
+  const match = p => (!ui.cat || (p.cat||"Other") === ui.cat) && (!q || [p.name,p.spec,p.pn,p.capacity,p.notes,...(p.alt||[]),...(p.sources||[]).map(s=>s.name)].join(" ").toLowerCase().includes(q));
+  const shown = S.parts.filter(match);
+  const lowCount = S.parts.filter(p => p.min != null && p.qty <= p.min).length;
+  let html = `<div class="toolbar">
+    <input type="search" id="parts-q" placeholder="Search parts, numbers, stores" value="${esc(ui.q)}" aria-label="Search parts">
+    <select id="parts-cat" aria-label="Category"><option value="">All categories</option>${cats.map(c=>`<option ${c===ui.cat?"selected":""}>${esc(c)}</option>`).join("")}</select>
+    <button class="btn primary" data-act="part-new">${ICON.plus} Add part</button>
+  </div>
+  ${lowCount?`<p style="margin:12px 0 0"><span class="pill soon">${lowCount} low</span> <span class="muted" style="font-size:13.5px">At or below the reorder level you set.</span></p>`:""}`;
+  if (!shown.length) return html + `<div class="empty-state">No parts match.</div>`;
+  cats.forEach(c => {
+    const ps = shown.filter(p => (p.cat||"Other") === c);
+    if (!ps.length) return;
+    html += `<h2 class="cat-h">${esc(c)}<span class="c">${ps.length}</span></h2><div class="parts">${ps.map(partHTML).join("")}</div>`;
+  });
+  return html;
+}
+function partHTML(p){
+  const low = p.min != null && p.qty <= p.min;
+  const specLine = [p.spec, p.capacity && ("Capacity " + p.capacity)].filter(Boolean).join(" · ");
+  const srcs = (p.sources||[]).filter(s => s.name || s.url);
+  return `<article class="part">
+    <div style="min-width:0"><div class="nm">${esc(p.name)}${low?'<span class="pill soon">Low</span>':""}</div>${specLine?`<div class="spec">${esc(specLine)}</div>`:""}${p.notes?`<div class="note">${esc(p.notes)}</div>`:""}</div>
+    <div class="pns">${p.pn?`<span class="pn">${esc(p.pn)}</span>`:'<span class="muted">No part number</span>'}${(p.alt||[]).map(a=>`<span class="alt">alt ${esc(a)}</span>`).join("")}</div>
+    <div class="stock"><div class="stepper"><button data-act="qty" data-id="${p.id}" data-d="-1" aria-label="Decrease ${esc(p.name)}">−</button><span class="q">${fmtQty(p.qty)}</span><button data-act="qty" data-id="${p.id}" data-d="1" aria-label="Increase ${esc(p.name)}">+</button></div><span class="u">${esc(p.unit)} on hand${p.min!=null?` · reorder at ${fmtQty(p.min)}`:""}</span></div>
+    <div class="buy">${srcs.length ? '<span class="muted">Buy:</span> ' + srcs.map(s => {
+      const isUrl = /^https?:\/\//i.test(s.url||"");
+      const label = s.name || (isUrl ? new URL(s.url).hostname.replace(/^www\./,"") : s.url);
+      return isUrl ? `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener">${ICON.link}${esc(label)}</a>` : `<span class="src">${ICON.pin}${esc(label)}${s.url&&s.name?` · ${esc(s.url)}`:""}</span>`;
+    }).join("") : `<span class="muted">No store saved</span>`}</div>
+    <button class="btn sm part-edit" data-act="part-edit" data-id="${p.id}">${ICON.edit} Edit</button>
+  </article>`;
+}
+
+function historyHTML(){
+  const rows = S.log.filter(e => !ui.hist || e.listId === ui.hist).slice().sort((a,b) => (b.date||"").localeCompare(a.date||"") || (b.hours||0)-(a.hours||0) || (b.ts||0)-(a.ts||0));
+  const opts = [["","All entries"],...S.lists.map(l=>[l.id,l.name]),["hours","Hour readings"]];
+  return `<div class="toolbar">
+    <select id="hist-filter" aria-label="Filter history">${opts.map(([v,n])=>`<option value="${v}" ${v===ui.hist?"selected":""}>${esc(n)}</option>`).join("")}</select>
+    <span class="muted" style="font-size:13.5px;flex:1">${rows.length} ${rows.length===1?"entry":"entries"}</span>
+    <button class="btn" data-act="csv">Copy as CSV</button>
+  </div>
+  ${rows.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Hours</th><th>Task</th><th>Checklist</th><th>Parts used</th><th>Note</th><th></th></tr></thead><tbody>
+  ${rows.map(e => `<tr>
+    <td class="num">${fmtDate(e.date)}</td><td class="num">${fmtH(e.hours)}</td>
+    <td>${esc(e.title)}</td><td class="kind">${esc(e.listName||"")}</td>
+    <td>${(e.parts||[]).map(x=>`${fmtQty(x.qty)} ${esc(x.unit)} ${esc(x.name)}`).join("<br>")||'<span class="muted">—</span>'}</td>
+    <td>${esc(e.note||"")}</td>
+    <td style="white-space:nowrap">${ui.confirm==="log:"+e.id?`<span class="confirm"><button class="btn sm danger solid" data-act="log-del-yes" data-id="${e.id}">Delete</button><button class="btn sm" data-act="confirm-no">Keep</button></span>`:`<button class="icon-btn" data-act="log-edit" data-id="${e.id}" aria-label="Edit entry">${ICON.edit}</button><button class="icon-btn" data-act="log-del" data-id="${e.id}" aria-label="Delete entry">${ICON.trash}</button>`}</td>
+  </tr>`).join("")}</tbody></table></div>
+  <p class="muted" style="font-size:12.5px">Deleting a checklist entry unchecks the task and puts any parts it used back into inventory.</p>`
+  : `<div class="empty-state" style="background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-top:12px">Nothing logged yet. Check off a task on any checklist and it lands here with the date and engine hours.</div>`}`;
+}
+
+/* ---------- actions ---------- */
+function setHours(h){
+  S.hours = h; S.hoursAt = today();
+  S.log.push({id:uid(),ts:Date.now(),date:today(),hours:h,listId:"hours",listName:"Hour reading",title:"Hour meter reading",parts:[],note:""});
+}
+function check(itemId, on){
+  const L = curList(); const it = L.items.find(i => i.id === itemId); if(!it) return;
+  if (on){
+    const used = [];
+    const p = it.partId && part(it.partId);
+    if (p && it.use > 0){ p.qty = Math.max(0, (p.qty||0) - it.use); used.push({id:p.id,name:p.name,qty:it.use,unit:p.unit}); }
+    const e = {id:uid(),ts:Date.now(),date:today(),hours:S.hours,listId:L.id,listName:L.name,itemId:it.id,title:it.title,service:it.service||"",parts:used,note:""};
+    S.log.push(e); L.checks[it.id] = e.id;
+    if (used.length) toast(`Logged · ${used.map(u=>`${u.qty} ${u.unit} ${u.name}`).join(", ")} taken from inventory`);
+  } else {
+    removeLog(L.checks[it.id]);
+  }
+}
+function removeLog(logId){
+  const e = S.log.find(x => x.id === logId); if(!e) return;
+  (e.parts||[]).forEach(u => { const p = part(u.id); if (p) p.qty = (p.qty||0) + u.qty; });
+  S.log = S.log.filter(x => x.id !== logId);
+  S.lists.forEach(l => Object.keys(l.checks).forEach(k => { if (l.checks[k] === logId) delete l.checks[k]; }));
+}
+function moveItem(id, d){
+  const L = curList(); const idx = L.items.findIndex(i => i.id === id); if (idx < 0) return;
+  const sec = L.items[idx].section;
+  let j = idx + d;
+  while (j >= 0 && j < L.items.length && L.items[j].section !== sec) j += d;
+  if (j < 0 || j >= L.items.length) return;
+  [L.items[idx], L.items[j]] = [L.items[j], L.items[idx]];
+}
+function commit(){ save(); render(); }
+
+document.addEventListener("click", ev => {
+  const b = ev.target.closest("[data-act]"); if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  const L = curList();
+  switch(act){
+    case "tab": S.ui.tab = id; ui.confirm = null; try{ history.replaceState(null,"","#"+id); }catch(e){} commit(); window.scrollTo({top:0}); break;
+    case "list": S.ui.list = id; ui.confirm = null; commit(); break;
+    case "edit-toggle": ui.edit = !ui.edit; ui.confirm = null; render(); break;
+    case "reset": ui.confirm = "reset"; render(); break;
+    case "reset-yes": L.checks = {}; ui.confirm = null; commit(); toast(`${L.name} cleared for a new round`); break;
+    case "confirm-no": ui.confirm = null; render(); break;
+    case "hours-open": ui.hoursOpen = true; render(); setTimeout(()=>$("#hours-in")?.focus(),0); break;
+    case "hours-cancel": ui.hoursOpen = false; render(); break;
+    case "item-up": moveItem(id,-1); commit(); break;
+    case "item-down": moveItem(id,1); commit(); break;
+    case "item-del": ui.confirm = "del:"+id; render(); break;
+    case "item-del-yes": L.items = L.items.filter(i => i.id !== id); delete L.checks[id]; ui.confirm = null; commit(); break;
+    case "item-edit": openItem(L.items.find(i => i.id === id)); break;
+    case "item-new": openItem(null, id || (L.items.length ? L.items[L.items.length-1].section : "General")); break;
+    case "list-new": openList(null); break;
+    case "list-edit": openList(L); break;
+    case "qty": { const p = part(id); p.qty = Math.max(0, Math.round(((p.qty||0) + Number(b.dataset.d))*100)/100); commit(); break; }
+    case "part-new": openPart(null); break;
+    case "part-edit": openPart(part(id)); break;
+    case "log-del": ui.confirm = "log:"+id; render(); break;
+    case "log-del-yes": removeLog(id); ui.confirm = null; commit(); break;
+    case "log-edit": openLog(S.log.find(e => e.id === id)); break;
+    case "csv": copyCSV(); break;
+    case "settings": openSettings(); break;
+    case "close": closeModal(); break;
+  }
+});
+document.addEventListener("change", ev => {
+  const t = ev.target;
+  if (t.dataset.check){ check(t.dataset.check, t.checked); commit(); return; }
+  if (t.id === "unit-pick"){
+    if (t.value === "__new"){ t.value = S.id; openUnitNew(); return; }
+    S = R.units.find(u => u.id === t.value) || S; R.active = S.id; ui.edit = false; ui.confirm = null; ui.q = ""; ui.cat = ""; ui.hist = ""; commit(); return;
+  }
+  if (t.id === "parts-cat"){ ui.cat = t.value; render(); }
+  if (t.id === "hist-filter"){ ui.hist = t.value; render(); }
+});
+document.addEventListener("input", ev => {
+  if (ev.target.id === "parts-q"){ ui.q = ev.target.value; const pos = ev.target.selectionStart; render(); const i = $("#parts-q"); i.focus(); try{ i.setSelectionRange(pos,pos); }catch(e){} }
+});
+document.addEventListener("submit", ev => {
+  const f = ev.target; ev.preventDefault();
+  if (f.dataset.form === "hours"){
+    const h = num($("#hours-in").value);
+    if (h == null || h < 0){ toast("Enter the hours as a number, like 312.4"); return; }
+    if (S.hours != null && h < S.hours && !f.dataset.ok){ f.dataset.ok = "1"; toast(`That's lower than ${fmtH(S.hours)} h. Save again to confirm.`); return; }
+    setHours(h); ui.hoursOpen = false; commit(); toast("Hours saved");
+  }
+});
+document.addEventListener("keydown", ev => { if (ev.key === "Escape" && $("#modal").innerHTML) closeModal(); });
+
+/* ---------- modals ---------- */
+function modal(title, body, foot, onSubmit){
+  $("#modal").innerHTML = `<div class="scrim" data-scrim><form class="sheet" id="sheet" novalidate>
+    <header><h2>${esc(title)}</h2><button type="button" class="icon-btn" data-act="close" aria-label="Close">${ICON.x}</button></header>
+    <div class="body">${body}</div><footer>${foot}</footer></form></div>`;
+  const form = $("#sheet");
+  form.addEventListener("submit", e => { e.preventDefault(); e.stopPropagation(); onSubmit && onSubmit(form); });
+  $("[data-scrim]").addEventListener("mousedown", e => { if (e.target.matches("[data-scrim]")) closeModal(); });
+  setTimeout(() => form.querySelector("input,textarea,select")?.focus(), 0);
+  return form;
+}
+function closeModal(){ $("#modal").innerHTML = ""; }
+const fv = (f, n) => f.elements[n] ? f.elements[n].value.trim() : "";
+
+function openItem(it, section){
+  const L = curList();
+  const isNew = !it;
+  it = it || {title:"",detail:"",section:section||"",src:"",partId:"",use:0,service:""};
+  const secs = [...new Set(L.items.map(i => i.section))];
+  const f = modal(isNew ? "Add checklist item" : "Edit checklist item", `
+    <div class="field"><label for="f-title">Task</label><input id="f-title" name="title" value="${esc(it.title)}" required></div>
+    <div class="field"><label for="f-detail">Details</label><textarea id="f-detail" name="detail">${esc(it.detail)}</textarea></div>
+    <div class="row2">
+      <div class="field"><label for="f-sec">Section</label><input id="f-sec" name="section" list="secs" value="${esc(it.section)}"><datalist id="secs">${secs.map(s=>`<option value="${esc(s)}">`).join("")}</datalist></div>
+      <div class="field"><label for="f-src">Reference</label><input id="f-src" name="src" value="${esc(it.src)}" placeholder="e.g. Ilmor p.38"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="f-part">Linked part</label><select id="f-part" name="partId"><option value="">None</option>${S.parts.map(p=>`<option value="${p.id}" ${p.id===it.partId?"selected":""}>${esc(p.name)}${p.pn?" · "+esc(p.pn):""}</option>`).join("")}</select></div>
+      <div class="field"><label for="f-use">Uses per completion</label><input id="f-use" name="use" type="number" min="0" step="0.1" value="${it.use||0}"><span class="hint">Taken from inventory when checked. 0 = reference only.</span></div>
+    </div>
+    <div class="field"><label for="f-svc">Resets service tracker</label><select id="f-svc" name="service"><option value="">None</option>${S.services.map(s=>`<option value="${s.key}" ${s.key===it.service?"selected":""}>${esc(s.name)}</option>`).join("")}</select></div>`,
+    `<span></span><span class="actions"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" type="submit">${isNew?"Add item":"Save"}</button></span>`,
+    form => {
+      const title = fv(form,"title"); if (!title){ form.elements.title.focus(); toast("Give the task a name"); return; }
+      const data = {title,detail:fv(form,"detail"),section:fv(form,"section")||"General",src:fv(form,"src"),partId:fv(form,"partId"),use:num(fv(form,"use"))||0,service:fv(form,"service")};
+      if (isNew){
+        const item = Object.assign({id:uid()}, data);
+        let at = -1; L.items.forEach((i,ix) => { if (i.section === item.section) at = ix; });
+        if (at >= 0) L.items.splice(at+1, 0, item); else L.items.push(item);
+      } else Object.assign(it, data);
+      closeModal(); commit();
+    });
+}
+function openList(L){
+  const isNew = !L;
+  modal(isNew ? "New checklist" : "Edit checklist", `
+    <div class="field"><label for="f-ln">Name</label><input id="f-ln" name="name" value="${esc(L?.name||"")}" placeholder="e.g. Trailer, Mid-season"></div>
+    <div class="field"><label for="f-lb">Description</label><input id="f-lb" name="blurb" value="${esc(L?.blurb||"")}"></div>
+    ${!isNew?`<div id="ldel"></div>`:""}`,
+    `${!isNew && S.lists.length>1?`<button type="button" class="btn danger" id="ldel-btn">${ICON.trash} Delete checklist</button>`:"<span></span>"}<span class="actions"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" type="submit">${isNew?"Create":"Save"}</button></span>`,
+    form => {
+      const name = fv(form,"name"); if (!name){ toast("Name the checklist"); return; }
+      if (isNew){ const nl = {id:uid(),name,blurb:fv(form,"blurb"),items:[],checks:{}}; S.lists.push(nl); S.ui.list = nl.id; }
+      else { L.name = name; L.blurb = fv(form,"blurb"); }
+      closeModal(); commit();
+    });
+  const db = $("#ldel-btn");
+  if (db) db.addEventListener("click", () => {
+    $("#ldel").innerHTML = `<div class="confirm" style="color:var(--bad)">Delete “${esc(L.name)}” and its ${L.items.length} items? History entries stay. <button type="button" class="btn sm danger solid" id="ldel-yes">Delete</button></div>`;
+    $("#ldel-yes").addEventListener("click", () => { S.lists = S.lists.filter(x => x.id !== L.id); S.ui.list = S.lists[0].id; closeModal(); commit(); });
+  });
+}
+function srcRow(s){ return `<div class="srcrow"><input name="sname" placeholder="Store or site" value="${esc(s.name||"")}" aria-label="Store name"><input name="surl" placeholder="https://… or address" value="${esc(s.url||"")}" aria-label="Link or address"><button type="button" class="icon-btn" data-rm aria-label="Remove">${ICON.x}</button></div>`; }
+function openPart(p){
+  const isNew = !p;
+  p = p || {name:"",cat:"",spec:"",capacity:"",pn:"",alt:[],qty:0,unit:"ea",min:null,sources:[],notes:""};
+  const cats = [...new Set(S.parts.map(x => x.cat).filter(Boolean))];
+  const used = !isNew && S.lists.some(l => l.items.some(i => i.partId === p.id));
+  modal(isNew ? "Add part" : "Edit part", `
+    <div class="row2">
+      <div class="field"><label for="p-name">Name</label><input id="p-name" name="name" value="${esc(p.name)}" placeholder="e.g. Oil filter"></div>
+      <div class="field"><label for="p-cat">Category</label><input id="p-cat" name="cat" list="cats" value="${esc(p.cat)}"><datalist id="cats">${cats.map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="p-spec">Type / spec</label><input id="p-spec" name="spec" value="${esc(p.spec)}" placeholder="e.g. 5W-30 full synthetic"></div>
+      <div class="field"><label for="p-capa">Capacity</label><input id="p-capa" name="capacity" value="${esc(p.capacity)}" placeholder="e.g. 5 L"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="p-pn">Part number</label><input id="p-pn" name="pn" value="${esc(p.pn)}" class="mono"></div>
+      <div class="field"><label for="p-alt">Alternate numbers</label><input id="p-alt" name="alt" value="${esc((p.alt||[]).join(", "))}" class="mono"><span class="hint">Separate with commas</span></div>
+    </div>
+    <div class="row3">
+      <div class="field"><label for="p-qty">On hand</label><input id="p-qty" name="qty" type="number" min="0" step="0.1" value="${p.qty||0}"></div>
+      <div class="field"><label for="p-unit">Unit</label><input id="p-unit" name="unit" value="${esc(p.unit)}" placeholder="ea, qt, L, gal"></div>
+      <div class="field"><label for="p-min">Reorder at</label><input id="p-min" name="min" type="number" min="0" step="0.1" value="${p.min??""}" placeholder="Off"></div>
+    </div>
+    <div class="field"><label>Where to buy</label><div id="srcs" style="display:flex;flex-direction:column;gap:6px">${(p.sources.length?p.sources:[{}]).map(srcRow).join("")}</div><button type="button" class="btn sm" id="add-src" style="align-self:flex-start">${ICON.plus} Add store</button></div>
+    <div class="field"><label for="p-notes">Notes</label><textarea id="p-notes" name="notes">${esc(p.notes)}</textarea></div>
+    <div id="pdel"></div>`,
+    `${!isNew?`<button type="button" class="btn danger" id="pdel-btn">${ICON.trash} Delete part</button>`:"<span></span>"}<span class="actions"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" type="submit">${isNew?"Add part":"Save"}</button></span>`,
+    form => {
+      const name = fv(form,"name"); if (!name){ toast("Name the part"); return; }
+      const names = [...form.querySelectorAll('[name="sname"]')].map(i => i.value.trim());
+      const urls = [...form.querySelectorAll('[name="surl"]')].map(i => i.value.trim());
+      const data = {name,cat:fv(form,"cat")||"Other",spec:fv(form,"spec"),capacity:fv(form,"capacity"),pn:fv(form,"pn"),
+        alt:fv(form,"alt").split(",").map(s=>s.trim()).filter(Boolean),qty:num(fv(form,"qty"))||0,unit:fv(form,"unit")||"ea",
+        min:num(fv(form,"min")),sources:names.map((n,i)=>({name:n,url:urls[i]})).filter(s=>s.name||s.url),notes:fv(form,"notes")};
+      if (isNew) S.parts.push(Object.assign({id:"p-"+uid()}, data)); else Object.assign(p, data);
+      closeModal(); commit();
+    });
+  $("#add-src").addEventListener("click", () => { $("#srcs").insertAdjacentHTML("beforeend", srcRow({})); });
+  $("#srcs").addEventListener("click", e => { const r = e.target.closest("[data-rm]"); if (r) r.parentElement.remove(); });
+  const db = $("#pdel-btn");
+  if (db) db.addEventListener("click", () => {
+    $("#pdel").innerHTML = `<div class="confirm" style="color:var(--bad)">Delete ${esc(p.name)}?${used?" Checklist items linked to it will lose the link.":""} <button type="button" class="btn sm danger solid" id="pdel-yes">Delete</button></div>`;
+    $("#pdel-yes").addEventListener("click", () => { S.parts = S.parts.filter(x => x.id !== p.id); S.lists.forEach(l => l.items.forEach(i => { if (i.partId === p.id){ i.partId = ""; i.use = 0; } })); closeModal(); commit(); });
+  });
+}
+function openLog(e){
+  modal("Edit history entry", `
+    <div class="field"><label>Task</label><div>${esc(e.title)} <span class="muted">· ${esc(e.listName||"")}</span></div></div>
+    <div class="row2">
+      <div class="field"><label for="g-date">Date</label><input id="g-date" name="date" type="date" value="${esc(e.date)}"></div>
+      <div class="field"><label for="g-h">Engine hours</label><input id="g-h" name="hours" type="number" step="0.1" min="0" value="${e.hours??""}"></div>
+    </div>
+    <div class="field"><label for="g-note">Note</label><textarea id="g-note" name="note" placeholder="Who did it, cost, what you found">${esc(e.note||"")}</textarea></div>`,
+    `<span></span><span class="actions"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" type="submit">Save</button></span>`,
+    form => { e.date = fv(form,"date") || e.date; e.hours = num(fv(form,"hours")); e.note = fv(form,"note"); closeModal(); commit(); });
+}
+function openUnitNew(){
+  modal("Add equipment", `
+    <div class="field"><label for="u-name">Name</label><input id="u-name" name="name" placeholder="e.g. Honda HRX217 mower"></div>
+    <span class="hint">Starts empty, with its own parts, checklists, hour meter and history.</span>`,
+    `<span></span><span class="actions"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" type="submit">Add</button></span>`,
+    form => { const name = fv(form,"name"); if (!name){ toast("Name the equipment"); return; }
+      const u = blankUnit(name); u.ui.list = u.lists[0].id; R.units.push(u); S = u; R.active = u.id; ui.edit = true; closeModal(); commit(); });
+}
+function openSettings(){
+  const json = JSON.stringify(S);
+  modal("Boat settings", `
+    <div class="field"><label for="s-name">Boat</label><input id="s-name" name="name" value="${esc(S.boat.name)}"></div>
+    <div class="field"><label for="s-eng">Engine</label><input id="s-eng" name="engine" value="${esc(S.boat.engine)}"></div>
+    <div class="field"><label for="s-tr">Transmission</label><input id="s-tr" name="trans" value="${esc(S.boat.trans)}"></div>
+    <div class="field"><label>Service intervals</label>
+      <div style="display:flex;flex-direction:column;gap:6px">${S.services.map(s=>`<div class="row3" style="align-items:center"><span style="font-size:14px">${esc(s.name)}</span><input name="sh-${s.key}" type="number" min="0" placeholder="hours" value="${s.hours??""}" aria-label="${esc(s.name)} hours"><input name="sm-${s.key}" type="number" min="0" placeholder="months" value="${s.months??""}" aria-label="${esc(s.name)} months"></div>`).join("")}</div>
+      <span class="hint">Hours, months, or both. Whichever comes first.</span></div>
+    <div class="field backup"><label for="s-json">Backup</label><textarea id="s-json" readonly>${esc(json)}</textarea>
+      <span class="hint">Your log is saved in this browser only. Copy this text or download it to keep a backup, or to move to another device.</span>
+      <div class="actions"><button type="button" class="btn sm" id="s-copy">Copy backup</button><button type="button" class="btn sm" id="s-dl">Download file</button></div></div>
+    <div class="field"><label for="s-imp">Restore from backup</label><textarea id="s-imp" placeholder="Paste backup text here"></textarea>
+      <div class="actions"><input type="file" id="s-file" accept=".json,application/json" style="font-size:13px;max-width:100%"><button type="button" class="btn sm" id="s-restore">Restore</button></div></div>
+    <div class="field"><label>Start over</label><div class="actions" id="s-danger"><button type="button" class="btn sm danger" id="s-reset">Reset to MasterCraft template</button><button type="button" class="btn sm danger" id="s-wipe">Erase everything</button>${R.units.length>1?`<button type="button" class="btn sm danger" id="s-remove">Remove this equipment</button>`:""}</div></div>`,
+    `<span></span><span class="actions"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" type="submit">Save</button></span>`,
+    form => {
+      S.boat.name = fv(form,"name") || S.boat.name; S.boat.engine = fv(form,"engine"); S.boat.trans = fv(form,"trans");
+      S.services.forEach(s => { s.hours = num(fv(form,"sh-"+s.key)); s.months = num(fv(form,"sm-"+s.key)); });
+      closeModal(); commit();
+    });
+  $("#s-copy").addEventListener("click", () => {
+    const ta = $("#s-json");
+    navigator.clipboard.writeText(ta.value).then(() => toast("Backup copied"), () => { ta.focus(); ta.select(); toast("Select-all is on. Copy with your keyboard."); });
+  });
+  $("#s-dl").addEventListener("click", () => {
+    try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([json],{type:"application/json"})); a.download = "boat-log-" + today() + ".json"; document.body.appendChild(a); a.click(); a.remove(); }
+    catch(e){ toast("Download blocked here. Use Copy backup."); }
+  });
+  $("#s-file").addEventListener("change", ev => { const file = ev.target.files[0]; if (!file) return; const r = new FileReader(); r.onload = () => { $("#s-imp").value = r.result; }; r.readAsText(file); });
+  $("#s-restore").addEventListener("click", () => {
+    try { let d = JSON.parse($("#s-imp").value); if (d && d.v === 2 && d.units) d = d.units[0]; if (!d || !d.lists || !d.parts) throw 0; d.ui = d.ui || {tab:"checklists",list:d.lists[0]?.id}; replaceUnit(d); closeModal(); commit(); toast("Backup restored"); }
+    catch(e){ toast("That text isn't a boat log backup"); }
+  });
+  const dangerConfirm = (label, fn) => { $("#s-danger").innerHTML = `<span class="confirm" style="color:var(--bad)">${label} <button type="button" class="btn sm danger solid" id="s-yes">Yes, do it</button><button type="button" class="btn sm" id="s-no">Cancel</button></span>`; $("#s-yes").addEventListener("click", fn); $("#s-no").addEventListener("click", openSettings); };
+  $("#s-reset").addEventListener("click", () => dangerConfirm("Replace this equipment's parts, checklists and history with the template?", () => { replaceUnit(seed()); closeModal(); commit(); toast("Template restored"); }));
+  $("#s-wipe").addEventListener("click", () => dangerConfirm("Erase this equipment's parts, items and history?", () => { const t = blankUnit(S.boat.name); t.ui.list = t.lists[0].id; replaceUnit(t); closeModal(); commit(); toast("Erased"); }));
+  const rm = $("#s-remove");
+  if (rm) rm.addEventListener("click", () => dangerConfirm(`Remove ${esc(S.boat.name)} and all its records?`, () => { R.units = R.units.filter(u => u !== S); S = R.units[0]; R.active = S.id; closeModal(); commit(); toast("Removed"); }));
+}
+
+function copyCSV(){
+  const q = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
+  const rows = [["Date","Hours","Task","Checklist","Parts used","Note"]].concat(
+    S.log.filter(e => !ui.hist || e.listId === ui.hist).slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")).map(e => [e.date, e.hours ?? "", e.title, e.listName, (e.parts||[]).map(x=>`${x.qty} ${x.unit} ${x.name}`).join("; "), e.note||""]));
+  const csv = rows.map(r => r.map(q).join(",")).join("\n");
+  navigator.clipboard.writeText(csv).then(() => toast("CSV copied. Paste into Excel or Sheets."), () => toast("Clipboard is blocked here"));
+}
+
+render();
+})();
+</script>
+</body>
+</html>
