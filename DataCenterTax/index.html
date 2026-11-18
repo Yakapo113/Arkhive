@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eagle Mountain Data Center Tax Tracker</title>
+<meta name="description" content="Year by year, where the property tax from Eagle Mountain, Utah's data center deals goes: the city, Utah County, schools, fire and water, versus the RDA. Projected from the city's budgets and checked against what the county actually paid.">
+<link rel="canonical" href="https://arkhive.us/DataCenterTax/">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Eagle Mountain Data Center Tax Tracker">
+<meta property="og:description" content="Projected vs actual property tax from Eagle Mountain's data center deals, by year, deal and taxing entity. Free, no signup.">
+<meta property="og:url" content="https://arkhive.us/DataCenterTax/">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23111827'/%3E%3Cpath d='M50 15 L80 32 L80 68 L50 85 L20 68 L20 32 Z' fill='none' stroke='white' stroke-width='8' stroke-linejoin='round'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23f2c230'/%3E%3C/svg%3E">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f6f7f9; --panel:#ffffff; --panel-2:#f3f5f8; --ink:#1f2430; --muted:#5f6675; --line:#e2e6ec;
+  --accent:#2563eb; --gold:#f2c230;
+  --s-kept:#2a78d6; --s-rda:#eb6834; --s-energy:#1baf7a; --s-actual:#1f2430;
+  --pos:#0f7a3d; --neg:#b42318;
+  --radius:16px; --shadow:0 2px 6px rgba(20,25,40,.06),0 10px 30px rgba(20,25,40,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121417; --panel:#1b1e23; --panel-2:#22262c; --ink:#eceef1; --muted:#a3a9b4; --line:#2e333b;
+    --accent:#6ea0ff; --s-kept:#3987e5; --s-rda:#d95926; --s-energy:#199e70; --s-actual:#eceef1;
+    --pos:#5fc88a; --neg:#ff8a7a;
+    --shadow:0 2px 6px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121417; --panel:#1b1e23; --panel-2:#22262c; --ink:#eceef1; --muted:#a3a9b4; --line:#2e333b;
+  --accent:#6ea0ff; --s-kept:#3987e5; --s-rda:#d95926; --s-energy:#199e70; --s-actual:#eceef1;
+  --pos:#5fc88a; --neg:#ff8a7a;
+  --shadow:0 2px 6px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+.num{font-variant-numeric:tabular-nums}
+.hero{background:linear-gradient(180deg,#111827,#1f2937);color:#fff;padding:28px 16px 64px}
+.hero .in{max-width:1100px;margin:0 auto}
+.home{display:inline-block;color:#c7cdd6;text-decoration:none;font-size:.9rem;font-weight:600;margin-bottom:14px}
+.home:hover{color:#fff}
+.hero h1{margin:0;font-size:clamp(1.6rem,4vw,2.3rem);line-height:1.15;font-weight:800;letter-spacing:.2px;text-wrap:balance}
+.hero h1 .hl{color:var(--gold)}
+.hero p{margin:10px 0 0;max-width:720px;color:#c7cdd6;font-size:1.02rem}
+main{max-width:1100px;margin:-40px auto 0;padding:0 16px 64px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:18px}
+.panel h2{margin:0 0 4px;font-size:1.15rem}
+.panel .sub{margin:0 0 14px;color:var(--muted);font-size:.92rem}
+.filters{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label,.lbl{font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+select,input[type=number]{font:inherit;color:var(--ink);background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+select{padding-right:28px}
+.seg{display:inline-flex;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{font:inherit;font-size:.88rem;border:0;background:transparent;color:var(--muted);padding:6px 10px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px}
+.kpi .v{font-size:1.55rem;font-weight:800;line-height:1.15;margin-top:4px}
+.kpi .d{color:var(--muted);font-size:.88rem;margin-top:4px}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.88rem;color:var(--muted);margin:2px 0 10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.sw.line{height:3px;border-radius:2px;width:16px;position:relative}
+.sw.line::after{content:"";position:absolute;left:5px;top:-3px;width:7px;height:7px;border-radius:50%;background:inherit}
+.chartbox{position:relative;height:340px}
+@media (max-width:600px){.chartbox{height:280px}}
+.whatif{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.whatif .field{gap:6px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.rv{font-weight:700}
+.chk{display:flex;gap:8px;align-items:center;font-size:.95rem}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{position:sticky;top:0;background:var(--panel-2);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+th:first-child,td:first-child{text-align:left}
+td.note{text-align:left;color:var(--muted);white-space:normal;min-width:180px}
+tr.past td{background:color-mix(in srgb,var(--panel-2) 60%,transparent)}
+tr.sel td{outline:2px solid var(--accent);outline-offset:-2px}
+tbody tr:last-child td{border-bottom:0}
+.scrolly{max-height:460px;overflow:auto}
+.row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.btn{font:inherit;font-size:.9rem;font-weight:600;color:var(--accent);background:transparent;border:1px solid var(--line);border-radius:10px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.callout{border-left:4px solid var(--s-rda);background:var(--panel-2);border-radius:10px;padding:12px 14px;margin:0 0 12px;font-size:.95rem}
+.notes{font-size:.92rem;color:var(--muted)}
+.notes li{margin-bottom:6px}
+.tip{position:absolute;pointer-events:none;background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:10px;padding:8px 10px;font-size:.85rem;opacity:0;transition:opacity .1s;z-index:5;min-width:190px}
+.tip b{display:block;margin-bottom:4px}
+.tip .r{display:flex;justify-content:space-between;gap:14px}
+footer{text-align:center;padding:10px 16px 40px;color:var(--muted);font-size:.88rem}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="in">
+    <a class="home" href="/">← ArkHive tools</a>
+    <h1>Eagle Mountain <span class="hl">Data Center</span> Tax Tracker</h1>
+    <p>Where the property tax from Eagle Mountain, Utah's five data center deals goes each year: to the city, Utah County, schools, fire and water, or to the city's redevelopment agency (RDA). Projected from the city's own budgets and checked against what the county actually paid.</p>
+  </div>
+</header>
+
+<main>
+  <section class="panel" aria-label="Filters">
+    <div class="filters">
+      <div class="field">
+        <label for="fDeal">Deal</label>
+        <select id="fDeal"></select>
+      </div>
+      <div class="field">
+        <label for="fEnt">Taxing entity</label>
+        <select id="fEnt"></select>
+      </div>
+      <div class="field">
+        <span class="lbl" id="rangeLbl">Years</span>
+        <div class="seg" role="group" aria-labelledby="rangeLbl" id="fRange">
+          <button type="button" data-v="2045" aria-pressed="false">2021–2045</button>
+          <button type="button" data-v="2070" aria-pressed="true">2021–2070</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section class="panel">
+    <h2 id="chartTitle">By year</h2>
+    <p class="sub">Bars are the budgets' projections. The line is what the county actually paid to the RDA. Tap a bar to see that year.</p>
+    <div class="legend" id="legend"></div>
+    <div class="chartbox" id="chartbox">
+      <svg id="chart" width="100%" height="100%" role="img" aria-labelledby="chartTitle"></svg>
+      <div class="tip" id="tip" role="status"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>What if</h2>
+    <p class="sub">These change the projections from 2026 on. Actual payments through 2025 don't change.</p>
+    <div class="whatif">
+      <div class="field">
+        <label for="wValue">Property value vs budget</label>
+        <input type="range" id="wValue" min="-60" max="60" step="5" value="0">
+        <span><span class="rv" id="wValueV">0%</span> <span class="muted" style="color:var(--muted)">(equipment loses value fast; Sweetwater 1 phase 1 fell about 60% in two years)</span></span>
+      </div>
+      <div class="field">
+        <label for="wCloseDeal">A data center closes</label>
+        <select id="wCloseDeal"></select>
+        <select id="wCloseYear" aria-label="Year it closes"></select>
+      </div>
+      <div class="field">
+        <label for="wLeft">Value left after it closes</label>
+        <input type="range" id="wLeft" min="0" max="100" step="5" value="25">
+        <span><span class="rv" id="wLeftV">25%</span> <span style="color:var(--muted)">(the equipment leaves; an empty building keeps some value)</span></span>
+      </div>
+      <div class="field">
+        <span class="lbl">Start year for deals not started yet</span>
+        <div id="starts" style="display:grid;grid-template-columns:auto 90px;gap:6px 10px;align-items:center;font-size:.92rem"></div>
+      </div>
+      <div class="field">
+        <span class="lbl">City energy tax</span>
+        <label class="chk"><input type="checkbox" id="wEnergy" checked> Include the city's energy (franchise) tax</label>
+        <span style="color:var(--muted);font-size:.86rem">Not property tax and not shared with the RDA. Goes to the city's general fund.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="row">
+      <div>
+        <h2>Year by year</h2>
+        <p class="sub" style="margin:0">Shaded rows are past years with reported payments.</p>
+      </div>
+      <button class="btn" id="csv" type="button">Download all data (CSV)</button>
+    </div>
+    <div class="tablewrap scrolly">
+      <table id="ytable" aria-label="Year by year projected and actual amounts"></table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Actual payments by phase: Meta Sweetwater 1</h2>
+    <p class="sub">The only deal that has paid anything so far. Meta built it in three phases, each with its own 20-year clock. The 2018 budget modeled it as one.</p>
+    <div class="tablewrap"><table id="ptable" aria-label="Sweetwater 1 actual payments by phase"></table></div>
+  </section>
+
+  <section class="panel">
+    <h2>The deals</h2>
+    <div class="callout"><b>Walk-away risk.</b> The posted participation agreements for Meta's Sweetwater 4 and QTS let the company end the deal by notice, don't require it to keep operating, and have no clawback if a building closes. The posted copies are unsigned drafts.</div>
+    <div class="tablewrap"><table id="dtable" aria-label="Deal terms"></table></div>
+  </section>
+
+  <section class="panel notes">
+    <h2 style="color:var(--ink)">How these numbers are built</h2>
+    <ul>
+      <li><b>Projected:</b> each deal's project area budget on the city's RDA page. Sweetwater 1 (May 2018), Sweetwater 2 (amended March 2021), Sweetwater 3 (August 2022) and Triple Tail (July 2024 draft) list amounts year by year, used as printed.</li>
+      <li><b>Sweetwater 4:</b> the budget's yearly table is posted only as a scanned image, so its 40-year totals (November 2025 budget in the fire district's interlocal agreement) are spread evenly. Real years will start lower and ramp up.</li>
+      <li><b>Actual:</b> Utah State Tax Commission "Year-End Project Increment Paid by Entity" reports, tax years 2021 to 2025, posted by the Utah County Auditor. They show what was paid to the RDA, not what the entities kept, so "kept" is projected only.</li>
+      <li><b>After sharing ends:</b> each budget's estimate of the full yearly tax once the deal expires, assuming values hold. If the equipment keeps depreciating, the real amount will be lower.</li>
+      <li><b>Splitting the RDA share by entity:</b> printed for Sweetwater 1 and 4. For the others it's split in the same proportions as the amounts each entity keeps, since every entity shares at the same rate.</li>
+      <li><b>Schools:</b> Alpine School District levied through 2025. Lake Mountain School District takes over the Eagle Mountain area in July 2027.</li>
+      <li>Years are tax years. The money reaches the RDA and the entities the following spring. These are estimates, not an official forecast.</li>
+    </ul>
+    <p style="margin-bottom:0"><b>Sources:</b>
+      <a href="https://eaglemountain.gov/eagle-mountain-redevelopment-agency/" rel="noopener">Eagle Mountain RDA budgets and agreements</a> ·
+      <a href="https://auditor.utahcounty.gov/api/media/file/auditor-rda-eagle-mountain-distribution-2025.pdf" rel="noopener">2025 county increment report</a> ·
+      <a href="https://auditor.utahcounty.gov/api/media/file/auditor-rda-eagle-mountain-distribution-2024.pdf" rel="noopener">2024</a> ·
+      <a href="https://www.utahcounty.gov/Dept/Auditor/TaxAdmin/Forms/2023%20Report%20700%20-%20Eagle%20Mountain.pdf" rel="noopener">2023</a> ·
+      <a href="https://www.utahcounty.gov/Dept/Auditor/docs/Distribution/2022/2022Rpt700EagleMtn.pdf" rel="noopener">2022</a> ·
+      <a href="https://auditor.utahcounty.gov/api/media/file/auditor-rda-eagle-mountain-distribution-2021.pdf" rel="noopener">2021</a>
+    </p>
+  </section>
+</main>
+<footer>&copy; 2026 ArkHive · <a href="/">arkhive.us</a> · Data as of November 2026</footer>
+
+<script>
+(function(){
+"use strict";
+const ENTS = ["city","county","school","fire","water"];
+const ENT_LABEL = {city:"Eagle Mountain City", county:"Utah County", school:"School district", fire:"Fire (UFSA)", water:"Water (CUWCD)"};
+const LAST_ACTUAL = 2025, FIRST_YEAR = 2021, MAX_YEAR = 2070;
+
+// helpers to build yearly arrays
+const rep = (arr,n)=>{const o=[];for(let i=0;i<n;i++)o.push(arr[i%arr.length]);return o;};
+const fill = (v,n)=>Array(n).fill(v);
+function splitByKept(rdaArr, keptByEnt){
+  // keptByEnt: {ent:[...]} ; returns {ent:[...]} RDA split in proportion to kept that year
+  const out={}; ENTS.forEach(e=>out[e]=[]);
+  rdaArr.forEach((r,i)=>{
+    const tot=ENTS.reduce((s,e)=>s+keptByEnt[e][i],0);
+    ENTS.forEach(e=>out[e].push(tot? r*keptByEnt[e][i]/tot : 0));
+  });
+  return out;
+}
+
+// ---- Sweetwater 1 (Meta / Stadion), May 2018 budget, tax years 2021-2040 ----
+const sw1 = {
+  id:"sw1", name:"Meta · Sweetwater 1", company:"Meta (Stadion)", start:2021, fixed:true, term:20,
+  share:"80% of real, 100% of personal property", budget:"May 2018",
+  rda:{ county:rep([525825,493691,467400,435266,403133],20), school:rep([4837725,4542086,4300200,4004561,3708923],20),
+        city:rep([682425,640721,606600,564896,523193],20), water:rep([270000,253500,240000,223500,207000],20),
+        fire:rep([1221075,1146454,1085400,1010779,936158],20) },
+  kept:{ county:fill(58425,20), school:fill(537525,20), city:fill(75825,20), water:fill(30000,20), fire:fill(135675,20) },
+  post:{ county:584250, school:5375250, city:758250, water:300000, fire:1356750 },
+  energy:17999,
+  ends:"2040 (phases end 2040, 2042, 2043)"
+};
+
+// ---- Sweetwater 2 (Google), amended March 2021 budget; start year not set ----
+const sw2Kept = { county:fill(57631,20), school:fill(376459,20), city:fill(42573,20), water:fill(22145,20), fire:fill(94945,20) };
+const sw2 = {
+  id:"sw2", name:"Google · Sweetwater 2", company:"Google", start:2028, fixed:false, term:20,
+  share:"67.5% of real, 100% of personal property", budget:"March 2021 (amended)",
+  rda: splitByKept(rep([4453647,4292772,3971022,3584922,3198822],20), sw2Kept),
+  kept: sw2Kept,
+  post:{ county:436200, school:2849337, city:322226, water:167608, fire:718619 },
+  energy:0, ends:"Not set (20 years from start)"
+};
+
+// ---- Sweetwater 3 (QTS), August 2022 budget, tax years 2025-2044 ----
+const s3 = {first:[33814,292820,27676,20463,67527],A:[48423,419321,39632,29303,96699],B:[45673,395509,37381,27639,91207],
+  C:[42751,370209,34990,25871,85373],D:[39658,343420,32458,23999,79195],E:[37767,327050,30911,22855,75420]};
+const s3r = {first:691802,A:1235635,B:1133267,C:1024500,D:909335,E:838957};
+const s3pat = ["first","A","B","C","D","E","A","B","C","D","E","A","B","C","D","E","A","B","C","D"];
+const s3order = ["county","school","city","water","fire"];
+const sw3Kept={}; s3order.forEach((e,k)=>sw3Kept[e]=s3pat.map(p=>s3[p][k]));
+const sw3 = {
+  id:"sw3", name:"QTS · Sweetwater 3", company:"QTS", start:2025, fixed:false, term:20,
+  share:"61% of real, 74% of personal property", budget:"August 2022",
+  rda: splitByKept(s3pat.map(p=>s3r[p]), sw3Kept), kept: sw3Kept,
+  post:{ county:142889, school:1237361, city:116948, water:86468, fire:285345 },
+  energy:81539, ends:"20 years per phase (40-year cap)"
+};
+
+// ---- Sweetwater 4 (Meta), Nov 2025 budget totals spread over 40 years ----
+const sw4 = {
+  id:"sw4", name:"Meta · Sweetwater 4", company:"Meta", start:2026, fixed:false, term:40,
+  share:"55% of real, 85% of personal property", budget:"November 2025 (amended January 2026)",
+  rda:{ county:fill(78359059/40,40), school:fill(494824910/40,40), city:fill(46857489/40,40), water:fill(15389941/40,40), fire:fill(144784376/40,40) },
+  kept:{ county:fill((97433861-78359059)/40,40), school:fill((629992288-494824910)/40,40), city:fill((103816577-45552656-46857489)/40,40),
+         water:fill((43643387-15389941)/40,40), fire:fill((180028970-144784376)/40,40) },
+  post:{ county:2305858, school:14909324, city:1378867, water:1032859, fire:4260545 },
+  energy:45552656/40, ends:"40 years"
+};
+
+// ---- Triple Tail (Tract), July 2024 draft budget, 55%, earliest increment 2027 ----
+const ttR=[125134,470684,791297,1083412,1336340,1542957,1888507,2444094,2954226,3233017,3451319,3618537,3825154,4028209,3955181,3864340,3848310,3928463,4028209,3955181];
+const ttK=[[7681,68122,6135,4684,15760],[28892,256237,23078,17617,59281],[48572,430777,38798,29617,99661],[66502,589803,53121,40550,136451],[82028,727495,65522,50017,168307],
+  [94710,839977,75653,57750,194329],[115921,1028092,92595,70684,237850],[150024,1330551,119836,91478,307824],[181337,1608263,144849,110572,372073],[198450,1760035,158518,121006,407186],
+  [211850,1878878,169222,129177,434680],[222114,1969910,177421,135436,455741],[234797,2082391,187551,143169,481763],[247261,2192933,197507,150769,507337],[242778,2153177,193927,148036,498140],
+  [237202,2103724,189473,144636,486699],[236218,2094997,188687,144036,484680],[241138,2138632,192617,147036,494775],[247261,2192933,197507,150769,507337],[242778,2153177,193927,148036,498140]];
+const ttKept={}; s3order.forEach((e,k)=>ttKept[e]=ttK.map(r=>r[k]));
+const tt = {
+  id:"tt", name:"Tract · Triple Tail", company:"Tract", start:2027, fixed:false, term:20,
+  share:"55% of real and personal property", budget:"July 2024 (draft)",
+  rda: splitByKept(ttR, ttKept), kept: ttKept,
+  post:{ county:539507, school:4784838, city:430948, water:328968, fire:1106977 },
+  energy:0, ends:"20 years per phase (40-year cap)"
+};
+
+const DEALS=[sw1,sw2,sw3,sw4,tt];
+
+// ---- Actuals paid to the RDA (State Tax Commission year-end reports), Sweetwater 1 by phase ----
+// [county, school, city, water, fire]
+const ACT = {
+  "Phase 1 (bldgs 1-2)": {trigger:2021,end:2040, y:{2021:[231797.32,1794595.01,196742.39,101903.87,432615.87],2022:[576472.21,4773120.15,471817.65,280823.07,1151200.19],
+    2023:[269409.95,2101890.35,215199.40,158935.44,549908.39],2024:[162105.74,1420911.48,139480.55,94478.81,312028.68],2025:[209110.97,1948268.63,183358.38,130479.74,462516.36]}},
+  "Phase 2 (bldgs 3-4)": {trigger:2023,end:2042, y:{2023:[525930.91,4103223.20,420103.35,310267.17,1073508.37],2024:[393812.33,3451897.97,338847.73,229522.52,758028.34],
+    2025:[310768.84,2895406.19,272496.81,193911.58,687365.55]}},
+  "Phase 3 (bldgs 5-6)": {trigger:2024,end:2043, y:{2024:[531191.81,4656075.45,457053.08,309590.32,1022462.77],2025:[511615.80,4766679.89,448608.93,319234.82,1131603.43]}}
+};
+const AORD=["county","school","city","water","fire"];
+function actualRDA(dealId, ent, year){
+  if(year>LAST_ACTUAL) return null;
+  if(dealId!=="sw1") return 0; // no other deal appears in the reports through 2025
+  let s=0;
+  Object.values(ACT).forEach(p=>{const r=p.y[year]; if(!r) return; AORD.forEach((e,k)=>{ if(ent==="all"||ent===e) s+=r[k]; });});
+  return s;
+}
+
+// ---- state ----
+const st = { deal:"all", ent:"all", end:2070, value:0, closeDeal:"none", closeYear:2035, left:25, energy:true, sel:2027,
+  starts:{sw2:2028, sw3:2025, sw4:2026, tt:2027} };
+
+function dealYear(d, year){
+  const start = d.fixed ? d.start : st.starts[d.id];
+  const i = year - start;
+  if(i<0) return {phase:"before", i};
+  if(i<d.term) return {phase:"sharing", i};
+  return {phase:"after", i};
+}
+// projected amounts for a deal/entity/year -> {kept, rda, energy, phase}
+function proj(d, ent, year){
+  const p = dealYear(d, year);
+  let kept=0, rda=0, energy=0;
+  const ents = ent==="all" ? ENTS : [ent];
+  if(p.phase==="sharing"){ ents.forEach(e=>{ kept+=d.kept[e][p.i]; rda+=d.rda[e][p.i]; }); }
+  else if(p.phase==="after"){ ents.forEach(e=>{ kept+=d.post[e]; }); }
+  if(p.phase!=="before" && (ent==="all"||ent==="city") && st.energy) energy=d.energy;
+  let m = 1;
+  if(year>LAST_ACTUAL) m *= (1+st.value/100);
+  if(st.closeDeal===d.id && year>=st.closeYear){ m *= st.left/100; energy=0; }
+  return {kept:kept*m, rda:rda*m, energy, phase:p.phase};
+}
+function selDeals(){ return st.deal==="all" ? DEALS : DEALS.filter(d=>d.id===st.deal); }
+function yearRow(year){
+  let kept=0,rda=0,energy=0,act=null; const notes=[];
+  selDeals().forEach(d=>{
+    const p=proj(d,st.ent,year); kept+=p.kept; rda+=p.rda; energy+=p.energy;
+    const a=actualRDA(d.id,st.ent,year); if(a!==null) act=(act||0)+a;
+    const start = d.fixed? d.start : st.starts[d.id];
+    if(year===start) notes.push(d.name.split(" · ")[1]+" starts"+(d.fixed?"":" (assumed)"));
+    if(year===start+d.term) notes.push(d.name.split(" · ")[1]+": sharing over, full tax starts");
+    if(st.closeDeal===d.id && year===st.closeYear) notes.push(d.name.split(" · ")[1]+" closes (what if)");
+  });
+  return {year,kept,rda,energy,act,notes};
+}
+function rows(){ const r=[]; for(let y=FIRST_YEAR;y<=st.end;y++) r.push(yearRow(y)); return r; }
+
+// ---- formatting ----
+function money(v,short=true){
+  if(v===null||v===undefined) return "–";
+  const a=Math.abs(v), s=v<0?"−":"";
+  if(!short) return s+"$"+Math.round(a).toLocaleString("en-US");
+  if(a>=1e9) return s+"$"+(a/1e9).toFixed(2)+"B";
+  if(a>=1e6) return s+"$"+(a/1e6).toFixed(a>=1e8?0:2)+"M";
+  if(a>=1e3) return s+"$"+Math.round(a/1e3)+"K";
+  return s+"$"+Math.round(a);
+}
+const css = n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// ---- controls ----
+const $=id=>document.getElementById(id);
+function opt(sel, items, val){ sel.innerHTML = items.map(([v,l])=>`<option value="${v}"${String(v)===String(val)?" selected":""}>${esc(l)}</option>`).join(""); }
+opt($("fDeal"), [["all","All five deals"],...DEALS.map(d=>[d.id,d.name])], st.deal);
+opt($("fEnt"), [["all","All taxing entities"],...ENTS.map(e=>[e,ENT_LABEL[e]])], st.ent);
+opt($("wCloseDeal"), [["none","None (no closure)"],...DEALS.map(d=>[d.id,d.name])], st.closeDeal);
+const yrs=[]; for(let y=2026;y<=2060;y++) yrs.push([y,"in "+y]);
+opt($("wCloseYear"), yrs, st.closeYear);
+$("starts").innerHTML = DEALS.filter(d=>!d.fixed).map(d=>`<label for="s_${d.id}">${esc(d.name)}</label><input type="number" id="s_${d.id}" min="2025" max="2045" value="${st.starts[d.id]}">`).join("");
+
+$("fDeal").onchange=e=>{st.deal=e.target.value; render();};
+$("fEnt").onchange=e=>{st.ent=e.target.value; render();};
+document.querySelectorAll("#fRange button").forEach(b=>b.onclick=()=>{
+  st.end=+b.dataset.v; document.querySelectorAll("#fRange button").forEach(x=>x.setAttribute("aria-pressed",x===b)); if(st.sel>st.end) st.sel=st.end; render();});
+$("wValue").oninput=e=>{st.value=+e.target.value; $("wValueV").textContent=(st.value>0?"+":"")+st.value+"%"; render();};
+$("wLeft").oninput=e=>{st.left=+e.target.value; $("wLeftV").textContent=st.left+"%"; render();};
+$("wCloseDeal").onchange=e=>{st.closeDeal=e.target.value; render();};
+$("wCloseYear").onchange=e=>{st.closeYear=+e.target.value; render();};
+$("wEnergy").onchange=e=>{st.energy=e.target.checked; render();};
+DEALS.filter(d=>!d.fixed).forEach(d=>{ $("s_"+d.id).onchange=e=>{ const v=Math.max(2025,Math.min(2045,+e.target.value||st.starts[d.id])); e.target.value=v; st.starts[d.id]=v; render(); }; });
+
+// ---- KPIs ----
+function renderKPIs(R){
+  const past=R.filter(r=>r.year<=LAST_ACTUAL);
+  const act=past.reduce((s,r)=>s+(r.act||0),0), prj=past.reduce((s,r)=>s+r.rda,0);
+  const diff=act-prj, pct=prj? diff/prj*100 : null;
+  const sel=R.find(r=>r.year===st.sel)||R[0];
+  const tot=R.reduce((s,r)=>s+r.kept+r.energy,0), totR=R.reduce((s,r)=>s+r.rda,0);
+  // sharing end years
+  const ends=selDeals().map(d=>{const s=d.fixed?d.start:st.starts[d.id]; return [d.name.split(" · ")[1], s+d.term];});
+  const entName = st.ent==="all" ? "the taxing entities" : ENT_LABEL[st.ent];
+  const cityE = (st.ent==="all"||st.ent==="city") && st.energy;
+  $("kpis").innerHTML = `
+    <div class="kpi"><div class="lbl">Paid to the RDA, 2021–2025</div>
+      <div class="v num">${money(act)}</div>
+      <div class="d">Budgets projected ${money(prj)}${pct===null?"":` · <span class="${diff>=0?"pos":"neg"}">${diff>=0?"+":""}${pct.toFixed(0)}%</span>`}</div></div>
+    <div class="kpi"><div class="lbl">In ${sel.year}, projected</div>
+      <div class="v num">${money(sel.kept+sel.energy)}</div>
+      <div class="d">to ${esc(entName)}${cityE&&sel.energy?` (incl. ${money(sel.energy)} energy tax)`:""} · ${money(sel.rda)} to the RDA</div></div>
+    <div class="kpi"><div class="lbl">Total ${FIRST_YEAR}–${st.end}, projected</div>
+      <div class="v num">${money(tot)}</div>
+      <div class="d">to ${esc(entName)} · ${money(totR)} to the RDA</div></div>
+    <div class="kpi"><div class="lbl">Full tax starts (sharing over)</div>
+      <div class="v num">${ends.length===1?ends[0][1]:ends.map(e=>e[1]).sort()[0]+"–"+ends.map(e=>e[1]).sort().slice(-1)[0]}</div>
+      <div class="d">${ends.map(e=>esc(e[0])+" "+e[1]).join(" · ")}${ends.some((e,i)=>!selDeals()[i].fixed)?" (from assumed start years)":""}</div></div>`;
+}
+
+// ---- chart (hand-drawn SVG, stacked bars + actual line) ----
+const NS="http://www.w3.org/2000/svg";
+function el(tag, attrs, parent){ const n=document.createElementNS(NS,tag); for(const k in attrs) n.setAttribute(k,attrs[k]); if(parent) parent.appendChild(n); return n; }
+function niceMax(v){ if(v<=0) return 1; const p=Math.pow(10,Math.floor(Math.log10(v))); const f=v/p; const n=f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10; return n*p; }
+function renderChart(R){
+  const svg=$("chart"), box=$("chartbox"); svg.innerHTML="";
+  const W=box.clientWidth, H=box.clientHeight, m={l:58,r:12,t:12,b:28};
+  const iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const showE = (st.ent==="all"||st.ent==="city") && st.energy;
+  const max=niceMax(Math.max(...R.map(r=>r.kept+r.rda+(showE?r.energy:0)), ...R.map(r=>r.act||0))*1.05);
+  const y=v=>m.t+ih-(v/max)*ih;
+  const n=R.length, bw=iw/n, barW=Math.max(2,bw-2);
+  const step=[1,2,5,10].find(s=>s*bw>=38)||10;
+  const muted=css("--muted"), line=css("--line");
+  // grid
+  for(let k=0;k<=4;k++){ const v=max*k/4, yy=y(v);
+    el("line",{x1:m.l,x2:W-m.r,y1:yy,y2:yy,stroke:line,"stroke-width":1},svg);
+    const t=el("text",{x:m.l-8,y:yy+4,"text-anchor":"end","font-size":11,fill:muted},svg); t.textContent=money(v); }
+  // now marker
+  const nx=m.l+(LAST_ACTUAL-FIRST_YEAR+1)*bw;
+  el("line",{x1:nx,x2:nx,y1:m.t,y2:m.t+ih,stroke:muted,"stroke-dasharray":"3 4","stroke-width":1},svg);
+  const nt=el("text",{x:nx+5,y:m.t+11,"font-size":11,fill:muted},svg); nt.textContent="projections →";
+  // bars
+  const cK=css("--s-kept"), cR=css("--s-rda"), cE=css("--s-energy"), surf=css("--panel");
+  R.forEach((r,i)=>{
+    const x=m.l+i*bw+(bw-barW)/2; let base=0;
+    const segs=[[r.kept,cK],[showE?r.energy:0,cE],[r.rda,cR]].filter(s=>s[0]>0);
+    segs.forEach((s,j)=>{ const y0=y(base), y1=y(base+s[0]); const h=Math.max(0,y0-y1-(j?1.5:0));
+      const top=j===segs.length-1;
+      if(top && h>3){ // rounded top
+        const rr=Math.min(3,barW/2,h);
+        el("path",{d:`M${x},${y0-(j?1.5:0)} V${y1+rr} Q${x},${y1} ${x+rr},${y1} H${x+barW-rr} Q${x+barW},${y1} ${x+barW},${y1+rr} V${y0-(j?1.5:0)} Z`,fill:s[1]},svg);
+      } else el("rect",{x,y:y1,width:barW,height:h,fill:s[1]},svg);
+      base+=s[0]; });
+    if(r.year===st.sel){ el("rect",{x:m.l+i*bw,y:m.t,width:bw,height:ih,fill:css("--accent"),"fill-opacity":.08},svg); }
+
+    if(r.year%step===0){ const t=el("text",{x:m.l+i*bw+bw/2,y:H-8,"text-anchor":"middle","font-size":11,fill:muted},svg); t.textContent=r.year; }
+  });
+  // actual line
+  const pts=R.filter(r=>r.act!==null).map(r=>[m.l+(r.year-FIRST_YEAR)*bw+bw/2, y(r.act)]);
+  if(pts.length){
+    const ca=css("--s-actual");
+    el("polyline",{points:pts.map(p=>p.join(",")).join(" "),fill:"none",stroke:ca,"stroke-width":2,"stroke-linejoin":"round"},svg);
+    pts.forEach(p=>el("circle",{cx:p[0],cy:p[1],r:4.5,fill:ca,stroke:surf,"stroke-width":2},svg));
+  }
+  // hit targets
+  const tip=$("tip");
+  R.forEach((r,i)=>{
+    const hit=el("rect",{x:m.l+i*bw,y:m.t,width:bw,height:ih,fill:"transparent",style:"cursor:pointer"},svg);
+    const show=ev=>{
+      tip.innerHTML=`<b>${r.year}${r.year<=LAST_ACTUAL?"":" (projected)"}</b>`+
+        `<div class="r"><span>Kept by ${st.ent==="all"?"entities":esc(ENT_LABEL[st.ent])}</span><span class="num">${money(r.kept)}</span></div>`+
+        (showE?`<div class="r"><span>City energy tax</span><span class="num">${money(r.energy)}</span></div>`:"")+
+        `<div class="r"><span>To RDA (budget)</span><span class="num">${money(r.rda)}</span></div>`+
+        (r.act!==null?`<div class="r"><span>To RDA (actual)</span><span class="num">${money(r.act)}</span></div>`:"")+
+        (r.notes.length?`<div style="color:var(--muted);margin-top:4px">${r.notes.map(esc).join("<br>")}</div>`:"");
+      tip.style.opacity=1;
+      const tx=m.l+i*bw+bw/2, tw=tip.offsetWidth;
+      tip.style.left=Math.max(4,Math.min(W-tw-4, tx-tw/2))+"px"; tip.style.top="8px";
+    };
+    hit.addEventListener("mouseenter",show); hit.addEventListener("mousemove",show);
+    hit.addEventListener("mouseleave",()=>tip.style.opacity=0);
+    hit.addEventListener("click",()=>{ st.sel=r.year; render(); show(); });
+  });
+  // legend
+  $("legend").innerHTML =
+    `<span><i class="sw" style="background:${cK}"></i>Kept by ${st.ent==="all"?"taxing entities":esc(ENT_LABEL[st.ent])}</span>`+
+    (showE?`<span><i class="sw" style="background:${cE}"></i>City energy tax</span>`:"")+
+    `<span><i class="sw" style="background:${cR}"></i>To RDA (budget)</span>`+
+    `<span><i class="sw line" style="background:${css("--s-actual")}"></i>To RDA (actual)</span>`;
+  const dn = st.deal==="all"?"All five deals":DEALS.find(d=>d.id===st.deal).name;
+  $("chartTitle").textContent = dn+(st.ent==="all"?"":" · "+ENT_LABEL[st.ent])+", by year";
+}
+
+// ---- tables ----
+function renderYearTable(R){
+  const showE=(st.ent==="all"||st.ent==="city");
+  let h=`<thead><tr><th>Tax year</th><th>Kept by ${st.ent==="all"?"entities":esc(ENT_LABEL[st.ent])}</th>${showE?"<th>City energy tax</th>":""}<th>To RDA (budget)</th><th>Total</th><th>To RDA (actual)</th><th>Actual vs budget</th><th>What happens</th></tr></thead><tbody>`;
+  R.forEach(r=>{
+    const d = r.act===null? null : r.act-r.rda;
+    h+=`<tr class="${r.year<=LAST_ACTUAL?"past":""}${r.year===st.sel?" sel":""}" data-y="${r.year}"><td class="num">${r.year}</td><td class="num">${money(r.kept,false)}</td>${showE?`<td class="num">${money(r.energy,false)}</td>`:""}<td class="num">${money(r.rda,false)}</td><td class="num">${money(r.kept+r.rda+(showE?r.energy:0),false)}</td><td class="num">${money(r.act,false)}</td><td class="num ${d===null?"":d>=0?"pos":"neg"}">${d===null?"–":(d>=0?"+":"")+money(d,false)}</td><td class="note">${r.notes.map(esc).join("; ")}</td></tr>`;
+  });
+  $("ytable").innerHTML=h+"</tbody>";
+  $("ytable").querySelectorAll("tbody tr").forEach(tr=>tr.onclick=()=>{st.sel=+tr.dataset.y; render();});
+}
+function renderPhaseTable(){
+  const ys=[2021,2022,2023,2024,2025];
+  const idx = st.ent==="all"? null : AORD.indexOf(st.ent);
+  const val=row=>row? (idx===null? row.reduce((a,b)=>a+b,0) : row[idx]) : null;
+  let h=`<thead><tr><th>Phase</th><th>Sharing</th>${ys.map(y=>`<th>${y}</th>`).join("")}</tr></thead><tbody>`;
+  const totals=ys.map(()=>0);
+  Object.entries(ACT).forEach(([name,p])=>{
+    h+=`<tr><td>${esc(name)}</td><td class="num">${p.trigger}–${p.end}</td>${ys.map((y,k)=>{const v=val(p.y[y]); if(v) totals[k]+=v; return `<td class="num">${v?money(v,false):"–"}</td>`;}).join("")}</tr>`;
+  });
+  const bud=ys.map(y=>proj(sw1, st.ent, y).rda);
+  h+=`<tr><td><b>Actual total</b></td><td></td>${totals.map(t=>`<td class="num"><b>${money(t,false)}</b></td>`).join("")}</tr>`;
+  h+=`<tr><td>2018 budget</td><td class="num">2021–2040</td>${bud.map(b=>`<td class="num">${money(b,false)}</td>`).join("")}</tr>`;
+  h+=`<tr><td>Difference</td><td></td>${totals.map((t,k)=>{const d=t-bud[k]; return `<td class="num ${d>=0?"pos":"neg"}">${d>=0?"+":""}${money(d,false)}</td>`;}).join("")}</tr>`;
+  $("ptable").innerHTML=`<caption style="caption-side:bottom;text-align:left;padding:8px 10px;color:var(--muted);font-size:.85rem">Paid to the RDA by ${st.ent==="all"?"all taxing entities":esc(ENT_LABEL[st.ent])}. Three phases paid about twice the one-phase budget, but phase 1 fell from $7.25M in 2022 to about $2–3M as its equipment depreciated.</caption>`+h+"</tbody>";
+}
+function renderDeals(){
+  let h=`<thead><tr><th>Deal</th><th>Share to RDA</th><th>Term</th><th>Years (tax)</th><th>Kept per year, sharing</th><th>Per year after</th><th>Budget</th></tr></thead><tbody>`;
+  DEALS.forEach(d=>{
+    const s=d.fixed?d.start:st.starts[d.id];
+    const keptAvg=ENTS.reduce((a,e)=>a+d.kept[e].reduce((x,y)=>x+y,0),0)/d.term;
+    const post=ENTS.reduce((a,e)=>a+d.post[e],0);
+    h+=`<tr><td>${esc(d.name)}</td><td style="text-align:left">${esc(d.share)}</td><td class="num">${d.term} years</td><td class="num">${s}–${s+d.term-1}${d.fixed?"":" (assumed)"}</td><td class="num">${money(keptAvg)}</td><td class="num">${money(post)}</td><td style="text-align:left">${esc(d.budget)}</td></tr>`;
+  });
+  $("dtable").innerHTML=h+"</tbody>";
+}
+
+// ---- CSV (long format, one row per year x deal x entity) ----
+$("csv").onclick=()=>{
+  const lines=["tax_year,deal,entity,phase,projected_kept,projected_to_rda,projected_city_energy_tax,actual_to_rda"];
+  for(let y=FIRST_YEAR;y<=MAX_YEAR;y++) DEALS.forEach(d=>ENTS.forEach(e=>{
+    const p=proj(d,e,y), a=actualRDA(d.id,e,y);
+    lines.push([y,`"${d.name}"`,`"${ENT_LABEL[e]}"`,p.phase,p.kept.toFixed(2),p.rda.toFixed(2),(e==="city"?p.energy:0).toFixed(2),a===null?"":a.toFixed(2)].join(","));
+  }));
+  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="eagle-mountain-data-center-tax.csv";
+  document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500);
+};
+
+function render(){ const R=rows(); renderKPIs(R); renderChart(R); renderYearTable(R); renderPhaseTable(); renderDeals(); }
+render();
+let rt; window.addEventListener("resize",()=>{clearTimeout(rt); rt=setTimeout(render,120);});
+if(window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",render);
+})();
+</script>
+</body>
+</html>
